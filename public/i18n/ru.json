@@ -2,6 +2,24 @@
   "app": {
     "title": "e-Dental"
   },
+  "common": {
+    "logout": "Выйти"
+  },
+  "header": {
+    "status": "Штатный режим",
+    "search": "Поиск пациента, врача или услуги",
+    "notifications": "Уведомления",
+    "waitingList": "Лист ожидания",
+    "newAppointment": "Новая запись"
+  },
+  "sidebar": {
+    "navigation": "Навигация"
+  },
+  "roles": {
+    "admin": "Администратор",
+    "doctor": "Врач",
+    "receptionist": "Регистратор"
+  },
   "menu": {
     "dashboard": "Главное",
     "schedule": "Расписание",

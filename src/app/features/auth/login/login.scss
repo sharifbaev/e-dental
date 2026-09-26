@@ -27,6 +27,17 @@
   @include mat.icon-button-overrides((
     icon-color: #fff
   ));
+
+  // Кнопка «Войти» — прежний синий цвет, независимо от бирюзовой темы приложения
+  @include mat.button-overrides((
+    filled-container-color: #005cbb,
+    filled-label-text-color: #fff
+  ));
+
+  // Спиннер на синей кнопке — белый
+  @include mat.progress-spinner-overrides((
+    active-indicator-color: #fff
+  ));
 }
 
 // Только для ПК: растягиваем компонент на всю ширину, чтобы карточку можно было сдвинуть влево

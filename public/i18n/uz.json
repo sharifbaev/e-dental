@@ -2,6 +2,24 @@
   "app": {
     "title": "e-Dental"
   },
+  "common": {
+    "logout": "Chiqish"
+  },
+  "header": {
+    "status": "Odatiy rejim",
+    "search": "Bemor, shifokor yoki xizmatni qidirish",
+    "notifications": "Bildirishnomalar",
+    "waitingList": "Kutish ro'yxati",
+    "newAppointment": "Yangi yozuv"
+  },
+  "sidebar": {
+    "navigation": "Navigatsiya"
+  },
+  "roles": {
+    "admin": "Administrator",
+    "doctor": "Shifokor",
+    "receptionist": "Registrator"
+  },
   "menu": {
     "dashboard": "Bosh sahifa",
     "schedule": "Jadval",

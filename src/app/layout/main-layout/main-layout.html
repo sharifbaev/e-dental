@@ -1,1 +1,99 @@
-<p>main-layout works!</p>
+<div class="flex min-h-screen bg-page">
+  <!-- Боковое меню — только ПК -->
+  <aside class="hidden md:flex w-60 border-r bg-white p-4 flex-col gap-1">
+    <div class="flex items-center gap-2 mb-6 px-2">
+      <img src="favicon.svg" alt="" class="w-8 h-8">
+      <span class="text-xl font-bold text-brand-700">{{ 'app.title' | transloco }}</span>
+    </div>
+
+    <div class="px-3 mb-2 text-[11px] font-semibold uppercase tracking-wider text-gray-400">{{ 'sidebar.navigation' | transloco }}</div>
+
+    @for (item of menu; track item.path) {
+      <a [routerLink]="item.path" routerLinkActive #rlaSide="routerLinkActive" class="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors" [class.bg-brand-700]="rlaSide.isActive" [class.text-white]="rlaSide.isActive" [class.text-gray-700]="!rlaSide.isActive">
+        <mat-icon fontSet="material-symbols-outlined">{{ item.icon }}</mat-icon>
+        <span>{{ item.label | transloco }}</span>
+      </a>
+    }
+
+    <!-- Карточка пользователя -->
+    <div class="mt-auto pt-4 border-t flex items-center gap-3 px-2">
+      <div class="w-10 h-10 shrink-0 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center font-semibold">{{ initials() }}</div>
+      <div class="min-w-0">
+        <div class="text-sm font-semibold text-gray-900 truncate">{{ user()?.fullName }}</div>
+        <div class="text-xs text-gray-500 truncate">{{ roleKey() | transloco }}</div>
+      </div>
+    </div>
+  </aside>
+
+  <div class="flex-1 flex flex-col min-w-0">
+    <header class="bg-white border-b p-4 flex items-center justify-between gap-3">
+      <!-- Логотип в шапке — только мобилка -->
+      <div class="flex items-center gap-2 md:hidden">
+        <img src="favicon.svg" alt="" class="w-7 h-7">
+        <span class="text-lg font-bold text-brand-700">{{ 'app.title' | transloco }}</span>
+      </div>
+
+      <!-- Статус и поиск — только ПК -->
+      <div class="hidden md:flex items-center gap-3 flex-1 min-w-0">
+        <div class="relative flex-1 max-w-md">
+          <mat-icon fontSet="material-symbols-outlined" class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">search</mat-icon>
+          <input type="search" class="w-full h-10 pl-10 pr-3 rounded-lg bg-page border border-transparent text-sm outline-none focus:border-brand-300 focus:bg-white" [placeholder]="'header.search' | transloco">
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <!-- Уведомления -->
+        <button type="button" class="relative w-10 h-10 flex items-center justify-center rounded-lg text-gray-600 hover:bg-page" [title]="'header.notifications' | transloco">
+          <mat-icon fontSet="material-symbols-outlined">notifications</mat-icon>
+          @if (notificationsCount() > 0) {
+            <span class="absolute top-1 right-1 min-w-4 h-4 px-1 rounded-full bg-red-500 text-white text-[10px] leading-4 text-center">{{ notificationsCount() }}</span>
+          }
+        </button>
+
+        <!-- Лист ожидания — только большие экраны -->
+        <button type="button" class="hidden lg:flex items-center gap-2 h-10 px-3 rounded-lg border border-brand-200 text-brand-700 text-sm font-medium hover:bg-brand-50">
+          <mat-icon fontSet="material-symbols-outlined">hourglass_top</mat-icon>
+          {{ 'header.waitingList' | transloco }}
+          <span class="px-1.5 rounded bg-brand-100 text-xs">{{ waitingListCount() }}</span>
+        </button>
+
+        <!-- Новая запись — только ПК -->
+        <button type="button" class="hidden md:flex items-center gap-1 h-10 px-3 rounded-lg bg-brand-700 text-white text-sm font-medium hover:bg-brand-800">
+          <mat-icon fontSet="material-symbols-outlined">add</mat-icon>
+          {{ 'header.newAppointment' | transloco }}
+        </button>
+
+        <!-- Переключатель языка флагами -->
+        <button type="button" title="Русский" class="rounded overflow-hidden border-2 transition-opacity" [class.border-brand-600]="lang() === 'ru'" [class.border-transparent]="lang() !== 'ru'" [class.opacity-50]="lang() !== 'ru'" (click)="setLang('ru')">
+          <img src="flags/ru.svg" alt="Русский" class="block w-8 h-5 object-cover">
+        </button>
+        <button type="button" title="O'zbekcha" class="rounded overflow-hidden border-2 transition-opacity" [class.border-brand-600]="lang() === 'uz'" [class.border-transparent]="lang() !== 'uz'" [class.opacity-50]="lang() !== 'uz'" (click)="setLang('uz')">
+          <img src="flags/uz.svg" alt="O'zbekcha" class="block w-8 h-5 object-cover">
+        </button>
+
+        <!-- Выход -->
+        <button type="button" class="ml-2 flex items-center gap-1 px-2 py-1 rounded text-gray-600 hover:text-red-600 hover:bg-red-50 transition-colors" [title]="'common.logout' | transloco" (click)="logout()">
+          <mat-icon fontSet="material-symbols-outlined">logout</mat-icon>
+          <span class="hidden md:inline text-sm">{{ 'common.logout' | transloco }}</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- pb-24 на мобилке, чтобы контент не прятался под нижней панелью -->
+    <main class="p-4 pb-24 md:pb-4 flex-1">
+      <router-outlet />
+    </main>
+  </div>
+
+  <!-- Нижнее меню — только мобилка -->
+  <nav class="md:hidden fixed bottom-0 inset-x-0 z-50 bg-white border-t flex pb-[env(safe-area-inset-bottom)]">
+    @for (item of menu; track item.path) {
+      <a [routerLink]="item.path" routerLinkActive #rla="routerLinkActive" class="flex-1 flex flex-col items-center justify-center gap-0.5 py-2 min-w-0" [class.text-brand-700]="rla.isActive" [class.text-gray-500]="!rla.isActive">
+        <span class="flex items-center justify-center w-14 h-8 rounded-full transition-colors" [class.bg-brand-100]="rla.isActive">
+          <mat-icon fontSet="material-symbols-outlined">{{ item.icon }}</mat-icon>
+        </span>
+        <span class="text-[10px] leading-tight truncate max-w-full px-1" [class.font-semibold]="rla.isActive">{{ item.label | transloco }}</span>
+      </a>
+    }
+  </nav>
+</div>
