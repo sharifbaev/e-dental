@@ -1,0 +1,12 @@
+{
+  "app": {
+    "title": "e-Dental"
+  },
+  "menu": {
+    "dashboard": "Bosh sahifa",
+    "schedule": "Jadval",
+    "patients": "Bemorlar",
+    "doctors": "Shifokorlar",
+    "settings": "Sozlamalar"
+  }
+}

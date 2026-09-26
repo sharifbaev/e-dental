@@ -1,0 +1,12 @@
+{
+  "app": {
+    "title": "e-Dental"
+  },
+  "menu": {
+    "dashboard": "Главное",
+    "schedule": "Расписание",
+    "patients": "Пациенты",
+    "doctors": "Врачи",
+    "settings": "Настройки"
+  }
+}
