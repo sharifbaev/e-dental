@@ -8,5 +8,15 @@
     "patients": "Bemorlar",
     "doctors": "Shifokorlar",
     "settings": "Sozlamalar"
+  },
+  "login": {
+    "subtitle": "Davom etish uchun tizimga kiring",
+    "username": "Login",
+    "password": "Parol",
+    "submit": "Kirish",
+    "errors": {
+      "required": "Majburiy maydon",
+      "invalid": "Login yoki parol noto'g'ri"
+    }
   }
 }

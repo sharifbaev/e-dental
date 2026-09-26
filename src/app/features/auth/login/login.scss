@@ -1,0 +1,47 @@
+@use '@angular/material' as mat;
+
+:host {
+  @include mat.form-field-overrides((
+    // Обычное состояние
+    outlined-outline-color: rgba(255, 255, 255, 0.7),
+    outlined-hover-outline-color: #fff,
+    outlined-focus-outline-color: #fff,
+    outlined-label-text-color: rgba(255, 255, 255, 0.8),
+    outlined-hover-label-text-color: #fff,
+    outlined-focus-label-text-color: #fff,
+    outlined-input-text-color: #fff,
+    outlined-caret-color: #fff,
+    trailing-icon-color: #fff,
+
+    // Состояние ошибки — поле не краснеет, остаётся как обычное
+    outlined-error-outline-color: rgba(255, 255, 255, 0.7),
+    outlined-error-hover-outline-color: #fff,
+    outlined-error-focus-outline-color: #fff,
+    outlined-error-label-text-color: rgba(255, 255, 255, 0.8),
+    outlined-error-hover-label-text-color: #fff,
+    outlined-error-focus-label-text-color: #fff,
+    outlined-error-caret-color: #fff,
+    error-trailing-icon-color: #fff
+  ));
+
+  @include mat.icon-button-overrides((
+    icon-color: #fff
+  ));
+}
+
+// Только для ПК: растягиваем компонент на всю ширину, чтобы карточку можно было сдвинуть влево
+@media (min-width: 768px) {
+  :host {
+    display: block;
+    width: 100%;
+  }
+}
+
+// Автозаполнение браузера не должно перекрашивать поле в светлый фон с тёмным текстом
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus {
+  -webkit-text-fill-color: #fff;
+  caret-color: #fff;
+  transition: background-color 9999s ease-in-out 0s;
+}

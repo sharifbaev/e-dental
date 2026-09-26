@@ -1,1 +1,36 @@
-<p>auth-layout works!</p>
+<div
+  class="relative min-h-screen flex items-center justify-center overflow-hidden bg-slate-900 bg-cover bg-center"
+  [style.background-image]="'url(' + posterSrc() + ')'">
+
+  @if (isMobile()) {
+    <video
+      #bgVideo
+      class="absolute inset-0 w-full h-full object-cover pointer-events-none"
+      src="videos/dental-mobile.mp4"
+      autoplay
+      loop
+      muted
+      playsinline
+      preload="auto"
+      disablepictureinpicture>
+    </video>
+  } @else {
+    <video
+      #bgVideo
+      class="absolute inset-0 w-full h-full object-cover pointer-events-none"
+      src="videos/dental-pc.mp4"
+      autoplay
+      loop
+      muted
+      playsinline
+      preload="auto"
+      disablepictureinpicture>
+    </video>
+  }
+
+  <div class="absolute inset-0"></div>
+
+  <div class="relative z-10 w-full flex justify-center px-4">
+    <router-outlet />
+  </div>
+</div>
