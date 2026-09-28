@@ -3,6 +3,9 @@ import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { AuthService } from '../../core/auth/auth.service';
+import { MatDialog } from '@angular/material/dialog';
+import { NOTIFICATIONS_DIALOG_CONFIG, NotificationsDialog } from '../../features/notifications/components/notifications-dialog/notifications-dialog';
+import { NotificationsService } from '../../features/notifications/services/notifications.service';
 
 @Component({
   selector: 'app-main-layout',
@@ -13,6 +16,8 @@ import { AuthService } from '../../core/auth/auth.service';
 export class MainLayout {
   private readonly transloco = inject(TranslocoService);
   private readonly auth = inject(AuthService);
+  private readonly dialog = inject(MatDialog);
+  private readonly notificationsService = inject(NotificationsService);
 
   protected readonly lang = signal(this.transloco.getActiveLang());
 
@@ -40,7 +45,8 @@ export class MainLayout {
   protected readonly roleKey = computed(() => `roles.${this.user()?.role ?? 'admin'}`);
 
   // TODO: заменить на данные с API
-  protected readonly notificationsCount = signal(3);
+  // Число непрочитанных уведомлений — из общего сервиса, обновляется сразу при прочтении
+  protected readonly notificationsCount = this.notificationsService.unreadCount;
   protected readonly waitingListCount = signal(3);
 
   protected setLang(lang: 'ru' | 'uz'): void {
@@ -50,5 +56,9 @@ export class MainLayout {
 
   protected logout(): void {
     this.auth.logout();
+  }
+
+  protected openNotifications(): void {
+    this.dialog.open(NotificationsDialog, NOTIFICATIONS_DIALOG_CONFIG);
   }
 }

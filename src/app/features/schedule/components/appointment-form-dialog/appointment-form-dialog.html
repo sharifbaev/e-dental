@@ -1,0 +1,184 @@
+<!-- Шапка -->
+<div class="flex items-start justify-between gap-2 px-6 pt-5 pb-3 border-b border-gray-100">
+  <div class="min-w-0">
+    <h2 class="text-lg font-bold text-gray-900">{{ 'appointmentForm.title' | transloco }}</h2>
+    <p class="text-sm text-gray-500">{{ 'appointmentForm.subtitle' | transloco }}</p>
+  </div>
+  <button matIconButton mat-dialog-close type="button" [title]="'common.close' | transloco">
+    <mat-icon fontSet="material-symbols-outlined">close</mat-icon>
+  </button>
+</div>
+
+<!-- Форма — прокручивается внутри окна -->
+<mat-dialog-content style="flex: 1 1 auto; max-height: none;">
+  <div class="flex flex-col gap-4 py-2">
+
+    <!-- Блок: Пациент -->
+    <section class="rounded-2xl border border-gray-100 bg-white p-4 flex flex-col gap-4">
+      <div class="flex items-center gap-2">
+        <span class="w-8 h-8 rounded-lg bg-brand-50 text-brand-700 flex items-center justify-center">
+          <mat-icon fontSet="material-symbols-outlined" style="font-size: 20px; width: 20px; height: 20px;">person</mat-icon>
+        </span>
+        <h3 class="font-semibold text-gray-900">{{ 'appointmentForm.patient.section' | transloco }}</h3>
+      </div>
+
+      <!-- Переключатель режима -->
+      <div class="grid grid-cols-2 gap-1 p-1 rounded-xl bg-page">
+        <button type="button" class="flex items-center justify-center gap-1.5 h-10 rounded-lg text-sm font-medium transition-colors" [class.bg-white]="mode() === 'search'" [class.shadow-sm]="mode() === 'search'" [class.text-brand-700]="mode() === 'search'" [class.text-gray-500]="mode() !== 'search'" (click)="setMode('search')">
+          <mat-icon fontSet="material-symbols-outlined" style="font-size: 18px; width: 18px; height: 18px;">search</mat-icon>
+          {{ 'appointmentForm.patient.search' | transloco }}
+        </button>
+        <button type="button" class="flex items-center justify-center gap-1.5 h-10 rounded-lg text-sm font-medium transition-colors" [class.bg-white]="mode() === 'new'" [class.shadow-sm]="mode() === 'new'" [class.text-brand-700]="mode() === 'new'" [class.text-gray-500]="mode() !== 'new'" (click)="setMode('new')">
+          <mat-icon fontSet="material-symbols-outlined" style="font-size: 18px; width: 18px; height: 18px;">person_add</mat-icon>
+          {{ 'appointmentForm.patient.new' | transloco }}
+        </button>
+      </div>
+
+      @if (mode() === 'search') {
+        @if (selectedPatient(); as patient) {
+          <!-- Выбранный пациент -->
+          <div class="flex items-center gap-3 rounded-xl border border-brand-200 bg-brand-50 p-3">
+            <span class="w-10 h-10 shrink-0 rounded-full bg-white text-brand-700 flex items-center justify-center">
+              <mat-icon fontSet="material-symbols-outlined">person</mat-icon>
+            </span>
+            <div class="min-w-0 flex-1">
+              <div class="font-semibold text-gray-900">{{ patient.fullName }}</div>
+              <div class="text-xs text-gray-500">{{ patient.phone }} • {{ 'appointmentForm.patient.born' | transloco: { date: selectedBirthDate() } }}</div>
+            </div>
+            <button type="button" class="shrink-0 px-3 py-1.5 rounded-lg bg-white text-sm font-medium text-brand-700 hover:bg-brand-100" (click)="clearPatient()">{{ 'appointmentForm.patient.change' | transloco }}</button>
+          </div>
+        } @else {
+          <!-- Поиск -->
+          <div class="flex flex-col gap-2">
+            <div class="relative">
+              <mat-icon fontSet="material-symbols-outlined" class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" style="font-size: 20px; width: 20px; height: 20px;">search</mat-icon>
+              <input type="text" class="w-full h-11 pl-10 pr-3 rounded-xl bg-page border border-transparent text-sm text-gray-800 outline-none focus:border-brand-300 focus:bg-white" [formControl]="searchControl" [placeholder]="'appointmentForm.patient.searchPlaceholder' | transloco">
+            </div>
+
+            @if (showMinChars()) {
+              <span class="text-xs text-gray-400">{{ 'appointmentForm.patient.minChars' | transloco }}</span>
+            }
+            @if (showNotFound()) {
+              <span class="text-xs text-gray-400">{{ 'appointmentForm.patient.notFound' | transloco }}</span>
+            }
+
+            @if (searchResults().length > 0) {
+              <div class="flex flex-col gap-1">
+                @for (patient of searchResults(); track patient.id) {
+                  <button type="button" class="flex items-center gap-3 rounded-xl p-2 text-left hover:bg-page" (click)="selectPatient(patient)">
+                    <span class="w-9 h-9 shrink-0 rounded-full bg-brand-50 text-brand-700 flex items-center justify-center">
+                      <mat-icon fontSet="material-symbols-outlined" style="font-size: 20px; width: 20px; height: 20px;">person</mat-icon>
+                    </span>
+                    <span class="min-w-0">
+                      <span class="block text-sm font-medium text-gray-900">{{ patient.fullName }}</span>
+                      <span class="block text-xs text-gray-500">{{ patient.phone }}</span>
+                    </span>
+                  </button>
+                }
+              </div>
+            }
+
+            @if (form.controls.patientId.touched && form.controls.patientId.invalid) {
+              <span class="text-xs text-red-600">{{ 'appointmentForm.errors.selectPatient' | transloco }}</span>
+            }
+          </div>
+        }
+      } @else {
+        <!-- Новый пациент -->
+        <div class="flex flex-col gap-3">
+          <label class="flex flex-col gap-1">
+            <span class="text-xs font-medium text-gray-600">{{ 'appointmentForm.patient.fullName' | transloco }} <span class="text-red-500">*</span></span>
+            <input type="text" class="w-full h-11 px-3 rounded-xl bg-page border text-sm text-gray-800 outline-none focus:border-brand-300 focus:bg-white" [class.border-transparent]="!isInvalid(newPatient.fullName)" [class.border-red-300]="isInvalid(newPatient.fullName)" [formControl]="newPatient.fullName" autocomplete="off">
+            @if (isInvalid(newPatient.fullName)) {
+              <span class="text-xs text-red-600">{{ (newPatient.fullName.hasError('required') ? 'appointmentForm.errors.required' : 'appointmentForm.errors.minLength') | transloco }}</span>
+            }
+          </label>
+
+          <label class="flex flex-col gap-1">
+            <span class="text-xs font-medium text-gray-600">{{ 'appointmentForm.patient.phone' | transloco }} <span class="text-red-500">*</span></span>
+            <input type="tel" class="w-full h-11 px-3 rounded-xl bg-page border text-sm text-gray-800 outline-none focus:border-brand-300 focus:bg-white" [class.border-transparent]="!isInvalid(newPatient.phone)" [class.border-red-300]="isInvalid(newPatient.phone)" [formControl]="newPatient.phone" placeholder="+998 90 123-45-67" autocomplete="off">
+            @if (isInvalid(newPatient.phone)) {
+              <span class="text-xs text-red-600">{{ (newPatient.phone.hasError('required') ? 'appointmentForm.errors.required' : 'appointmentForm.errors.phone') | transloco }}</span>
+            }
+          </label>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <label class="flex flex-col gap-1 min-w-0">
+              <span class="text-xs font-medium text-gray-600">{{ 'appointmentForm.patient.birthDate' | transloco }}</span>
+              <input type="date" class="w-full h-11 px-3 rounded-xl bg-page border border-transparent text-sm text-gray-800 outline-none focus:border-brand-300 focus:bg-white" [formControl]="newPatient.birthDate">
+            </label>
+
+            <div class="flex flex-col gap-1">
+              <span class="text-xs font-medium text-gray-600">{{ 'appointmentForm.patient.gender' | transloco }}</span>
+              <div class="grid grid-cols-2 gap-1 p-1 h-11 rounded-xl bg-page">
+                <button type="button" class="rounded-lg text-sm font-medium transition-colors" [class.bg-brand-700]="newPatient.gender.value === 'female'" [class.text-white]="newPatient.gender.value === 'female'" [class.text-gray-500]="newPatient.gender.value !== 'female'" (click)="setGender('female')">{{ 'appointmentForm.patient.female' | transloco }}</button>
+                <button type="button" class="rounded-lg text-sm font-medium transition-colors" [class.bg-brand-700]="newPatient.gender.value === 'male'" [class.text-white]="newPatient.gender.value === 'male'" [class.text-gray-500]="newPatient.gender.value !== 'male'" (click)="setGender('male')">{{ 'appointmentForm.patient.male' | transloco }}</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      }
+    </section>
+
+    <!-- Блок: Услуга или повод визита -->
+    <section class="rounded-2xl border border-gray-100 bg-white p-4 flex flex-col gap-3">
+      <div class="flex items-center gap-2">
+        <span class="w-8 h-8 rounded-lg bg-brand-50 text-brand-700 flex items-center justify-center">
+          <mat-icon fontSet="material-symbols-outlined" style="font-size: 20px; width: 20px; height: 20px;">medical_services</mat-icon>
+        </span>
+        <h3 class="font-semibold text-gray-900">{{ 'appointmentForm.service.section' | transloco }}</h3>
+        @if (selectedServiceId()) {
+          <span class="ml-auto px-2 py-0.5 rounded-full bg-brand-50 text-xs font-medium text-brand-700">{{ 'appointmentForm.service.selected' | transloco }}</span>
+        }
+      </div>
+
+      @if (services(); as list) {
+        <div class="flex flex-col gap-2">
+          @for (service of list; track service.id) {
+            <button type="button" class="flex items-center gap-3 rounded-xl border p-3 text-left transition-colors" [class.border-brand-600]="selectedServiceId() === service.id" [class.bg-brand-50]="selectedServiceId() === service.id" [class.border-red-200]="service.urgent && selectedServiceId() !== service.id" [class.bg-red-50]="service.urgent && selectedServiceId() !== service.id" [class.border-gray-100]="!service.urgent && selectedServiceId() !== service.id" (click)="selectService(service.id)">
+              <div class="min-w-0 flex-1">
+                <div class="flex flex-wrap items-center gap-2">
+                  <span class="font-medium" [class.text-red-700]="service.urgent" [class.text-gray-900]="!service.urgent">{{ service.name }}</span>
+                  @if (service.urgent) {
+                    <span class="px-1.5 py-0.5 rounded bg-red-100 text-[11px] font-semibold text-red-700">{{ 'appointmentForm.service.urgent' | transloco }}</span>
+                  }
+                </div>
+                <div class="mt-0.5 flex items-center gap-1 text-xs text-gray-500">
+                  <mat-icon fontSet="material-symbols-outlined" style="font-size: 14px; width: 14px; height: 14px;">schedule</mat-icon>
+                  {{ 'appointmentForm.service.minutes' | transloco: { count: service.durationMinutes } }}
+                </div>
+              </div>
+
+              <!-- Отметка выбора -->
+              @if (selectedServiceId() === service.id) {
+                <mat-icon fontSet="material-symbols-outlined" class="shrink-0 text-brand-700">check_circle</mat-icon>
+              } @else {
+                <span class="w-5 h-5 shrink-0 mx-0.5 rounded-full border-2 border-gray-300"></span>
+              }
+            </button>
+          }
+        </div>
+      } @else {
+        <div class="flex flex-col gap-2 animate-pulse">
+          <div class="h-16 rounded-xl bg-page"></div>
+          <div class="h-16 rounded-xl bg-page"></div>
+          <div class="h-16 rounded-xl bg-page"></div>
+        </div>
+      }
+
+      @if (form.controls.serviceId.touched && form.controls.serviceId.invalid) {
+        <span class="text-xs text-red-600">{{ 'appointmentForm.errors.selectService' | transloco }}</span>
+      }
+    </section>
+
+    <!-- Следующие блоки (врач, дата, слоты, комментарий) добавим на следующих шагах -->
+  </div>
+</mat-dialog-content>
+
+<!-- Кнопка внизу -->
+<div class="px-6 py-4 border-t border-gray-100">
+  <button type="button" class="w-full flex items-center justify-center gap-1 px-4 py-3 rounded-xl text-sm font-semibold transition-colors" [class.bg-brand-700]="canSubmit()" [class.text-white]="canSubmit()" [class.hover:bg-brand-800]="canSubmit()" [class.bg-gray-100]="!canSubmit()" [class.text-gray-400]="!canSubmit()" (click)="submit()">
+    <mat-icon fontSet="material-symbols-outlined">event_available</mat-icon>
+    {{ 'appointmentForm.submit' | transloco }}
+  </button>
+</div>

@@ -3,7 +3,8 @@
     "title": "e-Dental"
   },
   "common": {
-    "logout": "Выйти"
+    "logout": "Выйти",
+    "close": "Закрыть"
   },
   "header": {
     "status": "Штатный режим",
@@ -26,6 +27,140 @@
     "patients": "Пациенты",
     "doctors": "Врачи",
     "settings": "Настройки"
+  },
+  "dashboard": {
+    "greeting": {
+      "morning": "Доброе утро, {{name}}",
+      "day": "Добрый день, {{name}}",
+      "evening": "Добрый вечер, {{name}}",
+      "night": "Доброй ночи {{name}}"
+    },
+    "clinicOpen": "Клиника открыта",
+    "clinicClosed": "Клиника закрыта",
+    "waitingList": "Лист ожидания",
+    "quickAppointment": "Быстрая запись",
+    "doctorPrefix": "Др.",
+    "kpi": {
+      "patientsToday": "Пациенты сегодня",
+      "patientsHint": "по сравнению с прошлой неделей",
+      "freeSlots": "Свободные слоты",
+      "slotsUnit": "окон",
+      "allDoctors": "Все врачи",
+      "noSlots": "Свободных окон нет",
+      "noDoctors": "Врач не найден",
+      "doctorsOnShift": "Врачи на смене",
+      "doctorsOff": "Не на смене: {{count}}",
+      "revenue": "Выручка за день",
+      "revenuePlan": "{{value}}% от плана",
+      "currency": "сум"
+    },
+    "patientsDialog": {
+      "title": "Пациенты сегодня",
+      "empty": "На сегодня записей нет"
+    },
+    "slotsDialog": {
+      "title": "Свободные слоты",
+      "empty": "На сегодня свободных окон больше нет"
+    },
+    "doctorsDialog": {
+      "title": "Врачи",
+      "search": "Поиск по имени или специальности",
+      "onShift": "На смене",
+      "offShift": "Не на смене",
+      "patients": "Пациентов: {{count}}"
+    },
+    "appointments": {
+      "title": "Ближайшие приёмы",
+      "empty": "Ближайших приёмов нет",
+      "cabinet": "Каб. {{number}}",
+      "doctor": "Врач:",
+      "showPhone": "Показать телефон",
+      "inMinutes": "через {{count}} мин",
+      "inHours": "через {{hours}} ч {{minutes}} мин",
+      "status": {
+        "confirmed": "Подтверждено",
+        "pending": "Ожидает подтверждения",
+        "arrived": "Пациент пришёл"
+      }
+    },
+    "appointmentDialog": {
+      "title": "Приём",
+      "phoneTitle": "Телефон пациента",
+      "patient": "Пациент",
+      "diagnosis": "Диагноз",
+      "doctor": "Врач",
+      "phone": "Телефон",
+      "call": "Позвонить",
+      "copy": "Скопировать",
+      "copied": "Скопировано"
+    }
+  },
+  "appointmentForm": {
+    "title": "Новая запись на приём",
+    "subtitle": "Выберите пациента, услугу и время",
+    "submit": "Забронировать приём",
+    "patient": {
+      "section": "Пациент",
+      "search": "Поиск в базе",
+      "new": "Новый пациент",
+      "searchPlaceholder": "ФИО или номер телефона",
+      "minChars": "Введите минимум 2 символа",
+      "notFound": "Пациент не найден. Можно добавить его как нового",
+      "change": "Изменить",
+      "born": "д. р. {{date}}",
+      "fullName": "ФИО пациента",
+      "phone": "Номер телефона",
+      "birthDate": "Дата рождения",
+      "gender": "Пол",
+      "female": "Жен",
+      "male": "Муж"
+    },
+    "service": {
+      "section": "Услуга или повод визита",
+      "selected": "Выбрано",
+      "urgent": "Срочно",
+      "minutes": "{{count}} мин"
+    },
+    "errors": {
+      "required": "Обязательное поле",
+      "minLength": "Минимум 3 символа",
+      "phone": "Формат: +998 XX XXX-XX-XX",
+      "selectPatient": "Выберите пациента из базы",
+      "selectService": "Выберите услугу или повод визита"
+    }
+  },
+  "notifications": {
+    "title": "Уведомления",
+    "markAll": "Прочитать все",
+    "empty": "Уведомлений нет",
+    "emptyUnread": "Все уведомления прочитаны",
+    "tabs": {
+      "all": "Все",
+      "unread": "Непрочитанные"
+    },
+    "ago": {
+      "justNow": "только что",
+      "minutes": "{{count}} мин назад",
+      "hours": "{{count}} ч назад"
+    },
+    "types": {
+      "onlineBooking": {
+        "title": "Новая онлайн-запись",
+        "text": "{{patient}} — {{time}}, Др. {{doctor}}. Ожидает подтверждения"
+      },
+      "cancellation": {
+        "title": "Отмена приёма",
+        "text": "{{patient}} отменил(а) приём в {{time}} к Др. {{doctor}}"
+      },
+      "waitingList": {
+        "title": "Окно для листа ожидания",
+        "text": "Освободилось {{time}} у Др. {{doctor}} — подходит {{patient}}"
+      },
+      "noShow": {
+        "title": "Пациент не пришёл",
+        "text": "{{patient}} не пришёл(ла) на приём в {{time}} к Др. {{doctor}}"
+      }
+    }
   },
   "login": {
     "subtitle": "Войдите, чтобы продолжить",

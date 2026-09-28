@@ -33,7 +33,7 @@
         <span class="text-lg font-bold text-brand-700">{{ 'app.title' | transloco }}</span>
       </div>
 
-      <!-- Статус и поиск — только ПК -->
+      <!-- Поиск — только ПК -->
       <div class="hidden md:flex items-center gap-3 flex-1 min-w-0">
         <div class="relative flex-1 max-w-md">
           <mat-icon fontSet="material-symbols-outlined" class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">search</mat-icon>
@@ -43,7 +43,7 @@
 
       <div class="flex items-center gap-2">
         <!-- Уведомления -->
-        <button type="button" class="relative w-10 h-10 flex items-center justify-center rounded-lg text-gray-600 hover:bg-page" [title]="'header.notifications' | transloco">
+        <button type="button" class="relative w-10 h-10 flex items-center justify-center rounded-lg text-gray-600 hover:bg-page" [title]="'header.notifications' | transloco" (click)="openNotifications()">
           <mat-icon fontSet="material-symbols-outlined">notifications</mat-icon>
           @if (notificationsCount() > 0) {
             <span class="absolute top-1 right-1 min-w-4 h-4 px-1 rounded-full bg-red-500 text-white text-[10px] leading-4 text-center">{{ notificationsCount() }}</span>
@@ -55,12 +55,6 @@
           <mat-icon fontSet="material-symbols-outlined">hourglass_top</mat-icon>
           {{ 'header.waitingList' | transloco }}
           <span class="px-1.5 rounded bg-brand-100 text-xs">{{ waitingListCount() }}</span>
-        </button>
-
-        <!-- Новая запись — только ПК -->
-        <button type="button" class="hidden md:flex items-center gap-1 h-10 px-3 rounded-lg bg-brand-700 text-white text-sm font-medium hover:bg-brand-800">
-          <mat-icon fontSet="material-symbols-outlined">add</mat-icon>
-          {{ 'header.newAppointment' | transloco }}
         </button>
 
         <!-- Переключатель языка флагами -->

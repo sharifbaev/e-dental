@@ -3,7 +3,8 @@
     "title": "e-Dental"
   },
   "common": {
-    "logout": "Chiqish"
+    "logout": "Chiqish",
+    "close": "Yopish"
   },
   "header": {
     "status": "Odatiy rejim",
@@ -26,6 +27,140 @@
     "patients": "Bemorlar",
     "doctors": "Shifokorlar",
     "settings": "Sozlamalar"
+  },
+  "dashboard": {
+    "greeting": {
+      "morning": "Xayrli tong, {{name}}",
+      "day": "Xayrli kun, {{name}}",
+      "evening": "Xayrli kech, {{name}}",
+      "night": "Xayrli tun {{name}}"
+    },
+    "clinicOpen": "Klinika ochiq",
+    "clinicClosed": "Klinika yopiq",
+    "waitingList": "Kutish ro'yxati",
+    "quickAppointment": "Tezkor yozuv",
+    "doctorPrefix": "Dr.",
+    "kpi": {
+      "patientsToday": "Bugungi bemorlar",
+      "patientsHint": "o'tgan haftaga nisbatan",
+      "freeSlots": "Bo'sh vaqtlar",
+      "slotsUnit": "ta",
+      "allDoctors": "Barcha shifokorlar",
+      "noSlots": "Bo'sh vaqt yo'q",
+      "noDoctors": "Shifokor topilmadi",
+      "doctorsOnShift": "Navbatdagi shifokorlar",
+      "doctorsOff": "Navbatda emas: {{count}}",
+      "revenue": "Kunlik tushum",
+      "revenuePlan": "Rejaning {{value}}%",
+      "currency": "so'm"
+    },
+    "patientsDialog": {
+      "title": "Bugungi bemorlar",
+      "empty": "Bugun uchun yozuvlar yo'q"
+    },
+    "slotsDialog": {
+      "title": "Bo'sh vaqtlar",
+      "empty": "Bugun uchun bo'sh vaqtlar qolmadi"
+    },
+    "doctorsDialog": {
+      "title": "Shifokorlar",
+      "search": "Ism yoki mutaxassislik bo'yicha qidirish",
+      "onShift": "Navbatda",
+      "offShift": "Navbatda emas",
+      "patients": "Bemorlar: {{count}}"
+    },
+    "appointments": {
+      "title": "Yaqin qabullar",
+      "empty": "Yaqin qabullar yo'q",
+      "cabinet": "{{number}}-xona",
+      "doctor": "Shifokor:",
+      "showPhone": "Telefonni ko'rsatish",
+      "inMinutes": "{{count}} daqiqadan so'ng",
+      "inHours": "{{hours}} soat {{minutes}} daqiqadan so'ng",
+      "status": {
+        "confirmed": "Tasdiqlangan",
+        "pending": "Tasdiq kutilmoqda",
+        "arrived": "Bemor keldi"
+      }
+    },
+    "appointmentDialog": {
+      "title": "Приём",
+      "phoneTitle": "Телефон пациента",
+      "patient": "Пациент",
+      "diagnosis": "Диагноз",
+      "doctor": "Врач",
+      "phone": "Телефон",
+      "call": "Позвонить",
+      "copy": "Скопировать",
+      "copied": "Скопировано"
+    }
+  },
+  "appointmentForm": {
+    "title": "Qabulga yangi yozuv",
+    "subtitle": "Bemor, xizmat va vaqtni tanlang",
+    "submit": "Qabulni band qilish",
+    "patient": {
+      "section": "Bemor",
+      "search": "Bazadan qidirish",
+      "new": "Yangi bemor",
+      "searchPlaceholder": "F.I.Sh. yoki telefon raqami",
+      "minChars": "Kamida 2 ta belgi kiriting",
+      "notFound": "Bemor topilmadi. Uni yangi bemor sifatida qo'shish mumkin",
+      "change": "O'zgartirish",
+      "born": "t. s. {{date}}",
+      "fullName": "Bemorning F.I.Sh.",
+      "phone": "Telefon raqami",
+      "birthDate": "Tug'ilgan sana",
+      "gender": "Jinsi",
+      "female": "Ayol",
+      "male": "Erkak"
+    },
+    "service": {
+      "section": "Xizmat yoki tashrif sababi",
+      "selected": "Tanlandi",
+      "urgent": "Shoshilinch",
+      "minutes": "{{count}} daqiqa"
+    },
+    "errors": {
+      "required": "Majburiy maydon",
+      "minLength": "Kamida 3 ta belgi",
+      "phone": "Format: +998 XX XXX-XX-XX",
+      "selectPatient": "Bazadan bemorni tanlang",
+      "selectService": "Xizmat yoki tashrif sababini tanlang"
+    }
+  },
+  "notifications": {
+    "title": "Bildirishnomalar",
+    "markAll": "Barchasini o'qish",
+    "empty": "Bildirishnomalar yo'q",
+    "emptyUnread": "Barcha bildirishnomalar o'qilgan",
+    "tabs": {
+      "all": "Barchasi",
+      "unread": "O'qilmagan"
+    },
+    "ago": {
+      "justNow": "hozirgina",
+      "minutes": "{{count}} daqiqa oldin",
+      "hours": "{{count}} soat oldin"
+    },
+    "types": {
+      "onlineBooking": {
+        "title": "Yangi onlayn yozuv",
+        "text": "{{patient}} — {{time}}, Dr. {{doctor}}. Tasdiq kutilmoqda"
+      },
+      "cancellation": {
+        "title": "Qabul bekor qilindi",
+        "text": "{{patient}} {{time}} dagi Dr. {{doctor}} qabulini bekor qildi"
+      },
+      "waitingList": {
+        "title": "Kutish ro'yxati uchun vaqt",
+        "text": "Dr. {{doctor}} da {{time}} bo'shadi — {{patient}} uchun mos"
+      },
+      "noShow": {
+        "title": "Bemor kelmadi",
+        "text": "{{patient}} {{time}} dagi Dr. {{doctor}} qabuliga kelmadi"
+      }
+    }
   },
   "login": {
     "subtitle": "Davom etish uchun tizimga kiring",

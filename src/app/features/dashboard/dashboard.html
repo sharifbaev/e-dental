@@ -1,1 +1,178 @@
-<p>dashboard works!</p>
+<!-- Поле выбора врача с поиском — описано один раз, выводится в двух местах -->
+<ng-template #doctorSearch>
+  <div class="relative">
+    <mat-icon fontSet="material-symbols-outlined" class="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" style="font-size: 18px; width: 18px; height: 18px;">search</mat-icon>
+    <input type="text" class="w-full h-10 pl-8 pr-2 rounded-lg bg-page border border-transparent text-sm text-gray-700 outline-none focus:border-brand-300 focus:bg-white" [formControl]="doctorControl" [matAutocomplete]="doctorAuto" [placeholder]="'dashboard.kpi.allDoctors' | transloco" (input)="onDoctorInput()">
+  </div>
+</ng-template>
+
+<mat-autocomplete #doctorAuto="matAutocomplete" (optionSelected)="onDoctorSelected($event)">
+  <mat-option value="">{{ 'dashboard.kpi.allDoctors' | transloco }}</mat-option>
+  @for (doctor of filteredDoctors(); track doctor.doctorId) {
+    <mat-option [value]="doctor.doctorName">{{ doctor.doctorName }} <span class="text-gray-400">({{ doctor.slots.length }})</span></mat-option>
+  }
+  @if (filteredDoctors().length === 0) {
+    <mat-option disabled>{{ 'dashboard.kpi.noDoctors' | transloco }}</mat-option>
+  }
+</mat-autocomplete>
+
+@if (summary(); as s) {
+  <div class="flex flex-col gap-4">
+    <!-- Приветствие -->
+    <section class="bg-white rounded-2xl p-5 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div class="min-w-0">
+        <h1 class="text-xl md:text-2xl font-bold text-gray-900">{{ greetingKey() | transloco: { name: firstName() } }}</h1>
+        <p class="mt-1 text-sm text-gray-500">{{ today() }}</p>
+
+        <!-- Выбор врача — ПК: после приветствия -->
+        <div class="hidden md:block mt-3 w-72">
+          <ng-container [ngTemplateOutlet]="doctorSearch" />
+        </div>
+      </div>
+
+      <div class="flex flex-col md:flex-row gap-2">
+        <button type="button" class="hidden md:flex items-center gap-2 h-10 px-4 rounded-lg border border-brand-200 text-brand-700 text-sm font-medium hover:bg-brand-50">
+          <mat-icon fontSet="material-symbols-outlined">hourglass_top</mat-icon>
+          {{ 'dashboard.waitingList' | transloco }} ({{ s.waitingList }})
+        </button>
+        <button type="button" class="w-full md:w-auto flex items-center justify-center gap-1 h-10 px-4 rounded-lg bg-brand-700 text-white text-sm font-medium hover:bg-brand-800" (click)="openAppointmentForm()">
+          <mat-icon fontSet="material-symbols-outlined">add</mat-icon>
+          {{ 'dashboard.quickAppointment' | transloco }}
+        </button>
+
+        <!-- Выбор врача — мобилка: после «Быстрая запись», на всю ширину -->
+        <div class="md:hidden w-full">
+          <ng-container [ngTemplateOutlet]="doctorSearch" />
+        </div>
+      </div>
+    </section>
+
+    <!-- Карточки показателей -->
+    <section class="grid grid-cols-2 lg:grid-cols-3 gap-4">
+      <!-- Пациенты сегодня — открывает модалку -->
+      <button type="button" class="text-left bg-white rounded-2xl p-4 flex flex-col gap-2 cursor-pointer transition-shadow hover:shadow-md focus-visible:outline-2 focus-visible:outline-brand-300" (click)="openPatientsDialog()">
+        <div class="w-full flex items-start justify-between gap-2">
+          <span class="text-sm text-gray-500">{{ 'dashboard.kpi.patientsToday' | transloco }}</span>
+          <span class="w-9 h-9 shrink-0 rounded-lg bg-brand-50 text-brand-700 flex items-center justify-center">
+            <mat-icon fontSet="material-symbols-outlined">groups</mat-icon>
+          </span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="text-3xl font-bold text-gray-900">{{ s.patientsToday }}</span>
+          <span class="px-1.5 py-0.5 rounded text-xs font-medium bg-emerald-50 text-emerald-700">+{{ s.patientsTrend }}%</span>
+        </div>
+        <span class="text-xs text-gray-400">{{ 'dashboard.kpi.patientsHint' | transloco }}</span>
+      </button>
+
+      <!-- Свободные слоты — открывает модалку -->
+      <button type="button" class="text-left bg-white rounded-2xl p-4 flex flex-col gap-2 cursor-pointer transition-shadow hover:shadow-md focus-visible:outline-2 focus-visible:outline-brand-300" (click)="openSlotsDialog()">
+        <div class="w-full flex items-start justify-between gap-2">
+          <div class="min-w-0">
+            <div class="text-sm text-gray-500">{{ 'dashboard.kpi.freeSlots' | transloco }}</div>
+            <div class="text-xs text-brand-700 truncate">{{ selectedDoctorName() || ('dashboard.kpi.allDoctors' | transloco) }}</div>
+          </div>
+          <span class="w-9 h-9 shrink-0 rounded-lg bg-brand-50 text-brand-700 flex items-center justify-center">
+            <mat-icon fontSet="material-symbols-outlined">event_available</mat-icon>
+          </span>
+        </div>
+
+        <div class="flex items-baseline gap-1">
+          <span class="text-3xl font-bold text-gray-900">{{ visibleSlots().length }}</span>
+          <span class="text-sm text-gray-500">{{ 'dashboard.kpi.slotsUnit' | transloco }}</span>
+        </div>
+
+        @if (visibleSlots().length > 0) {
+          <div class="flex flex-wrap gap-1">
+            @for (slot of shownSlots(); track slot) {
+              <span class="px-1.5 py-0.5 rounded bg-brand-50 text-xs text-brand-700">{{ slot }}</span>
+            }
+            @if (hiddenSlotsCount() > 0) {
+              <span class="px-1.5 py-0.5 rounded bg-brand-700 text-xs font-medium text-white">+{{ hiddenSlotsCount() }}</span>
+            }
+          </div>
+        } @else {
+          <span class="text-xs text-gray-400">{{ 'dashboard.kpi.noSlots' | transloco }}</span>
+        }
+      </button>
+
+      <!-- Врачи на смене — только ПК -->
+      <!-- Врачи на смене — только ПК, открывает модалку -->
+      <button type="button" class="hidden md:flex text-left bg-white rounded-2xl p-4 flex-col gap-2 cursor-pointer transition-shadow hover:shadow-md focus-visible:outline-2 focus-visible:outline-brand-300" (click)="openDoctorsDialog()">
+        <div class="w-full flex items-start justify-between gap-2">
+          <span class="text-sm text-gray-500">{{ 'dashboard.kpi.doctorsOnShift' | transloco }}</span>
+          <span class="w-9 h-9 shrink-0 rounded-lg bg-brand-50 text-brand-700 flex items-center justify-center">
+            <mat-icon fontSet="material-symbols-outlined">stethoscope</mat-icon>
+          </span>
+        </div>
+        <div class="flex items-baseline gap-1">
+          <span class="text-3xl font-bold text-gray-900">{{ s.doctorsOnShift }}</span>
+          <span class="text-lg text-gray-400">/ {{ s.doctorsTotal }}</span>
+        </div>
+        <span class="text-xs text-gray-400">{{ 'dashboard.kpi.doctorsOff' | transloco: { count: s.doctorsTotal - s.doctorsOnShift } }}</span>
+      </button>
+    </section>
+
+    <!-- Ближайшие приёмы -->
+    <section class="bg-white rounded-2xl p-5 flex flex-col gap-4">
+      <div class="min-w-0">
+        <div class="flex items-center gap-2">
+          <h2 class="text-lg font-bold text-gray-900">{{ 'dashboard.appointments.title' | transloco }}</h2>
+          @if (!appointmentsLoading()) {
+            <span class="px-2 py-0.5 rounded-full bg-brand-50 text-xs font-semibold text-brand-700">{{ upcomingAppointments().length }}</span>
+          }
+        </div>
+        <div class="text-xs text-brand-700 truncate">{{ selectedDoctorName() || ('dashboard.kpi.allDoctors' | transloco) }}</div>
+      </div>
+
+      @if (appointmentsLoading()) {
+        <div class="grid lg:grid-cols-2 gap-3 animate-pulse">
+          <div class="h-24 rounded-2xl bg-page"></div>
+          <div class="h-24 rounded-2xl bg-page"></div>
+        </div>
+      } @else if (upcomingAppointments().length === 0) {
+        <div class="py-8 text-center text-sm text-gray-400">{{ 'dashboard.appointments.empty' | transloco }}</div>
+      } @else {
+        <div class="grid lg:grid-cols-2 gap-3">
+          @for (appointment of upcomingAppointments(); track appointment.id) {
+            <!-- Карточка приёма: клик — подробности -->
+            <div role="button" tabindex="0" class="rounded-2xl bg-page p-4 flex flex-col gap-3 cursor-pointer transition-shadow hover:shadow-md focus-visible:outline-2 focus-visible:outline-brand-300" (click)="openAppointmentDialog(appointment)" (keydown.enter)="openAppointmentDialog(appointment)">
+              <!-- Верхний ряд: время и кабинет, ФИО и «через N мин», телефон -->
+              <div class="flex items-center gap-4">
+                <div class="w-16 shrink-0 rounded-xl bg-white flex flex-col items-center justify-center py-2">
+                  <span class="text-lg font-semibold text-gray-800">{{ appointment.time }}</span>
+                  <span class="text-xs text-gray-400">{{ 'dashboard.appointments.cabinet' | transloco: { number: appointment.cabinet } }}</span>
+                </div>
+
+                <div class="min-w-0 flex-1">
+                  <div class="font-semibold text-gray-900">{{ appointment.patientName }}</div>
+                  <div class="text-xs text-gray-400">{{ appointment.leftKey | transloco: appointment.leftParams }}</div>
+                </div>
+
+                <!-- Телефон: клик — только номер -->
+                <button type="button" class="w-10 h-10 shrink-0 rounded-xl bg-white shadow-sm flex items-center justify-center text-gray-600 hover:text-brand-700" [title]="'dashboard.appointments.showPhone' | transloco" (click)="openPhoneDialog(appointment, $event)" (keydown.enter)="$event.stopPropagation()">
+                  <mat-icon fontSet="material-symbols-outlined">call</mat-icon>
+                </button>
+              </div>
+
+              <!-- Нижняя строка: врач -->
+              <div class="flex items-center gap-1 text-sm text-gray-400">
+                <mat-icon fontSet="material-symbols-outlined" style="font-size: 18px; width: 18px; height: 18px;">person</mat-icon>
+                {{ 'dashboard.appointments.doctor' | transloco }} {{ 'dashboard.doctorPrefix' | transloco }} {{ appointment.doctorName }}
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </section>
+  </div>
+} @else {
+  <!-- Пока данные грузятся -->
+  <div class="flex flex-col gap-4 animate-pulse">
+    <div class="h-24 rounded-2xl bg-white"></div>
+    <div class="grid grid-cols-2 lg:grid-cols-3 gap-4">
+      <div class="h-32 rounded-2xl bg-white"></div>
+      <div class="h-32 rounded-2xl bg-white"></div>
+      <div class="hidden md:block h-32 rounded-2xl bg-white"></div>
+    </div>
+  </div>
+}
