@@ -1,0 +1,18 @@
+<div class="flex items-center justify-between gap-2 px-5 pt-4">
+  <h2 class="text-lg font-bold text-gray-900">{{ 'schedule.calendarDialog.title' | transloco }}</h2>
+  <button matIconButton mat-dialog-close type="button" [title]="'common.close' | transloco">
+    <mat-icon fontSet="material-symbols-outlined">close</mat-icon>
+  </button>
+</div>
+
+<p class="px-5 text-sm text-gray-500">
+  @if (startLabel()) {
+    {{ 'schedule.calendarDialog.hintEnd' | transloco: { date: startLabel() } }}
+  } @else {
+    {{ 'schedule.calendarDialog.hint' | transloco }}
+  }
+</p>
+
+<div class="px-2 pb-3">
+  <mat-calendar [selected]="range()" [minDate]="data.minDate" (selectedChange)="onSelect($event)" />
+</div>

@@ -1,0 +1,86 @@
+<!-- Шапка -->
+<div class="flex items-center justify-between gap-2 px-6 pt-5 pb-2">
+  <div class="flex items-center gap-2 min-w-0">
+    <h2 class="text-lg font-bold text-gray-900">{{ 'schedule.details.title' | transloco }}</h2>
+    <span class="px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap" [class]="data.statusClass">{{ data.statusKey | transloco }}</span>
+  </div>
+  <button matIconButton mat-dialog-close type="button" [title]="'common.close' | transloco">
+    <mat-icon fontSet="material-symbols-outlined">close</mat-icon>
+  </button>
+</div>
+
+<mat-dialog-content>
+  <div class="flex flex-col gap-4 pb-2">
+    <!-- Дата, время, кабинет -->
+    <div class="flex flex-wrap gap-2">
+      <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-page text-sm font-medium text-gray-700">
+        <mat-icon fontSet="material-symbols-outlined" style="font-size: 18px; width: 18px; height: 18px;">calendar_today</mat-icon>
+        {{ data.dateLabel }}
+      </span>
+      <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-brand-50 text-sm font-semibold text-brand-700">
+        <mat-icon fontSet="material-symbols-outlined" style="font-size: 18px; width: 18px; height: 18px;">schedule</mat-icon>
+        {{ appointment.start }} – {{ appointment.end }}
+      </span>
+      <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-page text-sm font-medium text-gray-700">
+        <mat-icon fontSet="material-symbols-outlined" style="font-size: 18px; width: 18px; height: 18px;">meeting_room</mat-icon>
+        {{ 'schedule.cabinet' | transloco: { number: appointment.cabinet } }}
+      </span>
+    </div>
+
+    <!-- Пациент -->
+    <div class="flex items-start gap-3">
+      <mat-icon fontSet="material-symbols-outlined" class="text-gray-400 shrink-0">person</mat-icon>
+      <div class="min-w-0">
+        <div class="text-xs text-gray-400">{{ 'schedule.details.patient' | transloco }}</div>
+        <div class="font-semibold text-gray-900" [class.line-through]="isCancelled">{{ appointment.patientName }}</div>
+      </div>
+    </div>
+
+    <!-- Телефон -->
+    <div class="flex items-start gap-3">
+      <mat-icon fontSet="material-symbols-outlined" class="text-gray-400 shrink-0">call</mat-icon>
+      <div class="min-w-0 flex-1">
+        <div class="text-xs text-gray-400">{{ 'schedule.details.phone' | transloco }}</div>
+        <div class="flex items-center gap-2">
+          <a [href]="data.phoneHref" class="font-medium text-brand-700 hover:underline">{{ appointment.phone }}</a>
+          <button type="button" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs font-medium text-gray-500 hover:bg-page hover:text-brand-700" (click)="copyPhone()">
+            <mat-icon fontSet="material-symbols-outlined" style="font-size: 16px; width: 16px; height: 16px;">{{ copied() ? 'check' : 'content_copy' }}</mat-icon>
+            {{ (copied() ? 'schedule.details.copied' : 'schedule.details.copy') | transloco }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Услуга -->
+    <div class="flex items-start gap-3">
+      <mat-icon fontSet="material-symbols-outlined" class="text-gray-400 shrink-0">medical_services</mat-icon>
+      <div class="min-w-0">
+        <div class="text-xs text-gray-400">{{ 'schedule.details.service' | transloco }}</div>
+        <div class="text-gray-800">{{ appointment.service }}</div>
+      </div>
+    </div>
+
+    <!-- Врач -->
+    <div class="flex items-start gap-3">
+      <mat-icon fontSet="material-symbols-outlined" class="text-gray-400 shrink-0">stethoscope</mat-icon>
+      <div class="min-w-0">
+        <div class="text-xs text-gray-400">{{ 'schedule.details.doctor' | transloco }}</div>
+        <div class="text-gray-800">{{ 'dashboard.doctorPrefix' | transloco }} {{ appointment.doctorName }}</div>
+      </div>
+    </div>
+  </div>
+</mat-dialog-content>
+
+<!-- Действия — только для не отменённого приёма -->
+@if (!isCancelled) {
+  <div class="px-6 pb-5 pt-2 flex flex-col sm:flex-row gap-2">
+    <button type="button" class="flex-1 flex items-center justify-center gap-1 px-4 py-3 rounded-lg border border-brand-200 text-sm font-medium text-brand-700 hover:bg-brand-50" (click)="close('edit')">
+      <mat-icon fontSet="material-symbols-outlined" style="font-size: 20px; width: 20px; height: 20px;">edit</mat-icon>
+      {{ 'schedule.details.edit' | transloco }}
+    </button>
+    <button type="button" class="flex-1 flex items-center justify-center gap-1 px-4 py-3 rounded-lg border border-red-200 text-sm font-medium text-red-600 hover:bg-red-50" (click)="close('cancel')">
+      <mat-icon fontSet="material-symbols-outlined" style="font-size: 20px; width: 20px; height: 20px;">event_busy</mat-icon>
+      {{ 'schedule.details.cancel' | transloco }}
+    </button>
+  </div>
+}

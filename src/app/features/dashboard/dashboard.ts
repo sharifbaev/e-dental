@@ -14,6 +14,10 @@ import { ShiftDoctorsDialog } from './components/shift-doctors-dialog/shift-doct
 import { Appointment } from './models/dashboard.model';
 import { DashboardService } from './services/dashboard.service';
 import { APPOINTMENT_FORM_DIALOG_CONFIG, AppointmentFormDialog } from '../schedule/components/appointment-form-dialog/appointment-form-dialog';
+import { filter, switchMap } from 'rxjs';
+import { FeedbackService } from '../../shared/services/feedback.service';
+import { AppointmentFormData, AppointmentFormResult } from '../schedule/components/appointment-form-dialog/appointment-form-dialog';
+import { ScheduleService, toDateKey } from '../schedule/services/schedule.service';
 
 const LOCALES: Record<string, string> = { ru: 'ru-RU', uz: 'uz-Latn-UZ' };
 
@@ -54,6 +58,8 @@ export class Dashboard {
   private readonly dashboardService = inject(DashboardService);
   private readonly dialog = inject(MatDialog);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly scheduleService = inject(ScheduleService);
+  private readonly feedback = inject(FeedbackService);
 
   protected readonly summary = toSignal(this.dashboardService.getSummary());
   private readonly appointments = toSignal(this.dashboardService.getUpcomingAppointments());
@@ -237,7 +243,22 @@ export class Dashboard {
     });
   }
 
+  // Быстрая запись: на сегодня, в ближайшие полчаса
   protected openAppointmentForm(): void {
-    this.dialog.open(AppointmentFormDialog, APPOINTMENT_FORM_DIALOG_CONFIG);
+    this.dialog
+      .open<AppointmentFormDialog, AppointmentFormData, AppointmentFormResult>(AppointmentFormDialog, APPOINTMENT_FORM_DIALOG_CONFIG)
+      .afterClosed()
+      .pipe(
+        filter((result): result is AppointmentFormResult => !!result),
+        switchMap(result => this.scheduleService.add(result, toDateKey(new Date())))
+      )
+      .subscribe({
+        next: created => this.feedback.success('feedback.created', 'feedback.createdMessage', {
+          patient: created.patientName,
+          date: '',
+          time: created.start
+        }),
+        error: () => this.feedback.error()
+      });
   }
 }

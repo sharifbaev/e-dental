@@ -127,7 +127,10 @@
       "phone": "Формат: +998 XX XXX-XX-XX",
       "selectPatient": "Выберите пациента из базы",
       "selectService": "Выберите услугу или повод визита"
-    }
+    },
+    "editTitle": "Изменить запись",
+    "editSubtitle": "Измените пациента или услугу",
+    "save": "Сохранить изменения"
   },
   "notifications": {
     "title": "Уведомления",
@@ -161,6 +164,63 @@
         "text": "{{patient}} не пришёл(ла) на приём в {{time}} к Др. {{doctor}}"
       }
     }
+  },
+  "schedule": {
+    "title": "Расписание приёмов",
+    "count": "Приёмов: {{count}}",
+    "add": "Добавить запись",
+    "empty": "На этот день приёмов нет",
+    "cabinet": "Каб. {{number}}",
+    "periods": {
+      "today": "Сегодня",
+      "week": "Неделя",
+      "calendar": "Календарь"
+    },
+    "statusAll": "Все",
+    "dayCount": "{{count}} зап.",
+    "dayEmpty": "нет записей",
+    "status": {
+      "primary": "Первичный",
+      "inTreatment": "В лечении",
+      "completed": "Законченный",
+      "cancelled": "Отменённый"
+    },
+    "actions": {
+      "edit": "Изменить",
+      "cancel": "Отменить"
+    },
+    "cancelDialog": {
+      "title": "Отмена приёма",
+      "message": "Вы действительно хотите отменить приём {{patient}} в {{time}}?",
+      "confirm": "Да, отменить",
+      "back": "Нет"
+    },
+    "calendarDialog": {
+      "title": "Выберите период",
+      "hint": "Выберите начальную и конечную дату",
+      "hintEnd": "Начало: {{date}}. Теперь выберите конечную дату"
+    },
+    "clearPeriod": "Сбросить период",
+    "details": {
+      "title": "Приём",
+      "patient": "Пациент",
+      "phone": "Телефон",
+      "service": "Услуга",
+      "doctor": "Врач",
+      "copy": "Скопировать",
+      "copied": "Скопировано",
+      "edit": "Изменить",
+      "cancel": "Отменить приём"
+    }
+  },
+  "feedback": {
+    "ok": "Понятно",
+    "created": "Запись создана",
+    "createdMessage": "{{patient}} — {{date}} в {{time}}",
+    "updated": "Изменения сохранены",
+    "cancelled": "Приём отменён",
+    "errorTitle": "Что-то пошло не так",
+    "errorMessage": "Не удалось выполнить действие. Попробуйте ещё раз"
   },
   "login": {
     "subtitle": "Войдите, чтобы продолжить",

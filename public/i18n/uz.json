@@ -127,7 +127,10 @@
       "phone": "Format: +998 XX XXX-XX-XX",
       "selectPatient": "Bazadan bemorni tanlang",
       "selectService": "Xizmat yoki tashrif sababini tanlang"
-    }
+    },
+    "editTitle": "Yozuvni o'zgartirish",
+    "editSubtitle": "Bemor yoki xizmatni o'zgartiring",
+    "save": "O'zgarishlarni saqlash"
   },
   "notifications": {
     "title": "Bildirishnomalar",
@@ -161,6 +164,63 @@
         "text": "{{patient}} {{time}} dagi Dr. {{doctor}} qabuliga kelmadi"
       }
     }
+  },
+  "schedule": {
+    "title": "Qabullar jadvali",
+    "count": "Qabullar: {{count}}",
+    "add": "Yozuv qo'shish",
+    "empty": "Bu kunga qabullar yo'q",
+    "cabinet": "{{number}}-xona",
+    "periods": {
+      "today": "Bugun",
+      "week": "Hafta",
+      "calendar": "Kalendar"
+    },
+    "statusAll": "Barchasi",
+    "dayCount": "{{count}} ta",
+    "dayEmpty": "yozuv yo'q",
+    "status": {
+      "primary": "Birlamchi",
+      "inTreatment": "Davolanmoqda",
+      "completed": "Yakunlangan",
+      "cancelled": "Bekor qilingan"
+    },
+    "actions": {
+      "edit": "O'zgartirish",
+      "cancel": "Bekor qilish"
+    },
+    "cancelDialog": {
+      "title": "Qabulni bekor qilish",
+      "message": "{{patient}} ning {{time}} dagi qabulini haqiqatan ham bekor qilmoqchimisiz?",
+      "confirm": "Ha, bekor qilish",
+      "back": "Yo'q"
+    },
+    "calendarDialog": {
+      "title": "Davrni tanlang",
+      "hint": "Boshlanish va tugash sanasini tanlang",
+      "hintEnd": "Boshlanishi: {{date}}. Endi tugash sanasini tanlang"
+    },
+    "clearPeriod": "Davrni tozalash",
+    "details": {
+      "title": "Qabul",
+      "patient": "Bemor",
+      "phone": "Telefon",
+      "service": "Xizmat",
+      "doctor": "Shifokor",
+      "copy": "Nusxalash",
+      "copied": "Nusxalandi",
+      "edit": "O'zgartirish",
+      "cancel": "Qabulni bekor qilish"
+    }
+  },
+  "feedback": {
+    "ok": "Tushunarli",
+    "created": "Yozuv yaratildi",
+    "createdMessage": "{{patient}} — {{date}} soat {{time}}",
+    "updated": "O'zgarishlar saqlandi",
+    "cancelled": "Qabul bekor qilindi",
+    "errorTitle": "Nimadir xato ketdi",
+    "errorMessage": "Amalni bajarib bo'lmadi. Qaytadan urinib ko'ring"
   },
   "login": {
     "subtitle": "Davom etish uchun tizimga kiring",

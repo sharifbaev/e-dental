@@ -1,8 +1,8 @@
 <!-- Шапка -->
 <div class="flex items-start justify-between gap-2 px-6 pt-5 pb-3 border-b border-gray-100">
   <div class="min-w-0">
-    <h2 class="text-lg font-bold text-gray-900">{{ 'appointmentForm.title' | transloco }}</h2>
-    <p class="text-sm text-gray-500">{{ 'appointmentForm.subtitle' | transloco }}</p>
+    <h2 class="text-lg font-bold text-gray-900">{{ (isEdit ? 'appointmentForm.editTitle' : 'appointmentForm.title') | transloco }}</h2>
+    <p class="text-sm text-gray-500">{{ (isEdit ? 'appointmentForm.editSubtitle' : 'appointmentForm.subtitle') | transloco }}</p>
   </div>
   <button matIconButton mat-dialog-close type="button" [title]="'common.close' | transloco">
     <mat-icon fontSet="material-symbols-outlined">close</mat-icon>
@@ -43,7 +43,7 @@
             </span>
             <div class="min-w-0 flex-1">
               <div class="font-semibold text-gray-900">{{ patient.fullName }}</div>
-              <div class="text-xs text-gray-500">{{ patient.phone }} • {{ 'appointmentForm.patient.born' | transloco: { date: selectedBirthDate() } }}</div>
+              <div class="text-xs text-gray-500">{{ patient.phone }}@if (selectedBirthDate()) { • {{ 'appointmentForm.patient.born' | transloco: { date: selectedBirthDate() } }} }</div>
             </div>
             <button type="button" class="shrink-0 px-3 py-1.5 rounded-lg bg-white text-sm font-medium text-brand-700 hover:bg-brand-100" (click)="clearPatient()">{{ 'appointmentForm.patient.change' | transloco }}</button>
           </div>
@@ -179,6 +179,6 @@
 <div class="px-6 py-4 border-t border-gray-100">
   <button type="button" class="w-full flex items-center justify-center gap-1 px-4 py-3 rounded-xl text-sm font-semibold transition-colors" [class.bg-brand-700]="canSubmit()" [class.text-white]="canSubmit()" [class.hover:bg-brand-800]="canSubmit()" [class.bg-gray-100]="!canSubmit()" [class.text-gray-400]="!canSubmit()" (click)="submit()">
     <mat-icon fontSet="material-symbols-outlined">event_available</mat-icon>
-    {{ 'appointmentForm.submit' | transloco }}
+    {{ (isEdit ? 'appointmentForm.save' : 'appointmentForm.submit') | transloco }}
   </button>
 </div>
