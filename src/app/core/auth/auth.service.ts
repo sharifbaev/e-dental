@@ -6,6 +6,10 @@ import { LoginRequest, LoginResponse, User } from '../models/auth.model';
 const TOKEN_KEY = 'e-dental.token';
 const USER_KEY = 'e-dental.user';
 
+// Демо-доступ до подключения API
+const DEMO_USERNAME = 'admin';
+const DEMO_PASSWORD = 'admin123';
+
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly router = inject(Router);
@@ -37,7 +41,9 @@ export class AuthService {
   // TODO: заменить на реальный запрос, когда будет API:
   // return this.http.post<LoginResponse>(`${apiUrl}/auth/login`, credentials);
   private loginRequest(credentials: LoginRequest): Observable<LoginResponse> {
-    if (credentials.username === 'admin' && credentials.password === 'admin') {
+    const username = credentials.username.trim();
+
+    if (username === DEMO_USERNAME && credentials.password === DEMO_PASSWORD) {
       return of<LoginResponse>({
         token: 'mock-token',
         user: { id: 1, fullName: 'Administrator', username: 'admin', role: 'admin' }
