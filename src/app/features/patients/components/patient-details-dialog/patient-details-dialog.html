@@ -10,7 +10,7 @@
       </div>
     </div>
     @if (!editing()) {
-      <button type="button" class="shrink-0 flex items-center gap-1 h-9 px-3 rounded-lg border border-brand-200 text-sm font-medium text-brand-700 hover:bg-brand-50" (click)="startEdit()">
+      <button type="button" class="shrink-0 flex items-center gap-1 h-9 px-3 rounded-lg border border-brand-200 dark:border-brand-800 text-sm font-medium text-brand-700 hover:bg-brand-50" (click)="startEdit()">
         <mat-icon fontSet="material-symbols-outlined" style="font-size: 18px; width: 18px; height: 18px;">edit</mat-icon>
         <span class="hidden sm:inline">{{ 'patients.details.edit' | transloco }}</span>
       </button>
