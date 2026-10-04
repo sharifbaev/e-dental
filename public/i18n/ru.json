@@ -11,7 +11,9 @@
     "search": "Поиск пациента, врача или услуги",
     "notifications": "Уведомления",
     "waitingList": "Лист ожидания",
-    "newAppointment": "Новая запись"
+    "newAppointment": "Новая запись",
+    "themeLight": "Светлая тема",
+    "themeDark": "Тёмная тема"
   },
   "sidebar": {
     "navigation": "Навигация"
@@ -220,7 +222,111 @@
     "updated": "Изменения сохранены",
     "cancelled": "Приём отменён",
     "errorTitle": "Что-то пошло не так",
-    "errorMessage": "Не удалось выполнить действие. Попробуйте ещё раз"
+    "errorMessage": "Не удалось выполнить действие. Попробуйте ещё раз",
+    "patientUpdated": "Данные пациента сохранены",
+    "doctorCreated": "Врач добавлен",
+    "doctorUpdated": "Данные врача сохранены",
+    "doctorDeleted": "Врач удалён"
+  },
+  "patients": {
+    "title": "Пациенты",
+    "total": "Всего: {{count}}",
+    "search": "Поиск по ФИО или телефону",
+    "statusAll": "Все",
+    "empty": "Пациенты не найдены",
+    "age": "{{count}} г.",
+    "shown": "Показано {{from}}–{{to}} из {{total}}",
+    "showMore": "Показать ещё",
+    "prev": "Назад",
+    "next": "Вперёд",
+    "columns": {
+      "patient": "Пациент",
+      "age": "Возраст",
+      "lastVisit": "Последний визит",
+      "nextVisit": "Следующий приём",
+      "doctor": "Лечащий врач",
+      "status": "Статус"
+    },
+    "details": {
+      "general": "Общие данные",
+      "birthDate": "Дата рождения",
+      "gender": "Пол",
+      "female": "Женский",
+      "male": "Мужской",
+      "diagnoses": "История диагнозов",
+      "noDiagnoses": "Диагнозов пока нет",
+      "tooth": "Зуб {{number}}",
+      "toothNumber": "Номер зуба",
+      "diagnosisTitle": "Диагноз",
+      "description": "Описание и лечение",
+      "diagnosisStatus": {
+        "active": "Лечится",
+        "resolved": "Вылечен"
+      },
+      "edit": "Изменить",
+      "save": "Сохранить",
+      "cancel": "Отмена"
+    }
+  },
+  "doctors": {
+    "title": "Врачи",
+    "total": "Всего: {{count}}",
+    "search": "Поиск по ФИО, специальности или телефону",
+    "statusAll": "Все",
+    "empty": "Врачи не найдены",
+    "cabinet": "Каб. {{number}}",
+    "experience": "{{count}} г.",
+    "shown": "Показано {{from}}–{{to}} из {{total}}",
+    "showMore": "Показать ещё",
+    "prev": "Назад",
+    "next": "Вперёд",
+    "status": {
+      "onShift": "На смене",
+      "offShift": "Не на смене",
+      "vacation": "В отпуске"
+    },
+    "columns": {
+      "doctor": "Врач",
+      "specialty": "Специальность",
+      "cabinet": "Кабинет",
+      "schedule": "График",
+      "experience": "Стаж",
+      "patientsToday": "Пациентов сегодня",
+      "status": "Статус"
+    },
+    "add": "Добавить врача",
+    "actions": {
+      "edit": "Изменить",
+      "delete": "Удалить"
+    },
+    "deleteDialog": {
+      "title": "Удаление врача",
+      "message": "Вы действительно хотите удалить врача {{name}}?",
+      "confirm": "Да, удалить",
+      "back": "Нет"
+    },
+    "form": {
+      "titleCreate": "Новый врач",
+      "titleEdit": "Изменить данные врача",
+      "fullName": "ФИО врача",
+      "phone": "Номер телефона",
+      "specialty": "Специальность",
+      "selectSpecialty": "Выберите специальность",
+      "cabinet": "Кабинет",
+      "experience": "Стаж, лет",
+      "workDays": "Рабочие дни",
+      "workHours": "Часы работы",
+      "status": "Статус",
+      "create": "Добавить врача",
+      "save": "Сохранить изменения",
+      "errors": {
+        "required": "Обязательное поле",
+        "phone": "Формат: +998 XX XXX-XX-XX",
+        "cabinet": "Номер кабинета от 1 до 50",
+        "workDays": "Выберите хотя бы один день",
+        "timeRange": "Конец рабочего дня должен быть позже начала"
+      }
+    }
   },
   "login": {
     "subtitle": "Войдите, чтобы продолжить",

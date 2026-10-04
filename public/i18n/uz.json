@@ -11,7 +11,9 @@
     "search": "Bemor, shifokor yoki xizmatni qidirish",
     "notifications": "Bildirishnomalar",
     "waitingList": "Kutish ro'yxati",
-    "newAppointment": "Yangi yozuv"
+    "newAppointment": "Yangi yozuv",
+    "themeLight": "Yorug' mavzu",
+    "themeDark": "Qorong'i mavzu"
   },
   "sidebar": {
     "navigation": "Navigatsiya"
@@ -220,7 +222,111 @@
     "updated": "O'zgarishlar saqlandi",
     "cancelled": "Qabul bekor qilindi",
     "errorTitle": "Nimadir xato ketdi",
-    "errorMessage": "Amalni bajarib bo'lmadi. Qaytadan urinib ko'ring"
+    "errorMessage": "Amalni bajarib bo'lmadi. Qaytadan urinib ko'ring",
+    "patientUpdated": "Bemor ma'lumotlari saqlandi",
+    "doctorCreated": "Shifokor qo'shildi",
+    "doctorUpdated": "Shifokor ma'lumotlari saqlandi",
+    "doctorDeleted": "Shifokor o'chirildi"
+  },
+  "patients": {
+    "title": "Bemorlar",
+    "total": "Jami: {{count}}",
+    "search": "F.I.Sh. yoki telefon bo'yicha qidirish",
+    "statusAll": "Barchasi",
+    "empty": "Bemorlar topilmadi",
+    "age": "{{count}} yosh",
+    "shown": "{{total}} tadan {{from}}–{{to}}",
+    "showMore": "Yana ko'rsatish",
+    "prev": "Orqaga",
+    "next": "Oldinga",
+    "columns": {
+      "patient": "Bemor",
+      "age": "Yoshi",
+      "lastVisit": "Oxirgi tashrif",
+      "nextVisit": "Keyingi qabul",
+      "doctor": "Davolovchi shifokor",
+      "status": "Holati"
+    },
+    "details": {
+      "general": "Umumiy ma'lumotlar",
+      "birthDate": "Tug'ilgan sana",
+      "gender": "Jinsi",
+      "female": "Ayol",
+      "male": "Erkak",
+      "diagnoses": "Tashxislar tarixi",
+      "noDiagnoses": "Hozircha tashxislar yo'q",
+      "tooth": "{{number}}-tish",
+      "toothNumber": "Tish raqami",
+      "diagnosisTitle": "Tashxis",
+      "description": "Tavsif va davolash",
+      "diagnosisStatus": {
+        "active": "Davolanmoqda",
+        "resolved": "Davolangan"
+      },
+      "edit": "O'zgartirish",
+      "save": "Saqlash",
+      "cancel": "Bekor qilish"
+    }
+  },
+  "doctors": {
+    "title": "Shifokorlar",
+    "total": "Jami: {{count}}",
+    "search": "F.I.Sh., mutaxassislik yoki telefon bo'yicha qidirish",
+    "statusAll": "Barchasi",
+    "empty": "Shifokorlar topilmadi",
+    "cabinet": "{{number}}-xona",
+    "experience": "{{count}} yil",
+    "shown": "{{total}} tadan {{from}}–{{to}}",
+    "showMore": "Yana ko'rsatish",
+    "prev": "Orqaga",
+    "next": "Oldinga",
+    "status": {
+      "onShift": "Navbatda",
+      "offShift": "Navbatda emas",
+      "vacation": "Ta'tilda"
+    },
+    "columns": {
+      "doctor": "Shifokor",
+      "specialty": "Mutaxassislik",
+      "cabinet": "Xona",
+      "schedule": "Ish jadvali",
+      "experience": "Tajriba",
+      "patientsToday": "Bugungi bemorlar",
+      "status": "Holati"
+    },
+    "add": "Shifokor qo'shish",
+    "actions": {
+      "edit": "O'zgartirish",
+      "delete": "O'chirish"
+    },
+    "deleteDialog": {
+      "title": "Shifokorni o'chirish",
+      "message": "{{name}} shifokorini haqiqatan ham o'chirmoqchimisiz?",
+      "confirm": "Ha, o'chirish",
+      "back": "Yo'q"
+    },
+    "form": {
+      "titleCreate": "Yangi shifokor",
+      "titleEdit": "Shifokor ma'lumotlarini o'zgartirish",
+      "fullName": "Shifokorning F.I.Sh.",
+      "phone": "Telefon raqami",
+      "specialty": "Mutaxassislik",
+      "selectSpecialty": "Mutaxassislikni tanlang",
+      "cabinet": "Xona",
+      "experience": "Tajriba, yil",
+      "workDays": "Ish kunlari",
+      "workHours": "Ish vaqti",
+      "status": "Holati",
+      "create": "Shifokor qo'shish",
+      "save": "O'zgarishlarni saqlash",
+      "errors": {
+        "required": "Majburiy maydon",
+        "phone": "Format: +998 XX XXX-XX-XX",
+        "cabinet": "Xona raqami 1 dan 50 gacha",
+        "workDays": "Kamida bitta kunni tanlang",
+        "timeRange": "Ish kunining oxiri boshlanishidan keyin bo'lishi kerak"
+      }
+    }
   },
   "login": {
     "subtitle": "Davom etish uchun tizimga kiring",

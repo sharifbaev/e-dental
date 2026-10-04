@@ -5,6 +5,14 @@
   <title>e-Dental</title>
   <base href="/" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script>
+    try {
+      var theme = localStorage.getItem('e-dental.theme');
+      if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        document.documentElement.classList.add('dark');
+      }
+    } catch (e) {}
+  </script>
   <link rel="icon" href="favicon.ico" sizes="32x32">
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com" />

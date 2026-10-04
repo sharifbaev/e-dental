@@ -1,8 +1,10 @@
 @import "tailwindcss";
 
+/* Тёмная тема включается классом .dark на <html> (а не только настройкой системы) */
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
-  --color-brand-50:  #eef8f8;
-  --color-brand-100: #d5eef0;
+  /* Бирюзовая палитра по макету DentaCare — одинаковая в обеих темах */
   --color-brand-200: #aedde1;
   --color-brand-300: #7cc5cc;
   --color-brand-400: #4aa7b1;
@@ -12,6 +14,52 @@
   --color-brand-800: #1b4d56;
   --color-brand-900: #193f47;
   --color-brand-950: #0c262c;
+}
 
-  --color-page: #f3f6f8;
+/* Семантические цвета: значение берётся из переменных ниже и меняется вместе с темой */
+@theme inline {
+  --color-brand-50: var(--app-brand-50);
+  --color-brand-100: var(--app-brand-100);
+
+  --color-page: var(--app-page);
+  --color-surface: var(--app-surface);
+  --color-content: var(--app-content);
+  --color-soft: var(--app-soft);
+  --color-muted: var(--app-muted);
+  --color-subtle: var(--app-subtle);
+  --color-line: var(--app-line);
+  --color-line-strong: var(--app-line-strong);
+  --color-accent: var(--app-accent);
+}
+
+/* Светлая тема */
+:root {
+  --app-brand-50: #eef8f8;
+  --app-brand-100: #d5eef0;
+
+  --app-page: #f3f6f8;
+  --app-surface: #ffffff;
+  --app-content: #111827;
+  --app-soft: #374151;
+  --app-muted: #6b7280;
+  --app-subtle: #9ca3af;
+  --app-line: #f3f4f6;
+  --app-line-strong: #e5e7eb;
+  --app-accent: #1d5e69;
+}
+
+/* Тёмная тема */
+.dark {
+  --app-brand-50: #12343a;
+  --app-brand-100: #174148;
+
+  --app-page: #0b1215;
+  --app-surface: #151d22;
+  --app-content: #e5e7eb;
+  --app-soft: #cbd5e1;
+  --app-muted: #9ca3af;
+  --app-subtle: #6b7280;
+  --app-line: #1f2a30;
+  --app-line-strong: #2b373e;
+  --app-accent: #7cc5cc;
 }

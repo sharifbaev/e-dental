@@ -1,0 +1,102 @@
+<!-- Шапка -->
+<div class="flex items-center justify-between gap-2 px-6 pt-5 pb-3 border-b border-gray-100">
+  <h2 class="text-lg font-bold text-gray-900">{{ (isEdit ? 'doctors.form.titleEdit' : 'doctors.form.titleCreate') | transloco }}</h2>
+  <button matIconButton mat-dialog-close type="button" [title]="'common.close' | transloco">
+    <mat-icon fontSet="material-symbols-outlined">close</mat-icon>
+  </button>
+</div>
+
+<!-- Форма — прокручивается внутри окна -->
+<mat-dialog-content style="flex: 1 1 auto; max-height: none;">
+  <div [formGroup]="form" class="grid grid-cols-1 sm:grid-cols-2 gap-3 py-2">
+    <!-- ФИО -->
+    <label class="flex flex-col gap-1 sm:col-span-2">
+      <span class="text-xs font-medium text-gray-600">{{ 'doctors.form.fullName' | transloco }} <span class="text-red-500">*</span></span>
+      <input type="text" formControlName="fullName" autocomplete="off" class="w-full h-11 px-3 rounded-xl bg-page border text-sm text-gray-800 outline-none focus:border-brand-300 focus:bg-white" [class.border-transparent]="!isInvalid('fullName')" [class.border-red-300]="isInvalid('fullName')">
+      @if (isInvalid('fullName')) {
+        <span class="text-xs text-red-600">{{ 'doctors.form.errors.required' | transloco }}</span>
+      }
+    </label>
+
+    <!-- Телефон -->
+    <label class="flex flex-col gap-1">
+      <span class="text-xs font-medium text-gray-600">{{ 'doctors.form.phone' | transloco }} <span class="text-red-500">*</span></span>
+      <input type="tel" formControlName="phone" placeholder="+998 90 123-45-67" autocomplete="off" class="w-full h-11 px-3 rounded-xl bg-page border text-sm text-gray-800 outline-none focus:border-brand-300 focus:bg-white" [class.border-transparent]="!isInvalid('phone')" [class.border-red-300]="isInvalid('phone')">
+      @if (isInvalid('phone')) {
+        <span class="text-xs text-red-600">{{ (form.controls.phone.hasError('required') ? 'doctors.form.errors.required' : 'doctors.form.errors.phone') | transloco }}</span>
+      }
+    </label>
+
+    <!-- Специальность -->
+    <label class="flex flex-col gap-1">
+      <span class="text-xs font-medium text-gray-600">{{ 'doctors.form.specialty' | transloco }} <span class="text-red-500">*</span></span>
+      <select formControlName="specialty" class="w-full h-11 px-3 rounded-xl bg-page border text-sm text-gray-800 outline-none focus:border-brand-300 focus:bg-white" [class.border-transparent]="!isInvalid('specialty')" [class.border-red-300]="isInvalid('specialty')">
+        <option value="" disabled>{{ 'doctors.form.selectSpecialty' | transloco }}</option>
+        @for (specialty of specialties; track specialty) {
+          <option [value]="specialty">{{ specialty }}</option>
+        }
+      </select>
+      @if (isInvalid('specialty')) {
+        <span class="text-xs text-red-600">{{ 'doctors.form.errors.required' | transloco }}</span>
+      }
+    </label>
+
+    <!-- Кабинет -->
+    <label class="flex flex-col gap-1">
+      <span class="text-xs font-medium text-gray-600">{{ 'doctors.form.cabinet' | transloco }} <span class="text-red-500">*</span></span>
+      <input type="number" min="1" max="50" formControlName="cabinet" class="w-full h-11 px-3 rounded-xl bg-page border text-sm text-gray-800 outline-none focus:border-brand-300 focus:bg-white" [class.border-transparent]="!isInvalid('cabinet')" [class.border-red-300]="isInvalid('cabinet')">
+      @if (isInvalid('cabinet')) {
+        <span class="text-xs text-red-600">{{ 'doctors.form.errors.cabinet' | transloco }}</span>
+      }
+    </label>
+
+    <!-- Стаж -->
+    <label class="flex flex-col gap-1">
+      <span class="text-xs font-medium text-gray-600">{{ 'doctors.form.experience' | transloco }}</span>
+      <input type="number" min="0" max="60" formControlName="experienceYears" class="w-full h-11 px-3 rounded-xl bg-page border border-transparent text-sm text-gray-800 outline-none focus:border-brand-300 focus:bg-white">
+    </label>
+
+    <!-- Рабочие дни -->
+    <div class="flex flex-col gap-1 sm:col-span-2">
+      <span class="text-xs font-medium text-gray-600">{{ 'doctors.form.workDays' | transloco }} <span class="text-red-500">*</span></span>
+      <div class="grid grid-cols-7 gap-1">
+        @for (item of weekDays(); track item.day) {
+          <button type="button" class="h-10 rounded-lg text-sm font-medium transition-colors" [class.bg-brand-700]="item.active" [class.text-white]="item.active" [class.bg-page]="!item.active" [class.text-gray-600]="!item.active" (click)="toggleDay(item.day)">{{ item.label }}</button>
+        }
+      </div>
+      @if (isInvalid('workDays')) {
+        <span class="text-xs text-red-600">{{ 'doctors.form.errors.workDays' | transloco }}</span>
+      }
+    </div>
+
+    <!-- Часы работы -->
+    <div class="flex flex-col gap-1 sm:col-span-2">
+      <span class="text-xs font-medium text-gray-600">{{ 'doctors.form.workHours' | transloco }} <span class="text-red-500">*</span></span>
+      <div class="grid grid-cols-2 gap-3">
+        <input type="time" formControlName="workStart" class="w-full h-11 px-3 rounded-xl bg-page border text-sm text-gray-800 outline-none focus:border-brand-300 focus:bg-white" [class.border-transparent]="!timeRangeInvalid()" [class.border-red-300]="timeRangeInvalid()">
+        <input type="time" formControlName="workEnd" class="w-full h-11 px-3 rounded-xl bg-page border text-sm text-gray-800 outline-none focus:border-brand-300 focus:bg-white" [class.border-transparent]="!timeRangeInvalid()" [class.border-red-300]="timeRangeInvalid()">
+      </div>
+      @if (timeRangeInvalid()) {
+        <span class="text-xs text-red-600">{{ 'doctors.form.errors.timeRange' | transloco }}</span>
+      }
+    </div>
+
+    <!-- Статус -->
+    <label class="flex flex-col gap-1 sm:col-span-2">
+      <span class="text-xs font-medium text-gray-600">{{ 'doctors.form.status' | transloco }}</span>
+      <select formControlName="status" class="w-full h-11 px-3 rounded-xl bg-page border border-transparent text-sm text-gray-800 outline-none focus:border-brand-300 focus:bg-white">
+        @for (status of statuses; track status) {
+          <option [value]="status">{{ ('doctors.status.' + status) | transloco }}</option>
+        }
+      </select>
+    </label>
+  </div>
+</mat-dialog-content>
+
+<!-- Кнопка внизу -->
+<div class="px-6 py-4 border-t border-gray-100">
+  <button type="button" class="w-full flex items-center justify-center gap-1 px-4 py-3 rounded-xl text-sm font-semibold transition-colors" [class.bg-brand-700]="canSubmit()" [class.text-white]="canSubmit()" [class.hover:bg-brand-800]="canSubmit()" [class.bg-gray-100]="!canSubmit()" [class.text-gray-400]="!canSubmit()" (click)="submit()">
+    <mat-icon fontSet="material-symbols-outlined">{{ isEdit ? 'check' : 'person_add' }}</mat-icon>
+    {{ (isEdit ? 'doctors.form.save' : 'doctors.form.create') | transloco }}
+  </button>
+</div>

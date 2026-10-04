@@ -1,0 +1,182 @@
+@if (view(); as p) {
+  <!-- Шапка: пациент -->
+  <div class="flex items-start gap-3 px-6 pt-5 pb-4 border-b border-gray-100">
+    <span class="w-12 h-12 shrink-0 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center font-semibold">{{ p.initials }}</span>
+    <div class="min-w-0 flex-1">
+      <h2 class="text-lg font-bold text-gray-900">{{ p.fullName }}</h2>
+      <div class="mt-0.5 flex flex-wrap items-center gap-2 text-sm text-gray-500">
+        <span>{{ p.phone }}</span>
+        <span class="px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap" [class]="p.statusClass">{{ p.statusKey | transloco }}</span>
+      </div>
+    </div>
+    @if (!editing()) {
+      <button type="button" class="shrink-0 flex items-center gap-1 h-9 px-3 rounded-lg border border-brand-200 text-sm font-medium text-brand-700 hover:bg-brand-50" (click)="startEdit()">
+        <mat-icon fontSet="material-symbols-outlined" style="font-size: 18px; width: 18px; height: 18px;">edit</mat-icon>
+        <span class="hidden sm:inline">{{ 'patients.details.edit' | transloco }}</span>
+      </button>
+    }
+    <button matIconButton mat-dialog-close type="button" class="shrink-0" [title]="'common.close' | transloco">
+      <mat-icon fontSet="material-symbols-outlined">close</mat-icon>
+    </button>
+  </div>
+
+  <mat-dialog-content style="flex: 1 1 auto; max-height: none;">
+    <div class="flex flex-col gap-5 py-2">
+
+      <!-- Общие данные -->
+      <section class="flex flex-col gap-3">
+        <h3 class="text-xs font-semibold uppercase tracking-wider text-gray-400">{{ 'patients.details.general' | transloco }}</h3>
+
+        @if (!editing()) {
+          <!-- Только чтение -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3">
+            <div>
+              <div class="text-xs text-gray-400">{{ 'patients.details.birthDate' | transloco }}</div>
+              <div class="text-gray-800">{{ p.birthDateLabel }} · {{ 'patients.age' | transloco: { count: p.age } }}</div>
+            </div>
+            <div>
+              <div class="text-xs text-gray-400">{{ 'patients.details.gender' | transloco }}</div>
+              <div class="text-gray-800">{{ ('patients.details.' + p.gender) | transloco }}</div>
+            </div>
+            <div>
+              <div class="text-xs text-gray-400">{{ 'patients.columns.doctor' | transloco }}</div>
+              <div class="text-gray-800">{{ 'dashboard.doctorPrefix' | transloco }} {{ p.doctorName }}</div>
+            </div>
+            <div>
+              <div class="text-xs text-gray-400">{{ 'patients.columns.lastVisit' | transloco }}</div>
+              <div class="text-gray-800">{{ p.lastVisitLabel || '—' }}</div>
+            </div>
+            <div>
+              <div class="text-xs text-gray-400">{{ 'patients.columns.nextVisit' | transloco }}</div>
+              <div [class.text-brand-700]="p.nextVisitLabel" [class.font-medium]="p.nextVisitLabel" [class.text-gray-800]="!p.nextVisitLabel">{{ p.nextVisitLabel || '—' }}</div>
+            </div>
+          </div>
+        } @else if (form) {
+          <!-- Изменение -->
+          <div [formGroup]="form" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <label class="flex flex-col gap-1 sm:col-span-2">
+              <span class="text-xs font-medium text-gray-600">{{ 'appointmentForm.patient.fullName' | transloco }} <span class="text-red-500">*</span></span>
+              <input type="text" formControlName="fullName" class="w-full h-11 px-3 rounded-xl bg-page border text-sm text-gray-800 outline-none focus:border-brand-300 focus:bg-white" [class.border-transparent]="!isInvalid('fullName')" [class.border-red-300]="isInvalid('fullName')">
+              @if (isInvalid('fullName')) {
+                <span class="text-xs text-red-600">{{ 'appointmentForm.errors.required' | transloco }}</span>
+              }
+            </label>
+
+            <label class="flex flex-col gap-1">
+              <span class="text-xs font-medium text-gray-600">{{ 'appointmentForm.patient.phone' | transloco }} <span class="text-red-500">*</span></span>
+              <input type="tel" formControlName="phone" class="w-full h-11 px-3 rounded-xl bg-page border text-sm text-gray-800 outline-none focus:border-brand-300 focus:bg-white" [class.border-transparent]="!isInvalid('phone')" [class.border-red-300]="isInvalid('phone')">
+              @if (isInvalid('phone')) {
+                <span class="text-xs text-red-600">{{ 'appointmentForm.errors.phone' | transloco }}</span>
+              }
+            </label>
+
+            <label class="flex flex-col gap-1 min-w-0">
+              <span class="text-xs font-medium text-gray-600">{{ 'patients.details.birthDate' | transloco }}</span>
+              <input type="date" formControlName="birthDate" class="w-full h-11 px-3 rounded-xl bg-page border border-transparent text-sm text-gray-800 outline-none focus:border-brand-300 focus:bg-white">
+            </label>
+
+            <label class="flex flex-col gap-1">
+              <span class="text-xs font-medium text-gray-600">{{ 'patients.details.gender' | transloco }}</span>
+              <select formControlName="gender" class="w-full h-11 px-3 rounded-xl bg-page border border-transparent text-sm text-gray-800 outline-none focus:border-brand-300 focus:bg-white">
+                <option value="female">{{ 'patients.details.female' | transloco }}</option>
+                <option value="male">{{ 'patients.details.male' | transloco }}</option>
+              </select>
+            </label>
+
+            <label class="flex flex-col gap-1">
+              <span class="text-xs font-medium text-gray-600">{{ 'patients.columns.status' | transloco }}</span>
+              <select formControlName="status" class="w-full h-11 px-3 rounded-xl bg-page border border-transparent text-sm text-gray-800 outline-none focus:border-brand-300 focus:bg-white">
+                @for (status of statuses; track status) {
+                  <option [value]="status">{{ ('schedule.status.' + status) | transloco }}</option>
+                }
+              </select>
+            </label>
+
+            <label class="flex flex-col gap-1 sm:col-span-2">
+              <span class="text-xs font-medium text-gray-600">{{ 'patients.columns.doctor' | transloco }}</span>
+              <select formControlName="doctorName" class="w-full h-11 px-3 rounded-xl bg-page border border-transparent text-sm text-gray-800 outline-none focus:border-brand-300 focus:bg-white">
+                @for (doctor of doctors; track doctor) {
+                  <option [value]="doctor">{{ 'dashboard.doctorPrefix' | transloco }} {{ doctor }}</option>
+                }
+              </select>
+            </label>
+          </div>
+        }
+      </section>
+
+      <!-- История диагнозов -->
+      <section class="flex flex-col gap-3">
+        <h3 class="text-xs font-semibold uppercase tracking-wider text-gray-400">{{ 'patients.details.diagnoses' | transloco }} · {{ p.diagnoses.length }}</h3>
+
+        @if (p.diagnoses.length === 0) {
+          <div class="py-8 rounded-2xl bg-page text-center text-sm text-gray-400">{{ 'patients.details.noDiagnoses' | transloco }}</div>
+        } @else {
+          <!-- Вкладки: 1 диагноз — 1 вкладка -->
+          <div class="flex gap-2 overflow-x-auto pb-1">
+            @for (d of p.diagnoses; track d.id; let i = $index) {
+              <button type="button" class="shrink-0 flex flex-col items-start px-3 py-2 rounded-xl border text-left transition-colors" [class.border-brand-600]="activeTab() === i" [class.bg-brand-50]="activeTab() === i" [class.border-gray-100]="activeTab() !== i" [class.hover:bg-page]="activeTab() !== i" (click)="selectTab(i)">
+                <span class="text-sm font-medium" [class.text-brand-700]="activeTab() === i" [class.text-gray-700]="activeTab() !== i">{{ d.title }}</span>
+                <span class="text-xs text-gray-400">{{ d.dateLabel }}</span>
+              </button>
+            }
+          </div>
+
+          <!-- Содержимое вкладки -->
+          @if (p.diagnoses[activeTab()]; as d) {
+            <div class="rounded-2xl border border-gray-100 p-4 flex flex-col gap-3">
+              <div class="flex flex-wrap items-center gap-2 text-xs">
+                <span class="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-page text-gray-600">
+                  <mat-icon fontSet="material-symbols-outlined" style="font-size: 14px; width: 14px; height: 14px;">calendar_today</mat-icon>
+                  {{ d.dateLabel }}
+                </span>
+                <span class="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-page text-gray-600">
+                  <mat-icon fontSet="material-symbols-outlined" style="font-size: 14px; width: 14px; height: 14px;">stethoscope</mat-icon>
+                  {{ 'dashboard.doctorPrefix' | transloco }} {{ d.doctorName }}
+                </span>
+                <span class="px-2 py-1 rounded-lg font-medium" [class.bg-amber-50]="d.status === 'active'" [class.text-amber-700]="d.status === 'active'" [class.bg-emerald-50]="d.status === 'resolved'" [class.text-emerald-700]="d.status === 'resolved'">{{ ('patients.details.diagnosisStatus.' + d.status) | transloco }}</span>
+              </div>
+
+              @if (!editing()) {
+                <!-- Только чтение -->
+                <div>
+                  <div class="font-semibold text-gray-900">{{ d.title }}</div>
+                  @if (d.tooth) {
+                    <div class="text-sm text-brand-700">{{ 'patients.details.tooth' | transloco: { number: d.tooth } }}</div>
+                  }
+                </div>
+                <p class="text-sm text-gray-700 leading-relaxed">{{ d.description }}</p>
+              } @else if (form) {
+                <!-- Изменение диагноза на активной вкладке -->
+                <div [formGroup]="diagnosesArray.at(activeTab())" class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <label class="flex flex-col gap-1 sm:col-span-2">
+                    <span class="text-xs font-medium text-gray-600">{{ 'patients.details.diagnosisTitle' | transloco }} <span class="text-red-500">*</span></span>
+                    <input type="text" formControlName="title" class="w-full h-11 px-3 rounded-xl bg-page border border-transparent text-sm text-gray-800 outline-none focus:border-brand-300 focus:bg-white">
+                  </label>
+                  <label class="flex flex-col gap-1">
+                    <span class="text-xs font-medium text-gray-600">{{ 'patients.details.toothNumber' | transloco }}</span>
+                    <input type="number" min="11" max="48" formControlName="tooth" class="w-full h-11 px-3 rounded-xl bg-page border border-transparent text-sm text-gray-800 outline-none focus:border-brand-300 focus:bg-white">
+                  </label>
+                  <label class="flex flex-col gap-1 sm:col-span-3">
+                    <span class="text-xs font-medium text-gray-600">{{ 'patients.details.description' | transloco }}</span>
+                    <textarea rows="4" formControlName="description" class="w-full px-3 py-2 rounded-xl bg-page border border-transparent text-sm text-gray-800 outline-none resize-y focus:border-brand-300 focus:bg-white"></textarea>
+                  </label>
+                </div>
+              }
+            </div>
+          }
+        }
+      </section>
+    </div>
+  </mat-dialog-content>
+
+  <!-- Кнопки режима изменения -->
+  @if (editing()) {
+    <div class="px-6 py-4 border-t border-gray-100 flex flex-col-reverse sm:flex-row gap-2">
+      <button type="button" class="flex-1 px-4 py-3 rounded-lg border border-gray-200 text-sm font-medium text-gray-700 hover:bg-page" [disabled]="saving()" (click)="cancelEdit()">{{ 'patients.details.cancel' | transloco }}</button>
+      <button type="button" class="flex-1 flex items-center justify-center gap-1 px-4 py-3 rounded-lg bg-brand-700 text-sm font-medium text-white hover:bg-brand-800 disabled:opacity-60" [disabled]="saving()" (click)="save()">
+        <mat-icon fontSet="material-symbols-outlined" style="font-size: 20px; width: 20px; height: 20px;">{{ saving() ? 'progress_activity' : 'check' }}</mat-icon>
+        {{ 'patients.details.save' | transloco }}
+      </button>
+    </div>
+  }
+}

@@ -1,1 +1,124 @@
-<p>patient-list works!</p>
+<div class="flex flex-col gap-4">
+  <!-- Заголовок -->
+  <section class="bg-white rounded-2xl p-5">
+    <div class="flex flex-wrap items-center gap-2">
+      <h1 class="text-xl md:text-2xl font-bold text-gray-900">{{ 'patients.title' | transloco }}</h1>
+      <span class="px-2 py-0.5 rounded-full bg-brand-50 text-xs font-semibold text-brand-700">{{ 'patients.total' | transloco: { count: total() } }}</span>
+    </div>
+  </section>
+
+  <!-- Поиск и статусы -->
+  <section class="sticky top-0 z-20 shadow-sm md:static md:shadow-none bg-white rounded-2xl p-4 flex flex-col gap-4">
+    <div class="relative md:max-w-md">
+      <mat-icon fontSet="material-symbols-outlined" class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" style="font-size: 20px; width: 20px; height: 20px;">search</mat-icon>
+      <input type="text" class="w-full h-11 pl-10 pr-9 rounded-xl bg-page border border-transparent text-sm text-gray-800 outline-none focus:border-brand-300 focus:bg-white" [formControl]="searchControl" [placeholder]="'patients.search' | transloco">
+      @if (query()) {
+        <button type="button" class="absolute right-2 top-1/2 -translate-y-1/2 w-6 h-6 flex items-center justify-center rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600" (click)="clearSearch()">
+          <mat-icon fontSet="material-symbols-outlined" style="font-size: 16px; width: 16px; height: 16px;">close</mat-icon>
+        </button>
+      }
+    </div>
+
+    <div class="flex gap-2 overflow-x-auto pb-1">
+      <button type="button" class="shrink-0 px-3 py-1.5 rounded-full text-sm font-medium border transition-colors" [class.bg-brand-700]="allStatusesActive()" [class.text-white]="allStatusesActive()" [class.border-brand-700]="allStatusesActive()" [class.border-gray-200]="!allStatusesActive()" [class.text-gray-600]="!allStatusesActive()" (click)="clearStatuses()">{{ 'patients.statusAll' | transloco }}</button>
+
+      @for (chip of statusChips(); track chip.status) {
+        <button type="button" class="shrink-0 px-3 py-1.5 rounded-full text-sm font-medium border transition-colors" [class]="chip.active ? chip.activeClass + ' border-current' : 'bg-white text-gray-600 border-gray-200'" (click)="toggleStatus(chip.status)">{{ chip.key | transloco }} ({{ chip.count }})</button>
+      }
+    </div>
+  </section>
+
+  @if (filteredCount() === 0) {
+    <div class="bg-white rounded-2xl py-12 text-center text-sm text-gray-400">{{ 'patients.empty' | transloco }}</div>
+  } @else {
+    <!-- ПК: таблица -->
+    <section class="hidden md:block bg-white rounded-2xl overflow-hidden">
+      <div class="overflow-auto max-h-[33rem] overscroll-contain [scrollbar-gutter:stable]">
+        <table class="w-full text-sm">
+          <thead class="sticky top-0 z-10 bg-white shadow-[0_1px_0_0_rgb(243_244_246)]">
+            <tr class="text-left text-xs font-semibold uppercase tracking-wider text-gray-400">
+              <th class="px-4 py-3">{{ 'patients.columns.patient' | transloco }}</th>
+              <th class="px-4 py-3">{{ 'patients.columns.age' | transloco }}</th>
+              <th class="px-4 py-3">{{ 'patients.columns.lastVisit' | transloco }}</th>
+              <th class="px-4 py-3">{{ 'patients.columns.nextVisit' | transloco }}</th>
+              <th class="px-4 py-3">{{ 'patients.columns.doctor' | transloco }}</th>
+              <th class="px-4 py-3">{{ 'patients.columns.status' | transloco }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (patient of pageItems(); track patient.id) {
+              <tr class="border-b border-gray-50 last:border-0 hover:bg-page transition-colors cursor-pointer" (click)="openDetails(patient.id)">
+                <td class="px-4 py-3">
+                  <div class="flex items-center gap-3">
+                    <span class="w-9 h-9 shrink-0 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center text-xs font-semibold">{{ patient.initials }}</span>
+                    <div class="min-w-0">
+                      <div class="font-medium text-gray-900">{{ patient.fullName }}</div>
+                      <div class="text-xs text-gray-500">{{ patient.phone }}</div>
+                    </div>
+                  </div>
+                </td>
+                <td class="px-4 py-3 text-gray-700 whitespace-nowrap">{{ 'patients.age' | transloco: { count: patient.age } }}</td>
+                <td class="px-4 py-3 text-gray-700 whitespace-nowrap">{{ patient.lastVisitLabel || '—' }}</td>
+                <td class="px-4 py-3 whitespace-nowrap" [class.text-brand-700]="patient.nextVisitLabel" [class.font-medium]="patient.nextVisitLabel" [class.text-gray-400]="!patient.nextVisitLabel">{{ patient.nextVisitLabel || '—' }}</td>
+                <td class="px-4 py-3 text-gray-700 whitespace-nowrap">{{ 'dashboard.doctorPrefix' | transloco }} {{ patient.doctorName }}</td>
+                <td class="px-4 py-3">
+                  <span class="px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap" [class]="patient.statusClass">{{ patient.statusKey | transloco }}</span>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Страницы -->
+      <div class="flex items-center justify-between gap-3 px-4 py-3 border-t border-gray-100">
+        <span class="text-sm text-gray-500">{{ 'patients.shown' | transloco: { from: shownFrom(), to: shownTo(), total: filteredCount() } }}</span>
+
+        @if (totalPages() > 1) {
+          <div class="flex items-center gap-1">
+            <button type="button" class="w-9 h-9 flex items-center justify-center rounded-lg text-gray-600 hover:bg-page disabled:opacity-40 disabled:hover:bg-transparent" [disabled]="currentPage() === 1" [title]="'patients.prev' | transloco" (click)="goToPage(currentPage() - 1)">
+              <mat-icon fontSet="material-symbols-outlined">chevron_left</mat-icon>
+            </button>
+            @for (p of pages(); track p) {
+              <button type="button" class="min-w-9 h-9 px-2 rounded-lg text-sm font-medium transition-colors" [class.bg-brand-700]="p === currentPage()" [class.text-white]="p === currentPage()" [class.text-gray-600]="p !== currentPage()" [class.hover:bg-page]="p !== currentPage()" (click)="goToPage(p)">{{ p }}</button>
+            }
+            <button type="button" class="w-9 h-9 flex items-center justify-center rounded-lg text-gray-600 hover:bg-page disabled:opacity-40 disabled:hover:bg-transparent" [disabled]="currentPage() === totalPages()" [title]="'patients.next' | transloco" (click)="goToPage(currentPage() + 1)">
+              <mat-icon fontSet="material-symbols-outlined">chevron_right</mat-icon>
+            </button>
+          </div>
+        }
+      </div>
+    </section>
+
+    <!-- Мобилка: карточки -->
+    <section class="md:hidden flex flex-col gap-3">
+      @for (patient of mobileItems(); track patient.id) {
+        <div role="button" tabindex="0" class="bg-white rounded-2xl p-4 flex flex-col gap-3 cursor-pointer active:bg-page" (click)="openDetails(patient.id)" (keydown.enter)="openDetails(patient.id)">
+          <div class="flex items-center gap-3">
+            <span class="w-10 h-10 shrink-0 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center text-sm font-semibold">{{ patient.initials }}</span>
+            <div class="min-w-0 flex-1">
+              <div class="font-semibold text-gray-900">{{ patient.fullName }}</div>
+              <div class="text-xs text-gray-500">{{ patient.phone }} · {{ 'patients.age' | transloco: { count: patient.age } }}</div>
+            </div>
+            <span class="shrink-0 self-start px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap" [class]="patient.statusClass">{{ patient.statusKey | transloco }}</span>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2 pt-3 border-t border-gray-100 text-xs">
+            <div>
+              <div class="text-gray-400">{{ 'patients.columns.lastVisit' | transloco }}</div>
+              <div class="mt-0.5 text-gray-700">{{ patient.lastVisitLabel || '—' }}</div>
+            </div>
+            <div>
+              <div class="text-gray-400">{{ 'patients.columns.nextVisit' | transloco }}</div>
+              <div class="mt-0.5" [class.text-brand-700]="patient.nextVisitLabel" [class.font-medium]="patient.nextVisitLabel" [class.text-gray-700]="!patient.nextVisitLabel">{{ patient.nextVisitLabel || '—' }}</div>
+            </div>
+          </div>
+        </div>
+      }
+
+      @if (hasMore()) {
+        <button type="button" class="w-full px-4 py-3 rounded-xl border border-brand-200 bg-white text-sm font-medium text-brand-700 hover:bg-brand-50" (click)="showMore()">{{ 'patients.showMore' | transloco }}</button>
+      }
+    </section>
+  }
+</div>

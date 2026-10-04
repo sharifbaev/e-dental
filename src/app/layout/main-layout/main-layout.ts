@@ -6,6 +6,7 @@ import { AuthService } from '../../core/auth/auth.service';
 import { MatDialog } from '@angular/material/dialog';
 import { NOTIFICATIONS_DIALOG_CONFIG, NotificationsDialog } from '../../features/notifications/components/notifications-dialog/notifications-dialog';
 import { NotificationsService } from '../../features/notifications/services/notifications.service';
+import { ThemeService } from '../../core/theme/theme.service';
 
 @Component({
   selector: 'app-main-layout',
@@ -16,6 +17,8 @@ import { NotificationsService } from '../../features/notifications/services/noti
 export class MainLayout {
   private readonly transloco = inject(TranslocoService);
   private readonly auth = inject(AuthService);
+  private readonly themeService = inject(ThemeService);
+  protected readonly isDark = computed(() => this.themeService.theme() === 'dark');
   private readonly dialog = inject(MatDialog);
   private readonly notificationsService = inject(NotificationsService);
 
@@ -52,6 +55,10 @@ export class MainLayout {
   protected setLang(lang: 'ru' | 'uz'): void {
     this.transloco.setActiveLang(lang);
     this.lang.set(lang);
+  }
+
+  protected toggleTheme(): void {
+    this.themeService.toggle();
   }
 
   protected logout(): void {
