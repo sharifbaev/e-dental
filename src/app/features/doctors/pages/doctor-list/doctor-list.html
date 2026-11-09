@@ -1,23 +1,24 @@
 <div class="flex flex-col gap-4">
   <!-- Заголовок -->
-  <section class="bg-surface rounded-2xl p-5 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+  <section class="px-1 pt-1 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
     <div class="flex flex-wrap items-center gap-2">
-      <h1 class="text-xl md:text-2xl font-bold text-content">{{ 'doctors.title' | transloco }}</h1>
+      <h1 class="font-display text-2xl md:text-[30px] font-extrabold tracking-tight text-content">{{ 'doctors.title' | transloco }}</h1>
       <span class="px-2 py-0.5 rounded-full bg-brand-50 text-xs font-semibold text-accent">{{ 'doctors.total' | transloco: { count: total() } }}</span>
     </div>
 
     <!-- Добавить врача — ПК -->
-    <button type="button" class="hidden md:flex items-center justify-center gap-1 h-10 px-4 rounded-lg bg-brand-700 text-white text-sm font-medium hover:bg-brand-800" (click)="openCreate()">
+    <button type="button" class="hidden md:flex items-center justify-center gap-1 h-11 px-5 rounded-xl bg-brand-700 text-white text-sm font-semibold hover:bg-brand-800" (click)="openCreate()">
       <mat-icon fontSet="material-symbols-outlined">person_add</mat-icon>
       {{ 'doctors.add' | transloco }}
     </button>
   </section>
 
   <!-- Поиск и статусы: на мобилке закреплены сверху при прокрутке -->
-  <section class="sticky top-0 z-20 shadow-sm md:static md:shadow-none bg-surface rounded-2xl p-4 flex flex-col gap-4">
-    <div class="relative md:max-w-md">
+  <section class="sticky top-0 z-20 shadow-sm md:static md:shadow-none bg-surface border border-line-strong rounded-[20px] p-3 md:p-4 flex flex-col gap-4">
+    <div class="flex gap-2">
+    <div class="relative flex-1 md:max-w-md">
       <mat-icon fontSet="material-symbols-outlined" class="absolute left-3 top-1/2 -translate-y-1/2 text-subtle pointer-events-none" style="font-size: 20px; width: 20px; height: 20px;">search</mat-icon>
-      <input type="text" class="w-full h-11 pl-10 pr-9 rounded-xl bg-page border border-transparent text-sm text-content placeholder:text-subtle outline-none focus:border-brand-300 focus:bg-surface" [formControl]="searchControl" [placeholder]="'doctors.search' | transloco">
+      <input type="text" class="w-full h-11 pl-10 pr-9 rounded-xl bg-page border border-line-strong text-sm text-content placeholder:text-subtle outline-none focus:border-brand-300 focus:bg-surface" [formControl]="searchControl" [placeholder]="'doctors.search' | transloco">
       @if (query()) {
         <button type="button" class="absolute right-2 top-1/2 -translate-y-1/2 w-6 h-6 flex items-center justify-center rounded-full text-subtle hover:bg-line-strong hover:text-soft" (click)="clearSearch()">
           <mat-icon fontSet="material-symbols-outlined" style="font-size: 16px; width: 16px; height: 16px;">close</mat-icon>
@@ -25,7 +26,17 @@
       }
     </div>
 
-    <div class="flex gap-2 overflow-x-auto pb-1">
+    <!-- Мобилка: статус — выпадающий список -->
+    <select class="md:hidden w-36 shrink-0 h-11 px-2 rounded-xl bg-page border border-line-strong text-sm font-semibold text-content outline-none" [attr.aria-label]="'doctors.columns.status' | transloco" (change)="onStatusSelect($any($event.target).value)">
+      <option value="" [selected]="allStatusesActive()">{{ 'doctors.statusAll' | transloco }}</option>
+      @for (chip of statusChips(); track chip.status) {
+        <option [value]="chip.status" [selected]="chip.active && selectedStatuses().length === 1">{{ chip.key | transloco }} ({{ chip.count }})</option>
+      }
+    </select>
+    </div>
+
+    <!-- ПК: статусы — чипы -->
+    <div class="hidden md:flex gap-2 overflow-x-auto pb-1">
       <button type="button" class="shrink-0 px-3 py-1.5 rounded-full text-sm font-medium border transition-colors" [class.bg-brand-700]="allStatusesActive()" [class.text-white]="allStatusesActive()" [class.border-brand-700]="allStatusesActive()" [class.border-line-strong]="!allStatusesActive()" [class.text-soft]="!allStatusesActive()" (click)="clearStatuses()">{{ 'doctors.statusAll' | transloco }}</button>
 
       @for (chip of statusChips(); track chip.status) {
@@ -35,22 +46,22 @@
   </section>
 
   @if (filteredCount() === 0) {
-    <div class="bg-surface rounded-2xl py-12 text-center text-sm text-subtle">{{ 'doctors.empty' | transloco }}</div>
+    <div class="bg-surface border border-line-strong rounded-[20px] py-12 text-center text-sm text-subtle">{{ 'doctors.empty' | transloco }}</div>
   } @else {
     <!-- ПК: таблица -->
-    <section class="hidden md:block bg-surface rounded-2xl overflow-hidden">
+    <section class="hidden md:block bg-surface border border-line-strong rounded-[20px] overflow-hidden">
       <div class="overflow-auto max-h-[33rem] overscroll-contain [scrollbar-gutter:stable]">
         <table class="w-full text-sm">
           <thead class="sticky top-0 z-10 bg-surface shadow-[0_1px_0_0_var(--app-line)]">
           <tr class="text-left text-xs font-semibold uppercase tracking-wider text-subtle">
-            <th class="px-4 py-3">{{ 'doctors.columns.doctor' | transloco }}</th>
-            <th class="px-4 py-3">{{ 'doctors.columns.specialty' | transloco }}</th>
-            <th class="px-4 py-3">{{ 'doctors.columns.cabinet' | transloco }}</th>
-            <th class="px-4 py-3">{{ 'doctors.columns.schedule' | transloco }}</th>
-            <th class="px-4 py-3">{{ 'doctors.columns.experience' | transloco }}</th>
-            <th class="px-4 py-3">{{ 'doctors.columns.patientsToday' | transloco }}</th>
-            <th class="px-4 py-3">{{ 'doctors.columns.status' | transloco }}</th>
-            <th class="px-4 py-3"></th>
+            <th class="px-4 py-3.5">{{ 'doctors.columns.doctor' | transloco }}</th>
+            <th class="px-4 py-3.5">{{ 'doctors.columns.specialty' | transloco }}</th>
+            <th class="px-4 py-3.5">{{ 'doctors.columns.cabinet' | transloco }}</th>
+            <th class="px-4 py-3.5">{{ 'doctors.columns.schedule' | transloco }}</th>
+            <th class="px-4 py-3.5">{{ 'doctors.columns.experience' | transloco }}</th>
+            <th class="px-4 py-3.5">{{ 'doctors.columns.patientsToday' | transloco }}</th>
+            <th class="px-4 py-3.5">{{ 'doctors.columns.status' | transloco }}</th>
+            <th class="px-4 py-3.5"></th>
           </tr>
           </thead>
           <tbody>
@@ -58,9 +69,9 @@
               <tr class="border-b border-line last:border-0 hover:bg-page transition-colors">
                 <td class="px-4 py-3">
                   <div class="flex items-center gap-3">
-                    <span class="w-9 h-9 shrink-0 rounded-full bg-brand-100 text-accent flex items-center justify-center text-xs font-semibold">{{ doctor.initials }}</span>
+                    <span class="w-10 h-10 shrink-0 rounded-xl bg-brand-100 text-accent font-display flex items-center justify-center text-sm font-extrabold">{{ doctor.initials }}</span>
                     <div class="min-w-0">
-                      <div class="font-medium text-content">{{ doctor.fullName }}</div>
+                      <div class="font-semibold text-content">{{ doctor.fullName }}</div>
                       <div class="text-xs text-muted">{{ doctor.phone }}</div>
                     </div>
                   </div>
@@ -113,47 +124,17 @@
       </div>
     </section>
 
-    <!-- Мобилка: карточки -->
-    <section class="md:hidden flex flex-col gap-3">
+    <!-- Мобилка: компактные карточки — имя, специальность, статус; подробности — по нажатию -->
+    <section class="md:hidden flex flex-col gap-2">
       @for (doctor of mobileItems(); track doctor.id) {
-        <div class="bg-surface rounded-2xl p-4 flex flex-col gap-3">
-          <div class="flex items-center gap-3">
-            <span class="w-10 h-10 shrink-0 rounded-full bg-brand-100 text-accent flex items-center justify-center text-sm font-semibold">{{ doctor.initials }}</span>
-            <div class="min-w-0 flex-1">
-              <div class="font-semibold text-content">{{ doctor.fullName }}</div>
-              <div class="text-xs text-muted">{{ doctor.specialty }} · {{ 'doctors.experience' | transloco: { count: doctor.experienceYears } }}</div>
-            </div>
-            <span class="shrink-0 self-start px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap" [class]="doctor.statusClass">{{ doctor.statusKey | transloco }}</span>
-          </div>
-
-          <div class="grid grid-cols-3 gap-2 pt-3 border-t border-line text-xs">
-            <div>
-              <div class="text-subtle">{{ 'doctors.columns.cabinet' | transloco }}</div>
-              <div class="mt-0.5 text-soft">{{ 'doctors.cabinet' | transloco: { number: doctor.cabinet } }}</div>
-            </div>
-            <div>
-              <div class="text-subtle">{{ 'doctors.columns.schedule' | transloco }}</div>
-              <div class="mt-0.5 text-soft">{{ doctor.workDaysLabel }}</div>
-              <div class="text-muted">{{ doctor.workHoursLabel }}</div>
-            </div>
-            <div>
-              <div class="text-subtle">{{ 'doctors.columns.patientsToday' | transloco }}</div>
-              <div class="mt-0.5" [class.text-accent]="doctor.patientsToday > 0" [class.font-medium]="doctor.patientsToday > 0" [class.text-soft]="doctor.patientsToday === 0">{{ doctor.patientsToday > 0 ? doctor.patientsToday : '—' }}</div>
-            </div>
-          </div>
-
-          <!-- Действия -->
-          <div class="flex justify-end gap-2">
-            <button type="button" class="flex items-center gap-1 h-9 px-3 rounded-lg bg-page text-sm text-soft hover:text-accent hover:bg-brand-50" (click)="openEdit(doctor)">
-              <mat-icon fontSet="material-symbols-outlined" style="font-size: 18px; width: 18px; height: 18px;">edit</mat-icon>
-              {{ 'doctors.actions.edit' | transloco }}
-            </button>
-            <button type="button" class="flex items-center gap-1 h-9 px-3 rounded-lg bg-page text-sm text-soft hover:text-red-600 hover:bg-red-50 dark:hover:text-red-400 dark:hover:bg-red-500/10" (click)="remove(doctor)">
-              <mat-icon fontSet="material-symbols-outlined" style="font-size: 18px; width: 18px; height: 18px;">delete</mat-icon>
-              {{ 'doctors.actions.delete' | transloco }}
-            </button>
-          </div>
-        </div>
+        <button type="button" class="w-full min-h-16 text-left bg-surface border border-line-strong rounded-2xl px-3.5 py-2.5 flex items-center gap-3 active:bg-page" (click)="openDetails(doctor.id)">
+          <span class="w-10 h-10 shrink-0 rounded-xl bg-brand-100 text-accent font-display flex items-center justify-center text-sm font-extrabold">{{ doctor.initials }}</span>
+          <span class="min-w-0 flex-1 flex flex-col">
+            <span class="text-[15px] font-semibold text-content truncate">{{ doctor.fullName }}</span>
+            <span class="text-[13px] text-muted truncate">{{ doctor.specialty }}</span>
+          </span>
+          <span class="shrink-0 px-2.5 py-1 rounded-full text-xs font-semibold whitespace-nowrap" [class]="doctor.statusClass">{{ doctor.statusKey | transloco }}</span>
+        </button>
       }
 
       @if (hasMore()) {
@@ -162,6 +143,61 @@
     </section>
   }
 </div>
+
+<!-- Мобилка: подробности врача — нижняя панель -->
+@if (detailsDoctor(); as d) {
+  <div class="md:hidden fixed inset-0 z-[60] flex flex-col justify-end" role="dialog" aria-modal="true" [attr.aria-label]="d.fullName">
+    <button type="button" class="flex-1 bg-black/40" [attr.aria-label]="'common.close' | transloco" (click)="closeDetails()"></button>
+    <div class="bg-surface rounded-t-3xl px-4 pt-2.5 pb-[calc(1.75rem+env(safe-area-inset-bottom))] flex flex-col gap-4">
+      <span class="self-center w-10 h-1 rounded-full bg-line-strong" aria-hidden="true"></span>
+
+      <div class="flex items-center gap-3">
+        <span class="w-13 h-13 shrink-0 rounded-2xl bg-brand-100 text-accent font-display flex items-center justify-center text-[17px] font-extrabold">{{ d.initials }}</span>
+        <div class="min-w-0 flex-1">
+          <div class="font-display text-lg font-extrabold text-content">{{ d.fullName }}</div>
+          <div class="text-[13px] text-muted">{{ d.specialty }} · {{ 'doctors.experience' | transloco: { count: d.experienceYears } }}</div>
+        </div>
+        <button type="button" class="w-11 h-11 shrink-0 rounded-xl bg-page flex items-center justify-center text-content" [attr.aria-label]="'common.close' | transloco" (click)="closeDetails()">
+          <mat-icon fontSet="material-symbols-outlined">close</mat-icon>
+        </button>
+      </div>
+
+      <span class="self-start px-2.5 py-1 rounded-full text-xs font-semibold" [class]="d.statusClass">{{ d.statusKey | transloco }}</span>
+
+      <div class="grid grid-cols-2 gap-3 p-3.5 rounded-2xl bg-page text-[13px]">
+        <div>
+          <div class="text-muted">{{ 'doctors.form.phone' | transloco }}</div>
+          <div class="mt-0.5 font-semibold text-content">{{ d.phone }}</div>
+        </div>
+        <div>
+          <div class="text-muted">{{ 'doctors.columns.cabinet' | transloco }}</div>
+          <div class="mt-0.5 font-semibold text-content">{{ 'doctors.cabinet' | transloco: { number: d.cabinet } }}</div>
+        </div>
+        <div>
+          <div class="text-muted">{{ 'doctors.columns.schedule' | transloco }}</div>
+          <div class="mt-0.5 font-semibold text-content">{{ d.workDaysLabel }}</div>
+          <div class="text-muted">{{ d.workHoursLabel }}</div>
+        </div>
+        <div>
+          <div class="text-muted">{{ 'doctors.columns.patientsToday' | transloco }}</div>
+          <div class="mt-0.5 font-semibold" [class.text-accent]="d.patientsToday > 0" [class.text-content]="d.patientsToday === 0">{{ d.patientsToday > 0 ? d.patientsToday : '—' }}</div>
+        </div>
+      </div>
+
+      <div class="flex gap-2">
+        <a class="flex-1 flex items-center justify-center gap-2 h-12 rounded-2xl border border-line-strong text-[15px] font-semibold text-content" [href]="'tel:' + d.phone">
+          <mat-icon fontSet="material-symbols-outlined" style="font-size: 20px; width: 20px; height: 20px;">call</mat-icon>
+          {{ 'dashboard.appointmentDialog.call' | transloco }}
+        </a>
+        <button type="button" class="flex-1 flex items-center justify-center gap-2 h-12 rounded-2xl bg-brand-700 text-white text-[15px] font-semibold" (click)="closeDetails(); openEdit(d)">
+          <mat-icon fontSet="material-symbols-outlined" style="font-size: 20px; width: 20px; height: 20px;">edit</mat-icon>
+          {{ 'doctors.actions.edit' | transloco }}
+        </button>
+      </div>
+      <button type="button" class="self-center h-11 px-4 rounded-xl text-sm font-semibold text-red-600 dark:text-red-400" (click)="closeDetails(); remove(d)">{{ 'doctors.actions.delete' | transloco }}</button>
+    </div>
+  </div>
+}
 
 <!-- Добавить врача — мобилка: плавающая кнопка над нижним меню -->
 <button type="button" class="md:hidden fixed right-4 bottom-24 z-40 flex items-center gap-1 h-12 px-5 rounded-full bg-brand-700 text-white text-sm font-semibold shadow-lg hover:bg-brand-800" (click)="openCreate()">

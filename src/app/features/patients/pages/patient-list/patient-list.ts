@@ -4,6 +4,7 @@ import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { PATIENT_STATUS_CLASSES, PATIENT_STATUSES, PatientStatus } from '../../../../shared/models/patient-status';
+import { PATIENT_RATING_DOT, mockPatientRating } from '../../../../shared/models/patient-rating';
 import { PatientsService } from '../../services/patients.service';
 import { MatDialog } from '@angular/material/dialog';
 import { PATIENT_DETAILS_DIALOG_CONFIG, PatientDetailsDialog, PatientDetailsDialogData } from '../../components/patient-details-dialog/patient-details-dialog';
@@ -112,6 +113,11 @@ export class PatientList {
     this.resetPaging();
   }
 
+  // Мобилка: статус выбирается в селекте ('' — все)
+  protected onStatusSelect(value: string): void {
+    this.selectedStatuses.set(value ? [value as PatientStatus] : []);
+  }
+
   protected clearStatuses(): void {
     this.selectedStatuses.set([]);
     this.resetPaging();
@@ -122,6 +128,8 @@ export class PatientList {
   private readonly filtered = computed(() => {
     const statuses = this.selectedStatuses();
     const dateFormat = new Intl.DateTimeFormat(this.locale(), { day: '2-digit', month: '2-digit', year: 'numeric' });
+    // Короткая дата для мобильной карточки: «12 ноя.»
+    const shortFormat = new Intl.DateTimeFormat(this.locale(), { day: 'numeric', month: 'short' });
 
     return this.searched()
       .filter(patient => statuses.length === 0 || statuses.includes(patient.status))
@@ -133,7 +141,10 @@ export class PatientList {
         statusKey: `schedule.status.${patient.status}`,
         statusClass: PATIENT_STATUS_CLASSES[patient.status],
         lastVisitLabel: patient.lastVisit ? dateFormat.format(fromDateKey(patient.lastVisit)) : '',
-        nextVisitLabel: patient.nextVisit ? `${dateFormat.format(fromDateKey(patient.nextVisit))}, ${patient.nextVisitTime}` : ''
+        nextVisitLabel: patient.nextVisit ? `${dateFormat.format(fromDateKey(patient.nextVisit))}, ${patient.nextVisitTime}` : '',
+        nextVisitShort: patient.nextVisit ? shortFormat.format(fromDateKey(patient.nextVisit)) : '',
+        ratingDot: PATIENT_RATING_DOT[patient.rating ?? mockPatientRating(patient.id)],
+        ratingKey: `rating.${patient.rating ?? mockPatientRating(patient.id)}`
       }));
   });
 

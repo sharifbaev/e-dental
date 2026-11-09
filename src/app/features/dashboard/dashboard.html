@@ -2,7 +2,7 @@
 <ng-template #doctorSearch>
   <div class="relative">
     <mat-icon fontSet="material-symbols-outlined" class="absolute left-2 top-1/2 -translate-y-1/2 text-subtle pointer-events-none" style="font-size: 18px; width: 18px; height: 18px;">search</mat-icon>
-    <input type="text" class="w-full h-10 pl-8 pr-2 rounded-lg bg-page border border-transparent text-sm text-content placeholder:text-subtle outline-none focus:border-brand-300 focus:bg-surface" [formControl]="doctorControl" [matAutocomplete]="doctorAuto" [placeholder]="'dashboard.kpi.allDoctors' | transloco" (input)="onDoctorInput()">
+    <input type="text" class="w-full h-11 pl-8 pr-2 rounded-xl bg-surface border border-line-strong text-sm text-content placeholder:text-subtle outline-none focus:border-brand-300 focus:bg-surface" [formControl]="doctorControl" [matAutocomplete]="doctorAuto" [placeholder]="'dashboard.kpi.allDoctors' | transloco" (input)="onDoctorInput()">
   </div>
 </ng-template>
 
@@ -19,9 +19,9 @@
 @if (summary(); as s) {
   <div class="flex flex-col gap-4">
     <!-- Приветствие -->
-    <section class="bg-surface rounded-2xl p-5 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+    <section class="px-1 pt-1 flex flex-col md:flex-row md:items-end md:justify-between gap-4">
       <div class="min-w-0">
-        <h1 class="text-xl md:text-2xl font-bold text-content">{{ greetingKey() | transloco: { name: firstName() } }}</h1>
+        <h1 class="font-display text-2xl md:text-[30px] font-extrabold tracking-tight text-content">{{ greetingKey() | transloco: { name: firstName() } }}</h1>
         <p class="mt-1 text-sm text-muted">{{ today() }}</p>
 
         <!-- Выбор врача — ПК: после приветствия -->
@@ -31,11 +31,11 @@
       </div>
 
       <div class="flex flex-col md:flex-row gap-2">
-        <button type="button" class="hidden md:flex items-center gap-2 h-10 px-4 rounded-lg border border-brand-200 dark:border-brand-800 text-accent text-sm font-medium hover:bg-brand-50">
+        <button type="button" class="hidden md:flex items-center gap-2 h-11 px-4 rounded-xl bg-surface border border-line-strong text-content text-sm font-semibold hover:bg-brand-50">
           <mat-icon fontSet="material-symbols-outlined">hourglass_top</mat-icon>
           {{ 'dashboard.waitingList' | transloco }} ({{ s.waitingList }})
         </button>
-        <button type="button" class="w-full md:w-auto flex items-center justify-center gap-1 h-10 px-4 rounded-lg bg-brand-700 text-white text-sm font-medium hover:bg-brand-800" (click)="openAppointmentForm()">
+        <button type="button" class="w-full md:w-auto flex items-center justify-center gap-1 h-11 px-5 rounded-xl bg-brand-700 text-white text-sm font-semibold hover:bg-brand-800" (click)="openAppointmentForm()">
           <mat-icon fontSet="material-symbols-outlined">add</mat-icon>
           {{ 'dashboard.quickAppointment' | transloco }}
         </button>
@@ -50,34 +50,34 @@
     <!-- Карточки показателей -->
     <section class="grid grid-cols-2 lg:grid-cols-3 gap-4">
       <!-- Пациенты сегодня — открывает модалку -->
-      <button type="button" class="text-left bg-surface rounded-2xl p-4 flex flex-col gap-2 cursor-pointer transition-shadow hover:shadow-md focus-visible:outline-2 focus-visible:outline-brand-300" (click)="openPatientsDialog()">
+      <button type="button" class="text-left bg-surface border border-line-strong rounded-[18px] p-5 flex flex-col gap-2 cursor-pointer transition-shadow hover:shadow-md focus-visible:outline-2 focus-visible:outline-brand-300" (click)="openPatientsDialog()">
         <div class="w-full flex items-start justify-between gap-2">
           <span class="text-sm text-muted">{{ 'dashboard.kpi.patientsToday' | transloco }}</span>
-          <span class="w-9 h-9 shrink-0 rounded-lg bg-brand-50 text-accent flex items-center justify-center">
+          <span class="w-9 h-9 shrink-0 rounded-[10px] bg-brand-100 text-accent flex items-center justify-center">
             <mat-icon fontSet="material-symbols-outlined">groups</mat-icon>
           </span>
         </div>
         <div class="flex items-center gap-2">
-          <span class="text-3xl font-bold text-content">{{ s.patientsToday }}</span>
-          <span class="px-1.5 py-0.5 rounded text-xs font-medium bg-emerald-50 text-emerald-700">+{{ s.patientsTrend }}%</span>
+          <span class="font-display text-[34px] leading-none font-extrabold tracking-tight text-content">{{ s.patientsToday }}</span>
+          <span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300">+{{ s.patientsTrend }}%</span>
         </div>
         <span class="text-xs text-subtle">{{ 'dashboard.kpi.patientsHint' | transloco }}</span>
       </button>
 
       <!-- Свободные слоты — открывает модалку -->
-      <button type="button" class="text-left bg-surface rounded-2xl p-4 flex flex-col gap-2 cursor-pointer transition-shadow hover:shadow-md focus-visible:outline-2 focus-visible:outline-brand-300" (click)="openSlotsDialog()">
+      <button type="button" class="text-left bg-surface border border-line-strong rounded-[18px] p-5 flex flex-col gap-2 cursor-pointer transition-shadow hover:shadow-md focus-visible:outline-2 focus-visible:outline-brand-300" (click)="openSlotsDialog()">
         <div class="w-full flex items-start justify-between gap-2">
           <div class="min-w-0">
             <div class="text-sm text-muted">{{ 'dashboard.kpi.freeSlots' | transloco }}</div>
             <div class="text-xs text-accent truncate">{{ selectedDoctorName() || ('dashboard.kpi.allDoctors' | transloco) }}</div>
           </div>
-          <span class="w-9 h-9 shrink-0 rounded-lg bg-brand-50 text-accent flex items-center justify-center">
+          <span class="w-9 h-9 shrink-0 rounded-[10px] bg-brand-100 text-accent flex items-center justify-center">
             <mat-icon fontSet="material-symbols-outlined">event_available</mat-icon>
           </span>
         </div>
 
         <div class="flex items-baseline gap-1">
-          <span class="text-3xl font-bold text-content">{{ visibleSlots().length }}</span>
+          <span class="font-display text-[34px] leading-none font-extrabold tracking-tight text-content">{{ visibleSlots().length }}</span>
           <span class="text-sm text-muted">{{ 'dashboard.kpi.slotsUnit' | transloco }}</span>
         </div>
 
@@ -96,15 +96,15 @@
       </button>
 
       <!-- Врачи на смене — только ПК, открывает модалку -->
-      <button type="button" class="hidden md:flex text-left bg-surface rounded-2xl p-4 flex-col gap-2 cursor-pointer transition-shadow hover:shadow-md focus-visible:outline-2 focus-visible:outline-brand-300" (click)="openDoctorsDialog()">
+      <button type="button" class="hidden md:flex text-left bg-surface border border-line-strong rounded-[18px] p-5 flex-col gap-2 cursor-pointer transition-shadow hover:shadow-md focus-visible:outline-2 focus-visible:outline-brand-300" (click)="openDoctorsDialog()">
         <div class="w-full flex items-start justify-between gap-2">
           <span class="text-sm text-muted">{{ 'dashboard.kpi.doctorsOnShift' | transloco }}</span>
-          <span class="w-9 h-9 shrink-0 rounded-lg bg-brand-50 text-accent flex items-center justify-center">
+          <span class="w-9 h-9 shrink-0 rounded-[10px] bg-brand-100 text-accent flex items-center justify-center">
             <mat-icon fontSet="material-symbols-outlined">stethoscope</mat-icon>
           </span>
         </div>
         <div class="flex items-baseline gap-1">
-          <span class="text-3xl font-bold text-content">{{ s.doctorsOnShift }}</span>
+          <span class="font-display text-[34px] leading-none font-extrabold tracking-tight text-content">{{ s.doctorsOnShift }}</span>
           <span class="text-lg text-subtle">/ {{ s.doctorsTotal }}</span>
         </div>
         <span class="text-xs text-subtle">{{ 'dashboard.kpi.doctorsOff' | transloco: { count: s.doctorsTotal - s.doctorsOnShift } }}</span>
@@ -112,10 +112,10 @@
     </section>
 
     <!-- Ближайшие приёмы -->
-    <section class="bg-surface rounded-2xl p-5 flex flex-col gap-4">
+    <section class="bg-surface border border-line-strong rounded-[20px] p-5 md:p-6 flex flex-col gap-4">
       <div class="min-w-0">
         <div class="flex items-center gap-2">
-          <h2 class="text-lg font-bold text-content">{{ 'dashboard.appointments.title' | transloco }}</h2>
+          <h2 class="font-display text-lg font-bold text-content">{{ 'dashboard.appointments.title' | transloco }}</h2>
           @if (!appointmentsLoading()) {
             <span class="px-2 py-0.5 rounded-full bg-brand-50 text-xs font-semibold text-accent">{{ upcomingAppointments().length }}</span>
           }
@@ -138,7 +138,7 @@
               <!-- Верхний ряд: время и кабинет, ФИО и «через N мин», телефон -->
               <div class="flex items-center gap-4">
                 <div class="w-16 shrink-0 rounded-xl bg-surface flex flex-col items-center justify-center py-2">
-                  <span class="text-lg font-semibold text-content">{{ appointment.time }}</span>
+                  <span class="font-display text-lg font-bold text-content">{{ appointment.time }}</span>
                   <span class="text-xs text-subtle">{{ 'dashboard.appointments.cabinet' | transloco: { number: appointment.cabinet } }}</span>
                 </div>
 

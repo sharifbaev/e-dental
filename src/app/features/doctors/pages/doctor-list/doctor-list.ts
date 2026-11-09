@@ -118,6 +118,11 @@ export class DoctorList {
     this.resetPaging();
   }
 
+  // Мобилка: статус выбирается в селекте ('' — все)
+  protected onStatusSelect(value: string): void {
+    this.selectedStatuses.set(value ? [value as DoctorStatus] : []);
+  }
+
   protected clearStatuses(): void {
     this.selectedStatuses.set([]);
     this.resetPaging();
@@ -174,6 +179,18 @@ export class DoctorList {
   private readonly mobileLimit = signal(PAGE_SIZE);
 
   protected readonly mobileItems = computed(() => this.filtered().slice(0, this.mobileLimit()));
+
+  // Мобилка: подробности врача — в нижней панели по нажатию на карточку
+  private readonly detailsId = signal<number | null>(null);
+  protected readonly detailsDoctor = computed(() => this.filtered().find(doctor => doctor.id === this.detailsId()) ?? null);
+
+  protected openDetails(id: number): void {
+    this.detailsId.set(id);
+  }
+
+  protected closeDetails(): void {
+    this.detailsId.set(null);
+  }
   protected readonly hasMore = computed(() => this.mobileLimit() < this.filteredCount());
 
   protected showMore(): void {

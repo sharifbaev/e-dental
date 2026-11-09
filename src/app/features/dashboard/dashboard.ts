@@ -17,7 +17,7 @@ import { APPOINTMENT_FORM_DIALOG_CONFIG, AppointmentFormDialog } from '../schedu
 import { filter, switchMap } from 'rxjs';
 import { FeedbackService } from '../../shared/services/feedback.service';
 import { AppointmentFormData, AppointmentFormResult } from '../schedule/components/appointment-form-dialog/appointment-form-dialog';
-import { ScheduleService, toDateKey } from '../schedule/services/schedule.service';
+import { ScheduleService } from '../schedule/services/schedule.service';
 
 const LOCALES: Record<string, string> = { ru: 'ru-RU', uz: 'uz-Latn-UZ' };
 
@@ -243,19 +243,20 @@ export class Dashboard {
     });
   }
 
-  // Быстрая запись: на сегодня, в ближайшие полчаса
+  // Быстрая запись: по умолчанию на сегодня, в ближайшие полчаса (дату и время можно поменять в форме)
   protected openAppointmentForm(): void {
     this.dialog
       .open<AppointmentFormDialog, AppointmentFormData, AppointmentFormResult>(AppointmentFormDialog, APPOINTMENT_FORM_DIALOG_CONFIG)
       .afterClosed()
       .pipe(
         filter((result): result is AppointmentFormResult => !!result),
-        switchMap(result => this.scheduleService.add(result, toDateKey(new Date())))
+        switchMap(result => this.scheduleService.add(result, result.date, result.doctorId))
       )
       .subscribe({
         next: created => this.feedback.success('feedback.created', 'feedback.createdMessage', {
           patient: created.patientName,
-          date: '',
+          // Дата записи из формы: «30 октября»
+          date: new Intl.DateTimeFormat(this.locale(), { day: 'numeric', month: 'long' }).format(new Date(`${created.date}T00:00`)),
           time: created.start
         }),
         error: () => this.feedback.error()

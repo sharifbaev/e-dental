@@ -1,4 +1,5 @@
 import { PatientStatus } from '../../../shared/models/patient-status';
+import { PatientRating } from '../../../shared/models/patient-rating';
 
 export type Gender = 'female' | 'male';
 export type DiagnosisStatus = 'active' | 'resolved';
@@ -25,4 +26,5 @@ export interface Patient {
   nextVisit?: string;          // 'YYYY-MM-DD'
   nextVisitTime?: string;      // 'HH:mm'
   diagnoses: Diagnosis[];      // история, новые сверху
+  rating?: PatientRating;      // рейтинг пациента; нет — считаем «надёжный»
 }

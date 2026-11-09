@@ -1,7 +1,7 @@
 <!-- Шапка -->
 <div class="flex items-center justify-between gap-2 px-6 pt-5 pb-2">
   <div class="flex items-center gap-2 min-w-0">
-    <h2 class="text-lg font-bold text-gray-900">{{ 'schedule.details.title' | transloco }}</h2>
+    <h2 class="font-display text-lg font-bold text-content">{{ 'schedule.details.title' | transloco }}</h2>
     <span class="px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap" [class]="data.statusClass">{{ data.statusKey | transloco }}</span>
   </div>
   <button matIconButton mat-dialog-close type="button" [title]="'common.close' | transloco">
@@ -21,7 +21,7 @@
         <mat-icon fontSet="material-symbols-outlined" style="font-size: 18px; width: 18px; height: 18px;">schedule</mat-icon>
         {{ appointment.start }} – {{ appointment.end }}
       </span>
-      <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-page text-sm font-medium text-gray-700">
+      <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-page text-sm font-medium text-soft">
         <mat-icon fontSet="material-symbols-outlined" style="font-size: 18px; width: 18px; height: 18px;">meeting_room</mat-icon>
         {{ 'schedule.cabinet' | transloco: { number: appointment.cabinet } }}
       </span>
@@ -29,21 +29,21 @@
 
     <!-- Пациент -->
     <div class="flex items-start gap-3">
-      <mat-icon fontSet="material-symbols-outlined" class="text-gray-400 shrink-0">person</mat-icon>
+      <mat-icon fontSet="material-symbols-outlined" class="text-subtle shrink-0">person</mat-icon>
       <div class="min-w-0">
-        <div class="text-xs text-gray-400">{{ 'schedule.details.patient' | transloco }}</div>
-        <div class="font-semibold text-gray-900" [class.line-through]="isCancelled">{{ appointment.patientName }}</div>
+        <div class="text-xs text-subtle">{{ 'schedule.details.patient' | transloco }}</div>
+        <div class="font-semibold text-content" [class.line-through]="isCancelled">{{ appointment.patientName }}</div>
       </div>
     </div>
 
     <!-- Телефон -->
     <div class="flex items-start gap-3">
-      <mat-icon fontSet="material-symbols-outlined" class="text-gray-400 shrink-0">call</mat-icon>
+      <mat-icon fontSet="material-symbols-outlined" class="text-subtle shrink-0">call</mat-icon>
       <div class="min-w-0 flex-1">
-        <div class="text-xs text-gray-400">{{ 'schedule.details.phone' | transloco }}</div>
+        <div class="text-xs text-subtle">{{ 'schedule.details.phone' | transloco }}</div>
         <div class="flex items-center gap-2">
           <a [href]="data.phoneHref" class="font-medium text-brand-700 hover:underline">{{ appointment.phone }}</a>
-          <button type="button" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs font-medium text-gray-500 hover:bg-page hover:text-brand-700" (click)="copyPhone()">
+          <button type="button" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs font-medium text-muted hover:bg-page hover:text-brand-700" (click)="copyPhone()">
             <mat-icon fontSet="material-symbols-outlined" style="font-size: 16px; width: 16px; height: 16px;">{{ copied() ? 'check' : 'content_copy' }}</mat-icon>
             {{ (copied() ? 'schedule.details.copied' : 'schedule.details.copy') | transloco }}
           </button>
@@ -53,19 +53,19 @@
 
     <!-- Услуга -->
     <div class="flex items-start gap-3">
-      <mat-icon fontSet="material-symbols-outlined" class="text-gray-400 shrink-0">medical_services</mat-icon>
+      <mat-icon fontSet="material-symbols-outlined" class="text-subtle shrink-0">medical_services</mat-icon>
       <div class="min-w-0">
-        <div class="text-xs text-gray-400">{{ 'schedule.details.service' | transloco }}</div>
-        <div class="text-gray-800">{{ appointment.service }}</div>
+        <div class="text-xs text-subtle">{{ 'schedule.details.service' | transloco }}</div>
+        <div class="text-content">{{ appointment.service }}</div>
       </div>
     </div>
 
     <!-- Врач -->
     <div class="flex items-start gap-3">
-      <mat-icon fontSet="material-symbols-outlined" class="text-gray-400 shrink-0">stethoscope</mat-icon>
+      <mat-icon fontSet="material-symbols-outlined" class="text-subtle shrink-0">stethoscope</mat-icon>
       <div class="min-w-0">
-        <div class="text-xs text-gray-400">{{ 'schedule.details.doctor' | transloco }}</div>
-        <div class="text-gray-800">{{ 'dashboard.doctorPrefix' | transloco }} {{ appointment.doctorName }}</div>
+        <div class="text-xs text-subtle">{{ 'schedule.details.doctor' | transloco }}</div>
+        <div class="text-content">{{ 'dashboard.doctorPrefix' | transloco }} {{ appointment.doctorName }}</div>
       </div>
     </div>
   </div>

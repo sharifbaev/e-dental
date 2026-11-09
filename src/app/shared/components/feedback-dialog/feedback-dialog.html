@@ -4,11 +4,11 @@
   </span>
 
   <div>
-    <h2 class="text-lg font-bold text-gray-900">{{ data.titleKey | transloco }}</h2>
+    <h2 class="font-display text-lg font-bold text-content">{{ data.titleKey | transloco }}</h2>
     @if (data.messageKey) {
-      <p class="mt-1 text-sm text-gray-600">{{ data.messageKey | transloco: data.messageParams }}</p>
+      <p class="mt-1 text-sm text-soft">{{ data.messageKey | transloco: data.messageParams }}</p>
     }
   </div>
 
-  <button type="button" class="mt-1 w-full px-4 py-3 rounded-lg text-sm font-medium" [class.bg-brand-700]="isSuccess" [class.text-white]="isSuccess" [class.hover:bg-brand-800]="isSuccess" [class.border]="!isSuccess" [class.border-gray-200]="!isSuccess" [class.text-gray-700]="!isSuccess" [class.hover:bg-page]="!isSuccess" mat-dialog-close>{{ 'feedback.ok' | transloco }}</button>
+  <button type="button" class="mt-1 w-full px-4 py-3 rounded-lg text-sm font-medium" [class.bg-brand-700]="isSuccess" [class.text-white]="isSuccess" [class.hover:bg-brand-800]="isSuccess" [class.border]="!isSuccess" [class.border-line-strong]="!isSuccess" [class.text-soft]="!isSuccess" [class.hover:bg-page]="!isSuccess" mat-dialog-close>{{ 'feedback.ok' | transloco }}</button>
 </div>

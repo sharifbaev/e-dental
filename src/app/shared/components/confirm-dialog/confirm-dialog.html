@@ -4,12 +4,12 @@
   </span>
 
   <div>
-    <h2 class="text-lg font-bold text-gray-900">{{ data.titleKey | transloco }}</h2>
-    <p class="mt-1 text-sm text-gray-600">{{ data.messageKey | transloco: data.messageParams }}</p>
+    <h2 class="font-display text-lg font-bold text-content">{{ data.titleKey | transloco }}</h2>
+    <p class="mt-1 text-sm text-soft">{{ data.messageKey | transloco: data.messageParams }}</p>
   </div>
 
   <div class="w-full flex flex-col-reverse sm:flex-row gap-2">
-    <button type="button" class="flex-1 px-4 py-3 rounded-lg border border-line-strong text-sm font-medium text-gray-700 hover:bg-page" [mat-dialog-close]="false">{{ data.cancelKey | transloco }}</button>
+    <button type="button" class="flex-1 px-4 py-3 rounded-lg border border-line-strong text-sm font-medium text-soft hover:bg-page" [mat-dialog-close]="false">{{ data.cancelKey | transloco }}</button>
     <button type="button" class="flex-1 px-4 py-3 rounded-lg text-sm font-medium text-white" [class.bg-red-600]="data.danger" [class.hover:bg-red-700]="data.danger" [class.bg-brand-700]="!data.danger" [class.hover:bg-brand-800]="!data.danger" [mat-dialog-close]="true">{{ data.confirmKey | transloco }}</button>
   </div>
 </div>

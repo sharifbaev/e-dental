@@ -1,5 +1,5 @@
-import { Component, computed, inject } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { Component, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MAT_DIALOG_DATA, MatDialogConfig, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
@@ -7,6 +7,10 @@ import { MatIconModule } from '@angular/material/icon';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { uzPhoneValidator } from '../../../../shared/validators/uz-phone.validator';
 import { DOCTOR_STATUSES, Doctor, DoctorDraft, DoctorStatus, SPECIALTIES } from '../../models/doctor.model';
+import { AppointmentFormService } from '../../../schedule/services/appointment-form.service';
+
+// «Другое» в списке услуг — та же договорённость, что и в форме записи
+const OTHER_SERVICE_ID = 0;
 
 // Необязательные данные: если передан врач — форма в режиме изменения
 export interface DoctorFormData {
@@ -49,6 +53,7 @@ export class DoctorFormDialog {
   private readonly dialogRef = inject<MatDialogRef<DoctorFormDialog, DoctorDraft>>(MatDialogRef);
   private readonly data = inject<DoctorFormData | null>(MAT_DIALOG_DATA, { optional: true });
   private readonly transloco = inject(TranslocoService);
+  private readonly formService = inject(AppointmentFormService);
 
   private readonly doctor = this.data?.doctor;
 
@@ -71,8 +76,54 @@ export class DoctorFormDialog {
     workDays: [this.doctor?.workDays ?? [1, 2, 3, 4, 5], workDaysRequired],
     workStart: [this.doctor?.workStart ?? '09:00', Validators.required],
     workEnd: [this.doctor?.workEnd ?? '18:00', Validators.required],
-    status: [this.doctor?.status ?? ('offShift' as DoctorStatus)]
+    status: [this.doctor?.status ?? ('offShift' as DoctorStatus)],
+    // Услуги врача: можно несколько; «Другое» — своя услуга текстом
+    serviceIds: [this.doctor?.serviceIds ?? ([] as number[])],
+    otherService: [{ value: this.doctor?.otherService ?? '', disabled: !this.doctor?.serviceIds?.includes(OTHER_SERVICE_ID) }, [Validators.required, Validators.minLength(3)]]
   }, { validators: timeRangeValidator });
+
+  constructor() {
+    // Поле своей услуги — только при выбранном «Другое»
+    this.form.controls.serviceIds.valueChanges.pipe(takeUntilDestroyed()).subscribe(ids => {
+      const other = this.form.controls.otherService;
+      if (ids.includes(OTHER_SERVICE_ID)) {
+        other.enable();
+      } else {
+        other.disable();
+      }
+    });
+  }
+
+  // ---- Услуги врача (несколько) ----
+
+  protected readonly services = toSignal(this.formService.getVisitServices());
+  protected readonly otherServiceId = OTHER_SERVICE_ID;
+  protected readonly servicesOpen = signal(false);
+
+  private readonly selectedServiceIds = toSignal(this.form.controls.serviceIds.valueChanges, {
+    initialValue: this.form.controls.serviceIds.value
+  });
+
+  protected readonly selectedServices = computed(() => {
+    const ids = this.selectedServiceIds();
+    const chips = (this.services() ?? []).filter(service => ids.includes(service.id)).map(service => ({ id: service.id, name: service.name }));
+    return ids.includes(OTHER_SERVICE_ID) ? [{ id: OTHER_SERVICE_ID, name: '' }, ...chips] : chips;
+  });
+
+  protected readonly isOtherSelected = computed(() => this.selectedServiceIds().includes(OTHER_SERVICE_ID));
+
+  protected isServiceSelected(id: number): boolean {
+    return this.selectedServiceIds().includes(id);
+  }
+
+  protected toggleService(id: number): void {
+    const ids = this.form.controls.serviceIds.value;
+    this.form.controls.serviceIds.setValue(ids.includes(id) ? ids.filter(x => x !== id) : [...ids, id]);
+  }
+
+  protected toggleServicesList(): void {
+    this.servicesOpen.update(open => !open);
+  }
 
   private readonly formStatus = toSignal(this.form.statusChanges, { initialValue: this.form.status });
   protected readonly canSubmit = computed(() => this.formStatus() === 'VALID');
@@ -126,7 +177,8 @@ export class DoctorFormDialog {
       fullName: value.fullName.trim(),
       phone: value.phone.trim(),
       cabinet: Number(value.cabinet),
-      experienceYears: Number(value.experienceYears) || 0
+      experienceYears: Number(value.experienceYears) || 0,
+      otherService: value.serviceIds.includes(OTHER_SERVICE_ID) ? value.otherService.trim() : ''
     });
   }
 }

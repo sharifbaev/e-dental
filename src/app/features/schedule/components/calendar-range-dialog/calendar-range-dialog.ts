@@ -9,7 +9,7 @@ import { TranslocoPipe } from '@jsverse/transloco';
 export interface CalendarRangeDialogData {
   start: Date | null;
   end: Date | null;
-  minDate: Date;
+  minDate?: Date | null;      // ограничение снизу; не задано — можно выбрать и прошедшие даты
   locale: string;              // 'ru-RU' | 'uz-Latn-UZ' — язык календаря
 }
 

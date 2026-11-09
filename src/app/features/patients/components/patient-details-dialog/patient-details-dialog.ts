@@ -6,6 +6,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { PATIENT_STATUS_CLASSES, PATIENT_STATUSES, PatientStatus } from '../../../../shared/models/patient-status';
+import { PATIENT_RATING_CLASSES, PATIENT_RATING_DOT, mockPatientRating } from '../../../../shared/models/patient-rating';
 import { FeedbackService } from '../../../../shared/services/feedback.service';
 import { uzPhoneValidator } from '../../../../shared/validators/uz-phone.validator';
 import { Gender } from '../../models/patient.model';
@@ -96,6 +97,9 @@ export class PatientDetailsDialog {
       birthDateLabel: dateFormat.format(fromDateKey(patient.birthDate)),
       statusKey: `schedule.status.${patient.status}`,
       statusClass: PATIENT_STATUS_CLASSES[patient.status],
+      ratingKey: `rating.${patient.rating ?? mockPatientRating(patient.id)}`,
+      ratingClass: PATIENT_RATING_CLASSES[patient.rating ?? mockPatientRating(patient.id)],
+      ratingDot: PATIENT_RATING_DOT[patient.rating ?? mockPatientRating(patient.id)],
       lastVisitLabel: patient.lastVisit ? dateFormat.format(fromDateKey(patient.lastVisit)) : '',
       nextVisitLabel: patient.nextVisit ? `${dateFormat.format(fromDateKey(patient.nextVisit))}, ${patient.nextVisitTime}` : '',
       diagnoses: patient.diagnoses.map(d => ({ ...d, dateLabel: dateFormat.format(fromDateKey(d.date)) }))

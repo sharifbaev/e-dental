@@ -121,7 +121,30 @@
       "section": "Xizmat yoki tashrif sababi",
       "selected": "Tanlandi",
       "urgent": "Shoshilinch",
-      "minutes": "{{count}} daqiqa"
+      "minutes": "{{count}} daqiqa",
+      "placeholder": "Xizmatni tanlang",
+      "other": "Boshqa",
+      "otherLabel": "Tashrif sababini yozing",
+      "otherPlaceholder": "Masalan: plomba sinishi, tishlar sezgirligi…",
+      "add": "Xizmat qo'shish",
+      "remove": "Olib tashlash",
+      "done": "Tayyor",
+      "durationHint": "Qabul davomiyligi: {{count}} daq — tanlangan xizmatlar yig'indisi, quyida o'zgartirish mumkin"
+    },
+    "dateTime": {
+      "section": "Sana va vaqt",
+      "date": "Sana",
+      "time": "Vaqt",
+      "doctor": "Shifokor",
+      "duration": "Davomiyligi",
+      "min30": "30 daq",
+      "min45": "45 daq",
+      "hour1": "1 soat",
+      "otherDuration": "Boshqa",
+      "minutes": "Daqiqa",
+      "freeSlots": "Bo'sh vaqt",
+      "noSlots": "Bu sanada shifokorda bunday davomiylikdagi bo'sh vaqt yo'q — boshqa sana yoki shifokorni tanlang",
+      "orTime": "yoki o'z vaqtingiz:"
     },
     "errors": {
       "required": "Majburiy maydon",
@@ -131,7 +154,7 @@
       "selectService": "Xizmat yoki tashrif sababini tanlang"
     },
     "editTitle": "Yozuvni o'zgartirish",
-    "editSubtitle": "Bemor yoki xizmatni o'zgartiring",
+    "editSubtitle": "Bemor, xizmat yoki vaqtni o'zgartiring",
     "save": "O'zgarishlarni saqlash"
   },
   "notifications": {
@@ -213,7 +236,8 @@
       "copied": "Nusxalandi",
       "edit": "O'zgartirish",
       "cancel": "Qabulni bekor qilish"
-    }
+    },
+    "doctor": "Shifokor"
   },
   "feedback": {
     "ok": "Tushunarli",
@@ -226,7 +250,8 @@
     "patientUpdated": "Bemor ma'lumotlari saqlandi",
     "doctorCreated": "Shifokor qo'shildi",
     "doctorUpdated": "Shifokor ma'lumotlari saqlandi",
-    "doctorDeleted": "Shifokor o'chirildi"
+    "doctorDeleted": "Shifokor o'chirildi",
+    "settingsSaved": "Sozlamalar saqlandi"
   },
   "patients": {
     "title": "Bemorlar",
@@ -325,7 +350,10 @@
         "cabinet": "Xona raqami 1 dan 50 gacha",
         "workDays": "Kamida bitta kunni tanlang",
         "timeRange": "Ish kunining oxiri boshlanishidan keyin bo'lishi kerak"
-      }
+      },
+      "services": "Shifokor xizmatlari · bir nechtasini tanlash mumkin",
+      "otherService": "Boshqa xizmat",
+      "otherServicePlaceholder": "Masalan: bolalar stomatologiyasi"
     }
   },
   "login": {
@@ -336,6 +364,76 @@
     "errors": {
       "required": "Majburiy maydon",
       "invalid": "Login yoki parol noto'g'ri"
+    },
+    "title": "Tizimga kirish",
+    "heroTitle": "Butun klinika —",
+    "heroAccent": "bitta oynada",
+    "heroText": "Shifokorlar jadvali, bemor kartalari va to'lovlar — administratorlar va shifokorlar uchun.",
+    "help": "Kirish yo'qmi? Klinika administratoriga murojaat qiling.",
+    "features": {
+      "schedule": "Jadval",
+      "patients": "Bemor kartalari",
+      "payments": "To'lovlar va qarzlar"
+    }
+  },
+  "rating": {
+    "label": "Reyting",
+    "good": "Ishonchli",
+    "warn": "E'tibor talab qiladi",
+    "risk": "Muammoli",
+    "goodHint": "O'z vaqtida keladi, qarzi yo'q",
+    "warnHint": "Kechikishlar yoki tez-tez ko'chirishlar",
+    "riskHint": "Kelmasliklar, qarzlar yoki nizolar"
+  },
+  "settings": {
+    "title": "Sozlamalar",
+    "subtitle": "Klinika ma'lumotlari, ko'rinish va bildirishnomalar",
+    "save": "Saqlash",
+    "reset": "O'zgarishlarni bekor qilish",
+    "sections": {
+      "clinic": "Klinika",
+      "appearance": "Ko'rinish",
+      "notifications": "Bildirishnomalar"
+    },
+    "clinic": {
+      "logo": "Logotip",
+      "logoHint": "Menyuda va cheklarda ko'rsatiladi · PNG, SVG",
+      "name": "Klinika nomi",
+      "phone": "Qabulxona telefoni",
+      "address": "Manzil",
+      "hours": "Ish vaqti",
+      "open": "Ochilish",
+      "close": "Yopilish",
+      "timezone": "Vaqt mintaqasi",
+      "tashkent": "Toshkent (UTC+5)",
+      "currency": "Valyuta",
+      "uzs": "So'm (UZS)",
+      "usd": "Dollar (USD)"
+    },
+    "appearance": {
+      "language": "Interfeys tili",
+      "theme": "Mavzu",
+      "light": "Yorug'",
+      "dark": "Qorong'i",
+      "system": "Tizimdagidek"
+    },
+    "notifications": {
+      "sms24h": {
+        "title": "Tashrifdan 24 soat oldin SMS",
+        "hint": "Bemor «1» deb javob berib tasdiqlashi mumkin"
+      },
+      "sms2h": {
+        "title": "Tashrifdan 2 soat oldin SMS",
+        "hint": "Manzil bilan qisqa eslatma"
+      },
+      "doctorNewAppointment": {
+        "title": "Yangi yozuv haqida shifokorga xabar berish",
+        "hint": "Ilovada va SMS orqali"
+      },
+      "dailyReport": {
+        "title": "Administratorga kunlik hisobot",
+        "hint": "Qabullar, to'lovlar va qarzlar soat 19:00 da"
+      }
     }
   }
 }

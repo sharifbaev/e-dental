@@ -4,16 +4,25 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
-  /* Бирюзовая палитра по макету DentaCare — одинаковая в обеих темах */
-  --color-brand-200: #aedde1;
-  --color-brand-300: #7cc5cc;
-  --color-brand-400: #4aa7b1;
-  --color-brand-500: #2f8b96;
-  --color-brand-600: #237380;
-  --color-brand-700: #1d5e69;
-  --color-brand-800: #1b4d56;
-  --color-brand-900: #193f47;
-  --color-brand-950: #0c262c;
+  /* Шрифты нового дизайна: Inter — текст, Manrope — заголовки и цифры (класс font-display) */
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Manrope", "Inter", ui-sans-serif, system-ui, sans-serif;
+
+  /* Бирюзовая палитра нового дизайна — одинаковая в обеих темах. Основной цвет — brand-700 (#0B7A68) */
+  --color-brand-200: #bfe3d9;
+  --color-brand-300: #8acdbc;
+  --color-brand-400: #3fae96;
+  --color-brand-500: #189583;
+  --color-brand-600: #0f8a75;
+  --color-brand-700: #0b7a68;
+  --color-brand-800: #075e50;
+  --color-brand-900: #0a4a40;
+  --color-brand-950: #06231f;
+
+  /* Рейтинг пациента: надёжный / требует внимания / проблемный */
+  --color-rating-good: #16a34a;
+  --color-rating-warn: #ca8a04;
+  --color-rating-risk: #dc2626;
 }
 
 /* Семантические цвета: значение берётся из переменных ниже и меняется вместе с темой */
@@ -34,32 +43,32 @@
 
 /* Светлая тема */
 :root {
-  --app-brand-50: #eef8f8;
-  --app-brand-100: #d5eef0;
+  --app-brand-50: #f0f8f5;
+  --app-brand-100: #e3f2ee;
 
-  --app-page: #f3f6f8;
+  --app-page: #f4f6f5;
   --app-surface: #ffffff;
-  --app-content: #111827;
-  --app-soft: #374151;
-  --app-muted: #6b7280;
-  --app-subtle: #9ca3af;
-  --app-line: #f3f4f6;
-  --app-line-strong: #e5e7eb;
-  --app-accent: #1d5e69;
+  --app-content: #10201c;
+  --app-soft: #34433e;
+  --app-muted: #5b6b66;
+  --app-subtle: #8a9893;
+  --app-line: #eef1f0;
+  --app-line-strong: #e3e8e6;
+  --app-accent: #0b7a68;
 }
 
 /* Тёмная тема */
 .dark {
-  --app-brand-50: #12343a;
-  --app-brand-100: #174148;
+  --app-brand-50: #10302a;
+  --app-brand-100: #143a33;
 
-  --app-page: #0b1215;
-  --app-surface: #151d22;
-  --app-content: #e5e7eb;
-  --app-soft: #cbd5e1;
-  --app-muted: #9ca3af;
-  --app-subtle: #6b7280;
-  --app-line: #1f2a30;
-  --app-line-strong: #2b373e;
-  --app-accent: #7cc5cc;
+  --app-page: #0b1513;
+  --app-surface: #13211e;
+  --app-content: #e6eeeb;
+  --app-soft: #c9d6d1;
+  --app-muted: #93a49e;
+  --app-subtle: #6b7c76;
+  --app-line: #1c2b27;
+  --app-line-strong: #273833;
+  --app-accent: #5ee0c3;
 }

@@ -11,16 +11,20 @@ html {
       // Цвета Material переключаются вместе с color-scheme (светлая/тёмная)
       theme-type: color-scheme,
     ),
-    typography: Roboto,
+    // Inter — текст, Manrope — заголовки (как в новом дизайне)
+    typography: (
+      plain-family: Inter,
+      brand-family: Manrope,
+    ),
     density: 0,
   ));
 
   // Точные цвета бренда: первое значение — светлая тема, второе — тёмная
   @include mat.theme-overrides((
-    primary: light-dark(#1d5e69, #4aa7b1),
-    on-primary: light-dark(#ffffff, #0c262c),
-    primary-container: light-dark(#d5eef0, #174148),
-    on-primary-container: light-dark(#193f47, #d5eef0),
+    primary: light-dark(#0b7a68, #5ee0c3),
+    on-primary: light-dark(#ffffff, #06231f),
+    primary-container: light-dark(#e3f2ee, #143a33),
+    on-primary-container: light-dark(#075e50, #e3f2ee),
   ));
 }
 

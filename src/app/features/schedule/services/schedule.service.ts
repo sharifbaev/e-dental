@@ -1,6 +1,7 @@
 import { Injectable, computed, signal } from '@angular/core';
 import { Observable, delay, map, of, tap } from 'rxjs';
 import { AppointmentDraft, PatientStatus, ScheduleAppointment } from '../models/schedule.model';
+import { mockPatientRating } from '../../../shared/models/patient-rating';
 
 // Шаблоны приёмов для mock-данных
 const TEMPLATES: Omit<ScheduleAppointment, 'id' | 'date' | 'status'>[] = [
@@ -24,6 +25,9 @@ const TODAY_STATUSES: PatientStatus[] = ['completed', 'inTreatment', 'primary', 
 const FUTURE_STATUSES: PatientStatus[] = ['primary', 'inTreatment', 'primary', 'primary', 'inTreatment', 'cancelled'];
 
 const MOCK_DAYS = 60;
+// Прошедшие дни в mock-данных — чтобы в календаре было что показать за прошлые даты
+const MOCK_PAST_DAYS = 30;
+const PAST_STATUSES: PatientStatus[] = ['completed', 'completed', 'cancelled', 'completed'];
 
 // Имитация задержки ответа сервера
 const MOCK_DELAY_MS = 300;
@@ -43,7 +47,7 @@ export function addMinutes(time: string, minutes: number): string {
 }
 
 // Ближайшие полчаса от текущего времени: 14:10 → 14:30
-function nextHalfHour(): string {
+export function nextHalfHour(): string {
   const now = new Date();
   const total = Math.min(Math.ceil((now.getHours() * 60 + now.getMinutes()) / 30) * 30, 23 * 60 + 30);
   return `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`;
@@ -53,18 +57,21 @@ function buildMock(): ScheduleAppointment[] {
   const result: ScheduleAppointment[] = [];
   const today = new Date();
 
-  for (let dayIndex = 0; dayIndex < MOCK_DAYS; dayIndex++) {
+  for (let dayIndex = -MOCK_PAST_DAYS; dayIndex < MOCK_DAYS; dayIndex++) {
     const date = new Date(today.getFullYear(), today.getMonth(), today.getDate() + dayIndex);
-    const statuses = dayIndex === 0 ? TODAY_STATUSES : FUTURE_STATUSES;
-    const count = COUNTS[dayIndex % COUNTS.length];
+    const statuses = dayIndex === 0 ? TODAY_STATUSES : dayIndex < 0 ? PAST_STATUSES : FUTURE_STATUSES;
+    const index = Math.abs(dayIndex);
+    const count = COUNTS[index % COUNTS.length];
 
     for (let k = 0; k < count; k++) {
-      const template = TEMPLATES[(dayIndex * 3 + k) % TEMPLATES.length];
+      const template = TEMPLATES[(index * 3 + k) % TEMPLATES.length];
       result.push({
         ...template,
-        id: dayIndex * 100 + k + 1,
+        // Прошедшие дни — отдельный диапазон id, чтобы не пересекаться с текущими
+        id: dayIndex < 0 ? 100000 + index * 100 + k + 1 : dayIndex * 100 + k + 1,
         date: toDateKey(date),
-        status: statuses[(k + dayIndex) % statuses.length]
+        status: statuses[(k + index) % statuses.length],
+        patientRating: mockPatientRating(template.patientId)
       });
     }
   }
@@ -83,13 +90,13 @@ export class ScheduleService {
     [...this._appointments()].sort((a, b) => a.date.localeCompare(b.date) || a.start.localeCompare(b.start))
   );
 
-  // Новая запись. Пока в форме нет врача и времени: сегодня — ближайшие полчаса, иначе 09:00;
+  // Новая запись. Время — из формы; если не передано: сегодня — ближайшие полчаса, иначе 09:00;
   // врач — переданный или первый из расписания
   // TODO: на API — POST /appointments, данные врача, даты и слота — из формы
   add(draft: AppointmentDraft, date: string, doctorId?: number): Observable<ScheduleAppointment> {
     const list = this._appointments();
     const doctor = list.find(a => a.doctorId === doctorId) ?? list[0];
-    const start = date === toDateKey(new Date()) ? nextHalfHour() : '09:00';
+    const start = draft.time ?? (date === toDateKey(new Date()) ? nextHalfHour() : '09:00');
 
     const appointment: ScheduleAppointment = {
       id: Date.now(),
@@ -104,7 +111,8 @@ export class ScheduleService {
       service: draft.serviceName,
       doctorId: doctor.doctorId,
       doctorName: doctor.doctorName,
-      status: 'primary'
+      status: 'primary',
+      patientRating: draft.rating ?? (draft.patientId ? mockPatientRating(draft.patientId) : 'good')
     };
 
     return of(appointment).pipe(

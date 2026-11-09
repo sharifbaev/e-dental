@@ -30,6 +30,35 @@ export class ThemeService {
     }
   }
 
+  // Явный выбор темы (экран «Настройки»)
+  set(theme: Theme): void {
+    this.theme.set(theme);
+    try {
+      localStorage.setItem(STORAGE_KEY, theme);
+    } catch {
+      // localStorage недоступен — тема не запомнится
+    }
+  }
+
+  // «Как в системе»: забываем выбор и берём тему системы
+  useSystem(): void {
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+    } catch {
+      // нет доступа к localStorage
+    }
+    this.theme.set(window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  }
+
+  // Выбран ли «как в системе» (нет сохранённого выбора)
+  isSystem(): boolean {
+    try {
+      return !localStorage.getItem(STORAGE_KEY);
+    } catch {
+      return true;
+    }
+  }
+
   // Сохранённый выбор, а если его нет — тема системы
   private initialTheme(): Theme {
     try {

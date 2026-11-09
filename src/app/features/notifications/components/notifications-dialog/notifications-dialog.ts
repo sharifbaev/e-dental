@@ -18,10 +18,10 @@ export const NOTIFICATIONS_DIALOG_CONFIG: MatDialogConfig = {
 
 // Иконка и цвета по типу уведомления
 const TYPE_VIEW: Record<NotificationType, { icon: string; classes: string }> = {
-  onlineBooking: { icon: 'event_upcoming', classes: 'bg-brand-50 text-brand-700' },
-  cancellation: { icon: 'event_busy', classes: 'bg-red-50 text-red-600' },
-  waitingList: { icon: 'hourglass_top', classes: 'bg-amber-50 text-amber-700' },
-  noShow: { icon: 'person_off', classes: 'bg-orange-50 text-orange-600' }
+  onlineBooking: { icon: 'event_upcoming', classes: 'bg-brand-50 text-brand-700 dark:text-brand-300' },
+  cancellation: { icon: 'event_busy', classes: 'bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400' },
+  waitingList: { icon: 'hourglass_top', classes: 'bg-amber-50 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300' },
+  noShow: { icon: 'person_off', classes: 'bg-orange-50 text-orange-600 dark:bg-orange-500/15 dark:text-orange-300' }
 };
 
 type Tab = 'all' | 'unread';

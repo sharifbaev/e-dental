@@ -1,7 +1,7 @@
 <!-- Шапка -->
 <div class="flex items-center justify-between gap-2 px-6 pt-5 pb-3">
   <div class="flex items-center gap-2">
-    <h2 class="text-lg font-bold text-gray-900">{{ 'notifications.title' | transloco }}</h2>
+    <h2 class="font-display text-lg font-bold text-content">{{ 'notifications.title' | transloco }}</h2>
     @if (unreadCount() > 0) {
       <span class="px-2 py-0.5 rounded-full bg-red-50 text-xs font-semibold text-red-600">{{ unreadCount() }}</span>
     }
@@ -19,8 +19,8 @@
 <!-- Вкладки -->
 <div class="px-6 pb-3">
   <div class="grid grid-cols-2 gap-1 p-1 rounded-xl bg-page">
-    <button type="button" class="h-9 rounded-lg text-sm font-medium transition-colors" [class.bg-white]="tab() === 'all'" [class.shadow-sm]="tab() === 'all'" [class.text-brand-700]="tab() === 'all'" [class.text-gray-500]="tab() !== 'all'" (click)="setTab('all')">{{ 'notifications.tabs.all' | transloco }}</button>
-    <button type="button" class="h-9 rounded-lg text-sm font-medium transition-colors" [class.bg-white]="tab() === 'unread'" [class.shadow-sm]="tab() === 'unread'" [class.text-brand-700]="tab() === 'unread'" [class.text-gray-500]="tab() !== 'unread'" (click)="setTab('unread')">{{ 'notifications.tabs.unread' | transloco }}@if (unreadCount() > 0) { ({{ unreadCount() }}) }</button>
+    <button type="button" class="h-9 rounded-lg text-sm font-medium transition-colors" [class.bg-surface]="tab() === 'all'" [class.shadow-sm]="tab() === 'all'" [class.text-brand-700]="tab() === 'all'" [class.text-muted]="tab() !== 'all'" (click)="setTab('all')">{{ 'notifications.tabs.all' | transloco }}</button>
+    <button type="button" class="h-9 rounded-lg text-sm font-medium transition-colors" [class.bg-surface]="tab() === 'unread'" [class.shadow-sm]="tab() === 'unread'" [class.text-brand-700]="tab() === 'unread'" [class.text-muted]="tab() !== 'unread'" (click)="setTab('unread')">{{ 'notifications.tabs.unread' | transloco }}@if (unreadCount() > 0) { ({{ unreadCount() }}) }</button>
   </div>
 </div>
 
@@ -28,8 +28,8 @@
 <mat-dialog-content style="flex: 1 1 auto; max-height: none;">
   @if (items().length === 0) {
     <div class="py-12 flex flex-col items-center gap-2 text-center">
-      <mat-icon fontSet="material-symbols-outlined" class="text-gray-300" style="font-size: 40px; width: 40px; height: 40px;">notifications_off</mat-icon>
-      <span class="text-sm text-gray-400">{{ (tab() === 'unread' ? 'notifications.emptyUnread' : 'notifications.empty') | transloco }}</span>
+      <mat-icon fontSet="material-symbols-outlined" class="text-subtle" style="font-size: 40px; width: 40px; height: 40px;">notifications_off</mat-icon>
+      <span class="text-sm text-subtle">{{ (tab() === 'unread' ? 'notifications.emptyUnread' : 'notifications.empty') | transloco }}</span>
     </div>
   } @else {
     <div class="flex flex-col gap-2 pb-2">
@@ -41,13 +41,13 @@
 
           <span class="min-w-0 flex-1">
             <span class="flex items-center gap-2">
-              <span class="text-sm text-gray-900" [class.font-semibold]="!item.read" [class.font-medium]="item.read">{{ item.titleKey | transloco }}</span>
+              <span class="text-sm text-content" [class.font-semibold]="!item.read" [class.font-medium]="item.read">{{ item.titleKey | transloco }}</span>
               @if (!item.read) {
                 <span class="w-2 h-2 shrink-0 rounded-full bg-brand-600"></span>
               }
             </span>
-            <span class="mt-0.5 block text-sm text-gray-600">{{ item.textKey | transloco: item.textParams }}</span>
-            <span class="mt-1 block text-xs text-gray-400">{{ item.agoKey | transloco: item.agoParams }}</span>
+            <span class="mt-0.5 block text-sm text-soft">{{ item.textKey | transloco: item.textParams }}</span>
+            <span class="mt-1 block text-xs text-subtle">{{ item.agoKey | transloco: item.agoParams }}</span>
           </span>
         </button>
       }

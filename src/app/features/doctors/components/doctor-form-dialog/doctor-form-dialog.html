@@ -1,6 +1,6 @@
 <!-- Шапка -->
-<div class="flex items-center justify-between gap-2 px-6 pt-5 pb-3 border-b border-gray-100">
-  <h2 class="text-lg font-bold text-gray-900">{{ (isEdit ? 'doctors.form.titleEdit' : 'doctors.form.titleCreate') | transloco }}</h2>
+<div class="flex items-center justify-between gap-2 px-6 pt-5 pb-3 border-b border-line-strong">
+  <h2 class="font-display text-lg font-bold text-content">{{ (isEdit ? 'doctors.form.titleEdit' : 'doctors.form.titleCreate') | transloco }}</h2>
   <button matIconButton mat-dialog-close type="button" [title]="'common.close' | transloco">
     <mat-icon fontSet="material-symbols-outlined">close</mat-icon>
   </button>
@@ -11,8 +11,8 @@
   <div [formGroup]="form" class="grid grid-cols-1 sm:grid-cols-2 gap-3 py-2">
     <!-- ФИО -->
     <label class="flex flex-col gap-1 sm:col-span-2">
-      <span class="text-xs font-medium text-gray-600">{{ 'doctors.form.fullName' | transloco }} <span class="text-red-500">*</span></span>
-      <input type="text" formControlName="fullName" autocomplete="off" class="w-full h-11 px-3 rounded-xl bg-page border text-sm text-gray-800 outline-none focus:border-brand-300 focus:bg-white" [class.border-transparent]="!isInvalid('fullName')" [class.border-red-300]="isInvalid('fullName')">
+      <span class="text-xs font-medium text-soft">{{ 'doctors.form.fullName' | transloco }} <span class="text-red-500">*</span></span>
+      <input type="text" formControlName="fullName" autocomplete="off" class="w-full h-11 px-3 rounded-xl bg-page border text-sm text-content outline-none focus:border-brand-300 focus:bg-surface" [class.border-transparent]="!isInvalid('fullName')" [class.border-red-300]="isInvalid('fullName')">
       @if (isInvalid('fullName')) {
         <span class="text-xs text-red-600">{{ 'doctors.form.errors.required' | transloco }}</span>
       }
@@ -20,8 +20,8 @@
 
     <!-- Телефон -->
     <label class="flex flex-col gap-1">
-      <span class="text-xs font-medium text-gray-600">{{ 'doctors.form.phone' | transloco }} <span class="text-red-500">*</span></span>
-      <input type="tel" formControlName="phone" placeholder="+998 90 123-45-67" autocomplete="off" class="w-full h-11 px-3 rounded-xl bg-page border text-sm text-gray-800 outline-none focus:border-brand-300 focus:bg-white" [class.border-transparent]="!isInvalid('phone')" [class.border-red-300]="isInvalid('phone')">
+      <span class="text-xs font-medium text-soft">{{ 'doctors.form.phone' | transloco }} <span class="text-red-500">*</span></span>
+      <input type="tel" formControlName="phone" placeholder="+998 90 123-45-67" autocomplete="off" class="w-full h-11 px-3 rounded-xl bg-page border text-sm text-content outline-none focus:border-brand-300 focus:bg-surface" [class.border-transparent]="!isInvalid('phone')" [class.border-red-300]="isInvalid('phone')">
       @if (isInvalid('phone')) {
         <span class="text-xs text-red-600">{{ (form.controls.phone.hasError('required') ? 'doctors.form.errors.required' : 'doctors.form.errors.phone') | transloco }}</span>
       }
@@ -29,8 +29,8 @@
 
     <!-- Специальность -->
     <label class="flex flex-col gap-1">
-      <span class="text-xs font-medium text-gray-600">{{ 'doctors.form.specialty' | transloco }} <span class="text-red-500">*</span></span>
-      <select formControlName="specialty" class="w-full h-11 px-3 rounded-xl bg-page border text-sm text-gray-800 outline-none focus:border-brand-300 focus:bg-white" [class.border-transparent]="!isInvalid('specialty')" [class.border-red-300]="isInvalid('specialty')">
+      <span class="text-xs font-medium text-soft">{{ 'doctors.form.specialty' | transloco }} <span class="text-red-500">*</span></span>
+      <select formControlName="specialty" class="w-full h-11 px-3 rounded-xl bg-page border text-sm text-content outline-none focus:border-brand-300 focus:bg-surface" [class.border-transparent]="!isInvalid('specialty')" [class.border-red-300]="isInvalid('specialty')">
         <option value="" disabled>{{ 'doctors.form.selectSpecialty' | transloco }}</option>
         @for (specialty of specialties; track specialty) {
           <option [value]="specialty">{{ specialty }}</option>
@@ -41,10 +41,56 @@
       }
     </label>
 
+    <!-- Услуги врача: можно несколько, «Другое» — первым пунктом -->
+    <div class="flex flex-col gap-1 sm:col-span-2">
+      <span class="text-xs font-medium text-soft">{{ 'doctors.form.services' | transloco }}</span>
+      <div class="flex flex-wrap items-center gap-1.5 min-h-11 px-2 py-1.5 rounded-xl bg-page border" [class.border-brand-300]="servicesOpen()" [class.border-transparent]="!servicesOpen()">
+        @for (chip of selectedServices(); track chip.id) {
+          <span class="inline-flex items-center gap-0.5 h-8 pl-2.5 pr-0.5 rounded-lg bg-brand-100 text-[13px] font-semibold text-accent">
+            {{ chip.id === otherServiceId ? ('appointmentForm.service.other' | transloco) : chip.name }}
+            <button type="button" class="w-7 h-7 flex items-center justify-center rounded-md hover:bg-brand-50" [attr.aria-label]="('appointmentForm.service.remove' | transloco) + ': ' + (chip.id === otherServiceId ? ('appointmentForm.service.other' | transloco) : chip.name)" (click)="toggleService(chip.id)">
+              <mat-icon fontSet="material-symbols-outlined" style="font-size: 16px; width: 16px; height: 16px;">close</mat-icon>
+            </button>
+          </span>
+        }
+        <button type="button" class="flex-1 min-w-36 h-8 px-1.5 flex items-center justify-between gap-2 text-sm text-subtle" [attr.aria-expanded]="servicesOpen()" (click)="toggleServicesList()">
+          {{ (selectedServices().length ? 'appointmentForm.service.add' : 'appointmentForm.service.placeholder') | transloco }}
+          <mat-icon fontSet="material-symbols-outlined" style="font-size: 20px; width: 20px; height: 20px;">{{ servicesOpen() ? 'expand_less' : 'expand_more' }}</mat-icon>
+        </button>
+      </div>
+
+      @if (servicesOpen()) {
+        <div class="mt-1 rounded-xl border border-line-strong p-1 flex flex-col" role="listbox" aria-multiselectable="true">
+          <label class="flex items-center gap-3 min-h-11 px-2.5 rounded-lg cursor-pointer border-b border-line" [class.bg-brand-50]="isServiceSelected(otherServiceId)">
+            <input type="checkbox" class="w-[18px] h-[18px] accent-brand-700" [checked]="isServiceSelected(otherServiceId)" (change)="toggleService(otherServiceId)">
+            <span class="flex-1 text-sm font-medium text-content">{{ 'appointmentForm.service.other' | transloco }}</span>
+          </label>
+          @for (service of services() ?? []; track service.id) {
+            <label class="flex items-center gap-3 min-h-11 px-2.5 rounded-lg cursor-pointer" [class.bg-brand-50]="isServiceSelected(service.id)">
+              <input type="checkbox" class="w-[18px] h-[18px] accent-brand-700" [checked]="isServiceSelected(service.id)" (change)="toggleService(service.id)">
+              <span class="flex-1 text-sm font-medium text-content">{{ service.name }}</span>
+              <span class="text-xs text-muted whitespace-nowrap">{{ 'appointmentForm.service.minutes' | transloco: { count: service.durationMinutes } }}</span>
+            </label>
+          }
+          <button type="button" class="m-1 h-10 rounded-lg bg-brand-700 text-sm font-semibold text-white" (click)="toggleServicesList()">{{ 'appointmentForm.service.done' | transloco }}</button>
+        </div>
+      }
+    </div>
+
+    @if (isOtherSelected()) {
+      <label class="flex flex-col gap-1 sm:col-span-2">
+        <span class="text-xs font-medium text-soft">{{ 'doctors.form.otherService' | transloco }} <span class="text-red-500">*</span></span>
+        <input type="text" formControlName="otherService" class="w-full h-11 px-3 rounded-xl bg-page border text-sm text-content outline-none focus:border-brand-300 focus:bg-surface" [class.border-transparent]="!isInvalid('otherService')" [class.border-red-300]="isInvalid('otherService')" [placeholder]="'doctors.form.otherServicePlaceholder' | transloco">
+        @if (isInvalid('otherService')) {
+          <span class="text-xs text-red-600">{{ 'doctors.form.errors.required' | transloco }}</span>
+        }
+      </label>
+    }
+
     <!-- Кабинет -->
     <label class="flex flex-col gap-1">
-      <span class="text-xs font-medium text-gray-600">{{ 'doctors.form.cabinet' | transloco }} <span class="text-red-500">*</span></span>
-      <input type="number" min="1" max="50" formControlName="cabinet" class="w-full h-11 px-3 rounded-xl bg-page border text-sm text-gray-800 outline-none focus:border-brand-300 focus:bg-white" [class.border-transparent]="!isInvalid('cabinet')" [class.border-red-300]="isInvalid('cabinet')">
+      <span class="text-xs font-medium text-soft">{{ 'doctors.form.cabinet' | transloco }} <span class="text-red-500">*</span></span>
+      <input type="number" min="1" max="50" formControlName="cabinet" class="w-full h-11 px-3 rounded-xl bg-page border text-sm text-content outline-none focus:border-brand-300 focus:bg-surface" [class.border-transparent]="!isInvalid('cabinet')" [class.border-red-300]="isInvalid('cabinet')">
       @if (isInvalid('cabinet')) {
         <span class="text-xs text-red-600">{{ 'doctors.form.errors.cabinet' | transloco }}</span>
       }
@@ -52,16 +98,16 @@
 
     <!-- Стаж -->
     <label class="flex flex-col gap-1">
-      <span class="text-xs font-medium text-gray-600">{{ 'doctors.form.experience' | transloco }}</span>
-      <input type="number" min="0" max="60" formControlName="experienceYears" class="w-full h-11 px-3 rounded-xl bg-page border border-transparent text-sm text-gray-800 outline-none focus:border-brand-300 focus:bg-white">
+      <span class="text-xs font-medium text-soft">{{ 'doctors.form.experience' | transloco }}</span>
+      <input type="number" min="0" max="60" formControlName="experienceYears" class="w-full h-11 px-3 rounded-xl bg-page border border-transparent text-sm text-content outline-none focus:border-brand-300 focus:bg-surface">
     </label>
 
     <!-- Рабочие дни -->
     <div class="flex flex-col gap-1 sm:col-span-2">
-      <span class="text-xs font-medium text-gray-600">{{ 'doctors.form.workDays' | transloco }} <span class="text-red-500">*</span></span>
+      <span class="text-xs font-medium text-soft">{{ 'doctors.form.workDays' | transloco }} <span class="text-red-500">*</span></span>
       <div class="grid grid-cols-7 gap-1">
         @for (item of weekDays(); track item.day) {
-          <button type="button" class="h-10 rounded-lg text-sm font-medium transition-colors" [class.bg-brand-700]="item.active" [class.text-white]="item.active" [class.bg-page]="!item.active" [class.text-gray-600]="!item.active" (click)="toggleDay(item.day)">{{ item.label }}</button>
+          <button type="button" class="h-10 rounded-lg text-sm font-medium transition-colors" [class.bg-brand-700]="item.active" [class.text-white]="item.active" [class.bg-page]="!item.active" [class.text-soft]="!item.active" (click)="toggleDay(item.day)">{{ item.label }}</button>
         }
       </div>
       @if (isInvalid('workDays')) {
@@ -71,10 +117,10 @@
 
     <!-- Часы работы -->
     <div class="flex flex-col gap-1 sm:col-span-2">
-      <span class="text-xs font-medium text-gray-600">{{ 'doctors.form.workHours' | transloco }} <span class="text-red-500">*</span></span>
+      <span class="text-xs font-medium text-soft">{{ 'doctors.form.workHours' | transloco }} <span class="text-red-500">*</span></span>
       <div class="grid grid-cols-2 gap-3">
-        <input type="time" formControlName="workStart" class="w-full h-11 px-3 rounded-xl bg-page border text-sm text-gray-800 outline-none focus:border-brand-300 focus:bg-white" [class.border-transparent]="!timeRangeInvalid()" [class.border-red-300]="timeRangeInvalid()">
-        <input type="time" formControlName="workEnd" class="w-full h-11 px-3 rounded-xl bg-page border text-sm text-gray-800 outline-none focus:border-brand-300 focus:bg-white" [class.border-transparent]="!timeRangeInvalid()" [class.border-red-300]="timeRangeInvalid()">
+        <input type="time" formControlName="workStart" class="w-full h-11 px-3 rounded-xl bg-page border text-sm text-content outline-none focus:border-brand-300 focus:bg-surface" [class.border-transparent]="!timeRangeInvalid()" [class.border-red-300]="timeRangeInvalid()">
+        <input type="time" formControlName="workEnd" class="w-full h-11 px-3 rounded-xl bg-page border text-sm text-content outline-none focus:border-brand-300 focus:bg-surface" [class.border-transparent]="!timeRangeInvalid()" [class.border-red-300]="timeRangeInvalid()">
       </div>
       @if (timeRangeInvalid()) {
         <span class="text-xs text-red-600">{{ 'doctors.form.errors.timeRange' | transloco }}</span>
@@ -83,8 +129,8 @@
 
     <!-- Статус -->
     <label class="flex flex-col gap-1 sm:col-span-2">
-      <span class="text-xs font-medium text-gray-600">{{ 'doctors.form.status' | transloco }}</span>
-      <select formControlName="status" class="w-full h-11 px-3 rounded-xl bg-page border border-transparent text-sm text-gray-800 outline-none focus:border-brand-300 focus:bg-white">
+      <span class="text-xs font-medium text-soft">{{ 'doctors.form.status' | transloco }}</span>
+      <select formControlName="status" class="w-full h-11 px-3 rounded-xl bg-page border border-transparent text-sm text-content outline-none focus:border-brand-300 focus:bg-surface">
         @for (status of statuses; track status) {
           <option [value]="status">{{ ('doctors.status.' + status) | transloco }}</option>
         }
@@ -94,8 +140,8 @@
 </mat-dialog-content>
 
 <!-- Кнопка внизу -->
-<div class="px-6 py-4 border-t border-gray-100">
-  <button type="button" class="w-full flex items-center justify-center gap-1 px-4 py-3 rounded-xl text-sm font-semibold transition-colors" [class.bg-brand-700]="canSubmit()" [class.text-white]="canSubmit()" [class.hover:bg-brand-800]="canSubmit()" [class.bg-gray-100]="!canSubmit()" [class.text-gray-400]="!canSubmit()" (click)="submit()">
+<div class="px-6 py-4 border-t border-line-strong">
+  <button type="button" class="w-full flex items-center justify-center gap-1 px-4 py-3 rounded-xl text-sm font-semibold transition-colors" [class.bg-brand-700]="canSubmit()" [class.text-white]="canSubmit()" [class.hover:bg-brand-800]="canSubmit()" [class.bg-page]="!canSubmit()" [class.text-subtle]="!canSubmit()" (click)="submit()">
     <mat-icon fontSet="material-symbols-outlined">{{ isEdit ? 'check' : 'person_add' }}</mat-icon>
     {{ (isEdit ? 'doctors.form.save' : 'doctors.form.create') | transloco }}
   </button>

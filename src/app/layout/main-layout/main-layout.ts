@@ -7,6 +7,9 @@ import { MatDialog } from '@angular/material/dialog';
 import { NOTIFICATIONS_DIALOG_CONFIG, NotificationsDialog } from '../../features/notifications/components/notifications-dialog/notifications-dialog';
 import { NotificationsService } from '../../features/notifications/services/notifications.service';
 import { ThemeService } from '../../core/theme/theme.service';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { map } from 'rxjs';
+import { DashboardService } from '../../features/dashboard/services/dashboard.service';
 
 @Component({
   selector: 'app-main-layout',
@@ -21,6 +24,7 @@ export class MainLayout {
   protected readonly isDark = computed(() => this.themeService.theme() === 'dark');
   private readonly dialog = inject(MatDialog);
   private readonly notificationsService = inject(NotificationsService);
+  private readonly dashboardService = inject(DashboardService);
 
   protected readonly lang = signal(this.transloco.getActiveLang());
 
@@ -47,10 +51,13 @@ export class MainLayout {
 
   protected readonly roleKey = computed(() => `roles.${this.user()?.role ?? 'admin'}`);
 
-  // TODO: заменить на данные с API
   // Число непрочитанных уведомлений — из общего сервиса, обновляется сразу при прочтении
   protected readonly notificationsCount = this.notificationsService.unreadCount;
-  protected readonly waitingListCount = signal(3);
+  // Лист ожидания — из той же сводки, что и на «Главном» (null, пока не загрузилось)
+  protected readonly waitingListCount = toSignal(
+    this.dashboardService.getSummary().pipe(map(summary => summary.waitingList)),
+    { initialValue: null }
+  );
 
   protected setLang(lang: 'ru' | 'uz'): void {
     this.transloco.setActiveLang(lang);

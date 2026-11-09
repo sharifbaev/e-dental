@@ -8,6 +8,8 @@ import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { filter, switchMap } from 'rxjs';
 import { CONFIRM_DIALOG_CONFIG, ConfirmDialog, ConfirmDialogData } from '../../shared/components/confirm-dialog/confirm-dialog';
 import { FeedbackService } from '../../shared/services/feedback.service';
+import { PATIENT_STATUS_CLASSES } from '../../shared/models/patient-status';
+import { PATIENT_RATING_DOT } from '../../shared/models/patient-rating';
 import { APPOINTMENT_DETAILS_DIALOG_CONFIG, AppointmentDetailsAction, AppointmentDetailsData, AppointmentDetailsDialog } from './components/appointment-details-dialog/appointment-details-dialog';
 import { APPOINTMENT_FORM_DIALOG_CONFIG, AppointmentFormData, AppointmentFormDialog, AppointmentFormResult } from './components/appointment-form-dialog/appointment-form-dialog';
 import { CALENDAR_RANGE_DIALOG_CONFIG, CalendarRangeDialog, CalendarRangeDialogData, CalendarRangeResult } from './components/calendar-range-dialog/calendar-range-dialog';
@@ -20,13 +22,8 @@ type Period = 'today' | 'week' | 'calendar';
 
 const ALL_STATUSES: PatientStatus[] = ['primary', 'inTreatment', 'completed', 'cancelled'];
 
-// Цвета статусов пациента
-const STATUS_CLASSES: Record<PatientStatus, string> = {
-  primary: 'bg-sky-50 text-sky-700',
-  inTreatment: 'bg-brand-50 text-brand-700',
-  completed: 'bg-emerald-50 text-emerald-700',
-  cancelled: 'bg-red-50 text-red-600'
-};
+// Цвета статусов пациента — общие для всего приложения
+const STATUS_CLASSES: Record<PatientStatus, string> = PATIENT_STATUS_CLASSES;
 
 // 'YYYY-MM-DD' → Date по местному времени
 function fromDateKey(key: string): Date {
@@ -47,7 +44,7 @@ function getInitials(name: string): string {
 
 @Component({
   selector: 'app-schedule',
-  imports: [ReactiveFormsModule, MatAutocompleteModule, MatIconModule, TranslocoPipe],
+  imports: [ReactiveFormsModule, MatIconModule, TranslocoPipe],
   templateUrl: './schedule.html',
   styleUrl: './schedule.scss'
 })
@@ -66,9 +63,6 @@ export class Schedule {
   // ---- Период и дата ----
 
   private readonly todayKey = toDateKey(new Date());
-
-  // Прошедшие даты в календаре недоступны
-  private readonly minDate = fromDateKey(this.todayKey);
 
   protected readonly period = signal<Period>('today');
 
@@ -93,25 +87,6 @@ export class Schedule {
     return start === end
       ? format.format(fromDateKey(start))
       : `${format.format(fromDateKey(start))} – ${format.format(fromDateKey(end))}`;
-  });
-
-  // Дата или период в заголовке
-  protected readonly titleDate = computed(() => {
-    const start = this.rangeStart();
-    const end = this.rangeEnd();
-
-    if (this.isRange() && start && end && start !== end) {
-      const format = new Intl.DateTimeFormat(this.locale(), { day: 'numeric', month: 'long' });
-      return `${format.format(fromDateKey(start))} – ${format.format(fromDateKey(end))}`;
-    }
-
-    const key = this.isRange() && start ? start : this.selectedDate();
-    const text = new Intl.DateTimeFormat(this.locale(), {
-      weekday: 'long',
-      day: 'numeric',
-      month: 'long'
-    }).format(fromDateKey(key));
-    return text.charAt(0).toUpperCase() + text.slice(1);
   });
 
   protected setPeriod(period: Period): void {
@@ -146,7 +121,6 @@ export class Schedule {
         data: {
           start: start ? fromDateKey(start) : null,
           end: end ? fromDateKey(end) : null,
-          minDate: this.minDate,
           locale: this.locale()
         }
       })
@@ -205,6 +179,15 @@ export class Schedule {
   protected onDoctorSelected(event: MatAutocompleteSelectedEvent): void {
     const name = event.option.value as string;
     this.selectedDoctor.set(this.doctors().find(doctor => doctor.name === name)?.id ?? 'all');
+  }
+
+  // Список врачей для селекта
+  protected readonly doctorOptions = computed(() => this.doctors());
+
+  // Выбор врача в селекте: 'all' — все врачи
+  protected onDoctorChange(id: string): void {
+    this.selectedDoctor.set(id || 'all');
+    this.doctorControl.setValue(this.selectedDoctorName(), { emitEvent: false });
   }
 
   // Поле очистили вручную — снова все врачи
@@ -306,28 +289,29 @@ export class Schedule {
         statusKey: `schedule.status.${appointment.status}`,
         statusClass: STATUS_CLASSES[appointment.status],
         doctorInitials: getInitials(appointment.doctorName),
+        ratingDot: PATIENT_RATING_DOT[appointment.patientRating ?? 'good'],
+        ratingKey: `rating.${appointment.patientRating ?? 'good'}`,
         dateLabel: showDate ? dateFormat.format(fromDateKey(appointment.date)) : ''
       }));
   });
 
-  // Сколько приёмов за выбранный день или период без отменённых
-  protected readonly activeCount = computed(() =>
-    this.periodAppointments().filter(appointment => appointment.status !== 'cancelled').length
-  );
 
   // ---- Действия ----
 
-  // Новая запись: на выбранный день (или начало интервала), к выбранному врачу, если он выбран
+  // Новая запись: по умолчанию на выбранный день (или начало интервала), к выбранному врачу, если он выбран
   protected openNewAppointment(): void {
     const date = this.isRange() ? this.rangeStart()! : this.selectedDate();
     const doctorId = this.selectedDoctor() === 'all' ? undefined : Number(this.selectedDoctor());
 
     this.dialog
-      .open<AppointmentFormDialog, AppointmentFormData, AppointmentFormResult>(AppointmentFormDialog, APPOINTMENT_FORM_DIALOG_CONFIG)
+      .open<AppointmentFormDialog, AppointmentFormData, AppointmentFormResult>(AppointmentFormDialog, {
+        ...APPOINTMENT_FORM_DIALOG_CONFIG,
+        data: { date, doctorId }
+      })
       .afterClosed()
       .pipe(
         filter((result): result is AppointmentFormResult => !!result),
-        switchMap(result => this.scheduleService.add(result, date, doctorId))
+        switchMap(result => this.scheduleService.add(result, result.date, result.doctorId ?? doctorId))
       )
       .subscribe({
         next: created => {
@@ -385,8 +369,11 @@ export class Schedule {
           phone: result.phone,
           serviceId: result.serviceId,
           service: result.serviceName,
+          date: result.date,
+          start: result.time,
+          ...(result.doctorId ? { doctorId: result.doctorId, doctorName: this.doctors().find(d => d.id === String(result.doctorId))?.name ?? appointment.doctorName } : {}),
           // Время окончания — по длительности выбранной услуги
-          end: addMinutes(appointment.start, result.durationMinutes)
+          end: addMinutes(result.time, result.durationMinutes)
         }))
       )
       .subscribe({

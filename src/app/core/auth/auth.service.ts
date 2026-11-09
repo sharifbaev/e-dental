@@ -15,7 +15,7 @@ export class AuthService {
   private readonly router = inject(Router);
 
   private readonly _user = signal<User | null>(this.readUser());
-  private readonly _token = signal<string | null>(localStorage.getItem(TOKEN_KEY));
+  private readonly _token = signal<string | null>(this.readToken());
 
   readonly user = this._user.asReadonly();
   readonly isAuthenticated = computed(() => !!this._token());
@@ -27,8 +27,12 @@ export class AuthService {
   }
 
   logout(): void {
-    localStorage.removeItem(TOKEN_KEY);
-    localStorage.removeItem(USER_KEY);
+    try {
+      localStorage.removeItem(TOKEN_KEY);
+      localStorage.removeItem(USER_KEY);
+    } catch {
+      // localStorage недоступен — сессия очистится только в памяти
+    }
     this._token.set(null);
     this._user.set(null);
     this.router.navigate(['/login']);
@@ -55,10 +59,22 @@ export class AuthService {
   }
 
   private saveSession(response: LoginResponse): void {
-    localStorage.setItem(TOKEN_KEY, response.token);
-    localStorage.setItem(USER_KEY, JSON.stringify(response.user));
+    try {
+      localStorage.setItem(TOKEN_KEY, response.token);
+      localStorage.setItem(USER_KEY, JSON.stringify(response.user));
+    } catch {
+      // localStorage недоступен (например, приватный режим) — вход действует до перезагрузки
+    }
     this._token.set(response.token);
     this._user.set(response.user);
+  }
+
+  private readToken(): string | null {
+    try {
+      return localStorage.getItem(TOKEN_KEY);
+    } catch {
+      return null;
+    }
   }
 
   private readUser(): User | null {
