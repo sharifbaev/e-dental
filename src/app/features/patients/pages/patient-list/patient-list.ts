@@ -44,8 +44,7 @@ function getInitials(name: string): string {
 @Component({
   selector: 'app-patient-list',
   imports: [ReactiveFormsModule, MatIconModule, TranslocoPipe],
-  templateUrl: './patient-list.html',
-  styleUrl: './patient-list.scss'
+  templateUrl: './patient-list.html'
 })
 export class PatientList {
   private readonly patientsService = inject(PatientsService);

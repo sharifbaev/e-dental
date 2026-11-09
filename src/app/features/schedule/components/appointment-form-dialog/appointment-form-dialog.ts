@@ -265,11 +265,6 @@ export class AppointmentFormDialog {
   // «Другое» среди выбранных услуг — показываем поле повода визита
   protected readonly isOtherService = computed(() => this.selectedServiceIds().includes(OTHER_SERVICE_ID));
 
-  // Выбранная услуга из списка — для подсказки о длительности и срочности
-  protected readonly selectedService = computed(() =>
-    this.services()?.find(s => s.id === this.selectedServiceId()) ?? null
-  );
-
   // ---- Несколько услуг ----
 
   protected readonly servicesOpen = signal(false);

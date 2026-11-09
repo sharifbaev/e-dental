@@ -7,11 +7,9 @@
     "close": "Закрыть"
   },
   "header": {
-    "status": "Штатный режим",
     "search": "Поиск пациента, врача или услуги",
     "notifications": "Уведомления",
     "waitingList": "Лист ожидания",
-    "newAppointment": "Новая запись",
     "themeLight": "Светлая тема",
     "themeDark": "Тёмная тема"
   },
@@ -37,8 +35,6 @@
       "evening": "Добрый вечер, {{name}}",
       "night": "Доброй ночи {{name}}"
     },
-    "clinicOpen": "Клиника открыта",
-    "clinicClosed": "Клиника закрыта",
     "waitingList": "Лист ожидания",
     "quickAppointment": "Быстрая запись",
     "doctorPrefix": "Др.",
@@ -51,10 +47,7 @@
       "noSlots": "Свободных окон нет",
       "noDoctors": "Врач не найден",
       "doctorsOnShift": "Врачи на смене",
-      "doctorsOff": "Не на смене: {{count}}",
-      "revenue": "Выручка за день",
-      "revenuePlan": "{{value}}% от плана",
-      "currency": "сум"
+      "doctorsOff": "Не на смене: {{count}}"
     },
     "patientsDialog": {
       "title": "Пациенты сегодня",
@@ -78,12 +71,7 @@
       "doctor": "Врач:",
       "showPhone": "Показать телефон",
       "inMinutes": "через {{count}} мин",
-      "inHours": "через {{hours}} ч {{minutes}} мин",
-      "status": {
-        "confirmed": "Подтверждено",
-        "pending": "Ожидает подтверждения",
-        "arrived": "Пациент пришёл"
-      }
+      "inHours": "через {{hours}} ч {{minutes}} мин"
     },
     "appointmentDialog": {
       "title": "Приём",
@@ -134,7 +122,6 @@
     "dateTime": {
       "section": "Дата и время",
       "date": "Дата",
-      "time": "Время",
       "doctor": "Врач",
       "duration": "Продолжительность",
       "min30": "30 мин",
@@ -191,8 +178,6 @@
     }
   },
   "schedule": {
-    "title": "Расписание приёмов",
-    "count": "Приёмов: {{count}}",
     "add": "Добавить запись",
     "empty": "На этот день приёмов нет",
     "cabinet": "Каб. {{number}}",

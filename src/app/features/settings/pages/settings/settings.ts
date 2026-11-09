@@ -13,7 +13,6 @@ type ThemeChoice = Theme | 'system';
 @Component({
   imports: [ReactiveFormsModule, MatIconModule, TranslocoPipe],
   selector: 'app-settings',
-  styleUrl: './settings.scss',
   templateUrl: './settings.html',
 })
 export class Settings {

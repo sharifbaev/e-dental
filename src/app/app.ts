@@ -5,8 +5,7 @@ import { ThemeService } from './core/theme/theme.service';
 @Component({
   selector: 'app-root',
   imports: [RouterOutlet],
-  templateUrl: './app.html',
-  styleUrl: './app.scss'
+  templateUrl: './app.html'
 })
 export class App {
   // Создаём сервис темы при запуске: он ставит класс .dark на <html>

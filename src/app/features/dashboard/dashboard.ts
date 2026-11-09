@@ -49,8 +49,7 @@ function toMinutes(time: string): number {
 @Component({
   selector: 'app-dashboard',
   imports: [NgTemplateOutlet, ReactiveFormsModule, MatAutocompleteModule, MatIconModule, TranslocoPipe],
-  templateUrl: './dashboard.html',
-  styleUrl: './dashboard.scss'
+  templateUrl: './dashboard.html'
 })
 export class Dashboard {
   private readonly auth = inject(AuthService);
@@ -97,11 +96,6 @@ export class Dashboard {
       month: 'long'
     }).format(this.now());
     return text.charAt(0).toUpperCase() + text.slice(1);
-  });
-
-  protected readonly revenueFormatted = computed(() => {
-    const value = this.summary()?.revenueToday ?? 0;
-    return new Intl.NumberFormat('ru-RU').format(value);
   });
 
   // ---- Выбор врача с поиском (фильтрует свободные слоты и ближайшие приёмы) ----

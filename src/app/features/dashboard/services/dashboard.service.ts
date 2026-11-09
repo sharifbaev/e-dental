@@ -55,8 +55,6 @@ export class DashboardService {
 
   // TODO: заменить на реальный запрос, когда будет API:
   // return this.http.get<Appointment[]>(`${apiUrl}/dashboard/appointments/upcoming`);
-  // TODO: заменить на реальный запрос, когда будет API:
-  // return this.http.get<Appointment[]>(`${apiUrl}/dashboard/appointments/upcoming`);
   getUpcomingAppointments(): Observable<Appointment[]> {
     // Mock: время приёмов считаем от текущего, чтобы раздел можно было проверить в любое время.
     // Шаг сжимается к концу дня, чтобы все приёмы уложились до 23:59 и не ушли за полночь

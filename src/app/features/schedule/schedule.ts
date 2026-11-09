@@ -1,7 +1,5 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { MatAutocompleteModule, MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
 import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
@@ -44,9 +42,8 @@ function getInitials(name: string): string {
 
 @Component({
   selector: 'app-schedule',
-  imports: [ReactiveFormsModule, MatIconModule, TranslocoPipe],
-  templateUrl: './schedule.html',
-  styleUrl: './schedule.scss'
+  imports: [MatIconModule, TranslocoPipe],
+  templateUrl: './schedule.html'
 })
 export class Schedule {
   private readonly scheduleService = inject(ScheduleService);
@@ -145,13 +142,10 @@ export class Schedule {
     this.setPeriod('today');
   }
 
-  // ---- Врач: выбор с поиском ----
+  // ---- Врач ----
 
   // Выбранный врач: 'all' — все врачи, иначе doctorId
   protected readonly selectedDoctor = signal<string>('all');
-
-  protected readonly doctorControl = new FormControl<string>('', { nonNullable: true });
-  private readonly doctorQuery = toSignal(this.doctorControl.valueChanges, { initialValue: '' });
 
   // Все врачи из расписания, по алфавиту
   private readonly doctors = computed(() => {
@@ -164,37 +158,12 @@ export class Schedule {
       .sort((a, b) => a.name.localeCompare(b.name, 'ru'));
   });
 
-  private readonly selectedDoctorName = computed(() =>
-    this.doctors().find(doctor => doctor.id === this.selectedDoctor())?.name ?? ''
-  );
-
-  protected readonly filteredDoctors = computed(() => {
-    const query = this.doctorQuery().trim().toLowerCase();
-    if (!query || query === this.selectedDoctorName().toLowerCase()) {
-      return this.doctors();
-    }
-    return this.doctors().filter(doctor => doctor.name.toLowerCase().includes(query));
-  });
-
-  protected onDoctorSelected(event: MatAutocompleteSelectedEvent): void {
-    const name = event.option.value as string;
-    this.selectedDoctor.set(this.doctors().find(doctor => doctor.name === name)?.id ?? 'all');
-  }
-
   // Список врачей для селекта
   protected readonly doctorOptions = computed(() => this.doctors());
 
   // Выбор врача в селекте: 'all' — все врачи
   protected onDoctorChange(id: string): void {
     this.selectedDoctor.set(id || 'all');
-    this.doctorControl.setValue(this.selectedDoctorName(), { emitEvent: false });
-  }
-
-  // Поле очистили вручную — снова все врачи
-  protected onDoctorInput(): void {
-    if (!this.doctorControl.value.trim()) {
-      this.selectedDoctor.set('all');
-    }
   }
 
   // Приёмы выбранного врача (за все даты)

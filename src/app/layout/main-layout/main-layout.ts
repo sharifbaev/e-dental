@@ -14,8 +14,7 @@ import { DashboardService } from '../../features/dashboard/services/dashboard.se
 @Component({
   selector: 'app-main-layout',
   imports: [RouterOutlet, RouterLink, RouterLinkActive, MatIconModule, TranslocoPipe],
-  templateUrl: './main-layout.html',
-  styleUrl: './main-layout.scss'
+  templateUrl: './main-layout.html'
 })
 export class MainLayout {
   private readonly transloco = inject(TranslocoService);

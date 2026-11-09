@@ -47,8 +47,7 @@ function formatWorkDays(days: number[], locale: string): string {
 @Component({
   selector: 'app-doctor-list',
   imports: [ReactiveFormsModule, MatIconModule, TranslocoPipe],
-  templateUrl: './doctor-list.html',
-  styleUrl: './doctor-list.scss'
+  templateUrl: './doctor-list.html'
 })
 export class DoctorList {
   private readonly doctorsService = inject(DoctorsService);

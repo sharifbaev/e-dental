@@ -7,11 +7,9 @@
     "close": "Yopish"
   },
   "header": {
-    "status": "Odatiy rejim",
     "search": "Bemor, shifokor yoki xizmatni qidirish",
     "notifications": "Bildirishnomalar",
     "waitingList": "Kutish ro'yxati",
-    "newAppointment": "Yangi yozuv",
     "themeLight": "Yorug' mavzu",
     "themeDark": "Qorong'i mavzu"
   },
@@ -37,8 +35,6 @@
       "evening": "Xayrli kech, {{name}}",
       "night": "Xayrli tun {{name}}"
     },
-    "clinicOpen": "Klinika ochiq",
-    "clinicClosed": "Klinika yopiq",
     "waitingList": "Kutish ro'yxati",
     "quickAppointment": "Tezkor yozuv",
     "doctorPrefix": "Dr.",
@@ -51,10 +47,7 @@
       "noSlots": "Bo'sh vaqt yo'q",
       "noDoctors": "Shifokor topilmadi",
       "doctorsOnShift": "Navbatdagi shifokorlar",
-      "doctorsOff": "Navbatda emas: {{count}}",
-      "revenue": "Kunlik tushum",
-      "revenuePlan": "Rejaning {{value}}%",
-      "currency": "so'm"
+      "doctorsOff": "Navbatda emas: {{count}}"
     },
     "patientsDialog": {
       "title": "Bugungi bemorlar",
@@ -78,12 +71,7 @@
       "doctor": "Shifokor:",
       "showPhone": "Telefonni ko'rsatish",
       "inMinutes": "{{count}} daqiqadan so'ng",
-      "inHours": "{{hours}} soat {{minutes}} daqiqadan so'ng",
-      "status": {
-        "confirmed": "Tasdiqlangan",
-        "pending": "Tasdiq kutilmoqda",
-        "arrived": "Bemor keldi"
-      }
+      "inHours": "{{hours}} soat {{minutes}} daqiqadan so'ng"
     },
     "appointmentDialog": {
       "title": "Приём",
@@ -134,7 +122,6 @@
     "dateTime": {
       "section": "Sana va vaqt",
       "date": "Sana",
-      "time": "Vaqt",
       "doctor": "Shifokor",
       "duration": "Davomiyligi",
       "min30": "30 daq",
@@ -191,8 +178,6 @@
     }
   },
   "schedule": {
-    "title": "Qabullar jadvali",
-    "count": "Qabullar: {{count}}",
     "add": "Yozuv qo'shish",
     "empty": "Bu kunga qabullar yo'q",
     "cabinet": "{{number}}-xona",
