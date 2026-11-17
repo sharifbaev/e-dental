@@ -1,0 +1,56 @@
+<!-- Шапка -->
+<div class="flex items-center justify-between gap-2 px-6 pt-5 pb-2">
+  <h2 class="font-display text-lg font-bold text-content">{{ (isEdit ? 'finance.expenses.editTitle' : 'finance.expenses.addTitle') | transloco }}</h2>
+  <button matIconButton mat-dialog-close type="button" [title]="'common.close' | transloco">
+    <mat-icon fontSet="material-symbols-outlined">close</mat-icon>
+  </button>
+</div>
+
+<mat-dialog-content>
+  <form [formGroup]="form" class="flex flex-col gap-4 pb-2" (ngSubmit)="save()">
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <label class="flex flex-col gap-1 min-w-0">
+        <span class="text-xs font-medium text-soft">{{ 'finance.fields.date' | transloco }} <span class="text-red-500">*</span></span>
+        <input type="date" formControlName="date" class="w-full h-11 px-3 rounded-xl bg-page border text-sm text-content outline-none focus:border-brand-300 focus:bg-surface" [class.border-transparent]="!isInvalid('date')" [class.border-red-300]="isInvalid('date')">
+      </label>
+      <label class="flex flex-col gap-1 min-w-0">
+        <span class="text-xs font-medium text-soft">{{ 'finance.fields.category' | transloco }}</span>
+        <select formControlName="category" class="w-full h-11 px-3 rounded-xl bg-page border border-transparent text-sm text-content outline-none cursor-pointer focus:border-brand-300 focus:bg-surface">
+          @for (category of categories; track category) {
+            <option [value]="category">{{ ('finance.categories.' + category) | transloco }}</option>
+          }
+        </select>
+      </label>
+    </div>
+
+    <label class="flex flex-col gap-1">
+      <span class="text-xs font-medium text-soft">{{ 'finance.fields.description' | transloco }} <span class="text-red-500">*</span></span>
+      <input type="text" formControlName="description" autocomplete="off" class="w-full h-11 px-3 rounded-xl bg-page border text-sm text-content outline-none focus:border-brand-300 focus:bg-surface" [class.border-transparent]="!isInvalid('description')" [class.border-red-300]="isInvalid('description')" [placeholder]="'finance.expenses.descriptionPlaceholder' | transloco">
+      @if (isInvalid('description')) {
+        <span class="text-xs text-red-600">{{ 'appointmentForm.errors.minLength' | transloco }}</span>
+      }
+    </label>
+
+    <label class="flex flex-col gap-1">
+      <span class="text-xs font-medium text-soft">{{ 'finance.fields.amount' | transloco }} <span class="text-red-500">*</span></span>
+      <input type="number" min="0" step="1000" formControlName="amount" class="w-full h-11 px-3 rounded-xl bg-page border text-sm text-content outline-none focus:border-brand-300 focus:bg-surface" [class.border-transparent]="!isInvalid('amount')" [class.border-red-300]="isInvalid('amount')">
+      @if (isInvalid('amount')) {
+        <span class="text-xs text-red-600">{{ 'finance.errors.amount' | transloco }}</span>
+      }
+    </label>
+
+    <div class="flex flex-col gap-1">
+      <span class="text-xs font-medium text-soft">{{ 'finance.fields.method' | transloco }}</span>
+      <div class="grid grid-cols-3 gap-2" role="radiogroup">
+        @for (method of methods; track method) {
+          <button type="button" role="radio" [attr.aria-checked]="form.controls.method.value === method" class="h-11 px-2 rounded-xl border text-sm font-medium transition-colors" [class.border-brand-600]="form.controls.method.value === method" [class.bg-brand-50]="form.controls.method.value === method" [class.text-brand-700]="form.controls.method.value === method" [class.border-line-strong]="form.controls.method.value !== method" [class.text-soft]="form.controls.method.value !== method" (click)="form.controls.method.setValue(method)">{{ ('finance.methods.' + method) | transloco }}</button>
+        }
+      </div>
+    </div>
+  </form>
+</mat-dialog-content>
+
+<div class="px-6 py-4 flex flex-col-reverse sm:flex-row gap-2">
+  <button type="button" mat-dialog-close class="flex-1 px-4 py-3 rounded-xl border border-line-strong text-sm font-medium text-soft hover:bg-page">{{ 'common.cancel' | transloco }}</button>
+  <button type="button" class="flex-1 px-4 py-3 rounded-xl bg-brand-700 text-sm font-semibold text-white hover:bg-brand-800" (click)="save()">{{ (isEdit ? 'finance.saveChanges' : 'finance.add') | transloco }}</button>
+</div>

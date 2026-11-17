@@ -10,7 +10,7 @@
 
     <div class="px-3 mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted">{{ 'sidebar.navigation' | transloco }}</div>
 
-    @for (item of menu; track item.path) {
+    @for (item of menu(); track item.path) {
       <a [routerLink]="item.path" routerLinkActive #rlaSide="routerLinkActive" class="flex items-center gap-3 px-3 min-h-11 rounded-xl text-sm transition-colors" [class.bg-brand-100]="rlaSide.isActive" [class.text-accent]="rlaSide.isActive" [class.font-semibold]="rlaSide.isActive" [class.text-soft]="!rlaSide.isActive" [class.font-medium]="!rlaSide.isActive" [class.hover:bg-page]="!rlaSide.isActive">
         <mat-icon fontSet="material-symbols-outlined">{{ item.icon }}</mat-icon>
         <span>{{ item.label | transloco }}</span>
@@ -37,29 +37,13 @@
         <span class="font-display text-lg font-extrabold tracking-tight text-content whitespace-nowrap">{{ 'app.title' | transloco }}</span>
       </div>
 
-      <!-- Поиск — только ПК -->
-      <div class="hidden md:flex items-center gap-3 flex-1 min-w-0">
-        <div class="relative flex-1 max-w-md">
-          <mat-icon fontSet="material-symbols-outlined" class="absolute left-3 top-1/2 -translate-y-1/2 text-subtle">search</mat-icon>
-          <input type="search" class="w-full h-11 pl-10 pr-3 rounded-xl bg-page border border-line-strong text-sm text-content placeholder:text-subtle outline-none focus:border-brand-300 focus:bg-surface" [placeholder]="'header.search' | transloco">
-        </div>
-      </div>
-
-      <div class="flex items-center gap-2">
+      <!-- ml-auto — на ПК (без логотипа) кнопки остаются справа -->
+      <div class="ml-auto flex items-center gap-2">
         <!-- Уведомления -->
         <button type="button" class="relative w-10 h-10 flex items-center justify-center rounded-xl text-soft hover:bg-page" [title]="'header.notifications' | transloco" (click)="openNotifications()">
           <mat-icon fontSet="material-symbols-outlined">notifications</mat-icon>
           @if (notificationsCount() > 0) {
             <span class="absolute top-1 right-1 min-w-4 h-4 px-1 rounded-full bg-red-500 text-white text-[10px] leading-4 text-center">{{ notificationsCount() }}</span>
-          }
-        </button>
-
-        <!-- Лист ожидания — только большие экраны -->
-        <button type="button" class="hidden lg:flex items-center gap-2 h-10 px-3 rounded-xl border border-brand-200 dark:border-brand-800 text-accent text-sm font-medium hover:bg-brand-50">
-          <mat-icon fontSet="material-symbols-outlined">hourglass_top</mat-icon>
-          {{ 'header.waitingList' | transloco }}
-          @if (waitingListCount() !== null) {
-            <span class="px-1.5 rounded bg-brand-100 text-xs">{{ waitingListCount() }}</span>
           }
         </button>
 
@@ -90,7 +74,7 @@
 
   <!-- Нижнее меню — только мобилка -->
   <nav class="md:hidden fixed bottom-0 inset-x-0 z-50 bg-surface border-t border-line flex pb-[env(safe-area-inset-bottom)]">
-    @for (item of menu; track item.path) {
+    @for (item of menu(); track item.path) {
       <a [routerLink]="item.path" routerLinkActive #rla="routerLinkActive" class="flex-1 flex flex-col items-center justify-center gap-0.5 py-2 min-w-0" [class.text-accent]="rla.isActive" [class.text-muted]="!rla.isActive">
         <span class="flex items-center justify-center w-14 h-8 rounded-full transition-colors" [class.bg-brand-100]="rla.isActive">
           <mat-icon fontSet="material-symbols-outlined">{{ item.icon }}</mat-icon>

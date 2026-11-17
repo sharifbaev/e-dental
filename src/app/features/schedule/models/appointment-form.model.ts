@@ -13,4 +13,5 @@ export interface VisitService {
   name: string;
   durationMinutes: number;
   urgent?: boolean;            // срочный повод визита (например, острая боль)
+  price?: number;              // цена, сум (справочник услуг в «Настройках»)
 }

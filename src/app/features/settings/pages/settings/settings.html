@@ -6,18 +6,20 @@
   </section>
 
   <div class="flex flex-col md:flex-row gap-4 md:gap-6 md:items-start">
-    <!-- Разделы — только ПК -->
-    <nav class="hidden md:flex md:sticky md:top-4 w-60 shrink-0 flex-col gap-1 p-2 rounded-[20px] bg-surface border border-line-strong" [attr.aria-label]="'settings.title' | transloco">
-      @for (section of sections; track section.id) {
-        <button type="button" class="flex items-center gap-3 min-h-11 px-3 rounded-xl text-sm font-medium text-soft text-left hover:bg-page" (click)="scrollTo(section.id)">
-          <mat-icon fontSet="material-symbols-outlined" style="font-size: 20px; width: 20px; height: 20px;">{{ section.icon }}</mat-icon>
-          {{ section.key | transloco }}
+ <!-- Вкладки: на ПК — слева столбиком, на мобилке — лента сверху -->
+    <nav class="flex md:flex-col md:sticky md:top-4 md:w-60 shrink-0 gap-1 p-1.5 md:p-2 rounded-[20px] bg-surface border border-line-strong overflow-x-auto" role="tablist" [attr.aria-label]="'settings.title' | transloco">
+      @for (t of tabs(); track t.id) {
+        <button type="button" role="tab" [attr.aria-selected]="tab() === t.id" class="shrink-0 flex items-center gap-2 md:gap-3 min-h-10 md:min-h-11 px-3 rounded-xl text-sm font-medium text-left whitespace-nowrap transition-colors" [class.bg-brand-100]="tab() === t.id" [class.text-accent]="tab() === t.id" [class.font-semibold]="tab() === t.id" [class.text-soft]="tab() !== t.id" [class.hover:bg-page]="tab() !== t.id" (click)="setTab(t.id)">
+          <mat-icon fontSet="material-symbols-outlined" style="font-size: 20px; width: 20px; height: 20px;">{{ t.icon }}</mat-icon>
+          {{ t.key | transloco }}
         </button>
       }
     </nav>
 
-    <form [formGroup]="form" (ngSubmit)="save()" class="flex-1 min-w-0 flex flex-col gap-4">
+    <div class="flex-1 min-w-0 flex flex-col gap-4">
+    <form [formGroup]="form" (ngSubmit)="save()" class="flex flex-col gap-4" [class.hidden]="tab() === 'services' || tab() === 'workMode'">
       <!-- Клиника -->
+      @if (tab() === 'clinic') {
       <section id="clinic" class="scroll-mt-4 bg-surface border border-line-strong rounded-[20px] p-5 md:p-6 flex flex-col gap-5">
         <h2 class="font-display text-lg font-bold text-content">{{ 'settings.sections.clinic' | transloco }}</h2>
 
@@ -70,7 +72,10 @@
         </div>
       </section>
 
+      }
+
       <!-- Внешний вид -->
+      @if (tab() === 'appearance') {
       <section id="appearance" class="scroll-mt-4 bg-surface border border-line-strong rounded-[20px] p-5 md:p-6 flex flex-col gap-5">
         <h2 class="font-display text-lg font-bold text-content">{{ 'settings.sections.appearance' | transloco }}</h2>
 
@@ -112,7 +117,10 @@
         </div>
       </section>
 
+      }
+
       <!-- Уведомления -->
+      @if (tab() === 'notifications') {
       <section id="notifications" formGroupName="notifications" class="scroll-mt-4 bg-surface border border-line-strong rounded-[20px] p-5 md:p-6 flex flex-col">
         <h2 class="font-display text-lg font-bold text-content mb-2">{{ 'settings.sections.notifications' | transloco }}</h2>
         @for (item of notificationItems; track item.control) {
@@ -128,10 +136,137 @@
         }
       </section>
 
+      }
+
+      @if (showFormActions()) {
       <div class="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 pb-2">
         <button type="button" class="h-11 px-5 rounded-xl text-sm font-semibold text-content hover:bg-surface" [disabled]="form.pristine" [class.opacity-50]="form.pristine" (click)="reset()">{{ 'settings.reset' | transloco }}</button>
         <button type="submit" class="h-11 px-6 rounded-xl bg-brand-700 text-white text-sm font-semibold hover:bg-brand-800" [disabled]="saving()">{{ 'settings.save' | transloco }}</button>
       </div>
+      }
     </form>
+
+    <!-- Услуги: справочник для формы записи и формы врача -->
+    @if (tab() === 'services') {
+      <section class="bg-surface border border-line-strong rounded-[20px] p-4 md:p-6 flex flex-col gap-4">
+        <div class="flex items-center justify-between gap-3">
+          <div class="min-w-0">
+            <h2 class="font-display text-lg font-bold text-content">{{ 'settings.sections.services' | transloco }}</h2>
+            <p class="text-[13px] text-muted">{{ 'settings.services.hint' | transloco }}</p>
+          </div>
+          <button type="button" class="shrink-0 flex items-center gap-1 h-10 px-3 md:px-4 rounded-xl bg-brand-700 text-white text-sm font-semibold hover:bg-brand-800" (click)="openService()">
+            <mat-icon fontSet="material-symbols-outlined" style="font-size: 20px; width: 20px; height: 20px;">add</mat-icon>
+            <span class="hidden sm:inline">{{ 'settings.services.add' | transloco }}</span>
+          </button>
+        </div>
+
+        @if (services().length === 0) {
+          <div class="py-10 rounded-2xl bg-page text-center text-sm text-subtle">{{ 'settings.services.empty' | transloco }}</div>
+        } @else {
+          <!-- ПК: таблица -->
+          <div class="hidden md:block rounded-2xl border border-line-strong overflow-hidden">
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="text-left text-xs font-semibold uppercase tracking-wider text-subtle border-b border-line">
+                  <th class="px-4 py-3">{{ 'settings.services.name' | transloco }}</th>
+                  <th class="px-4 py-3">{{ 'settings.services.duration' | transloco }}</th>
+                  <th class="px-4 py-3 text-right">{{ 'settings.services.price' | transloco }}</th>
+                  <th class="px-4 py-3"></th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (service of services(); track service.id) {
+                  <tr class="border-b border-line last:border-0 hover:bg-page transition-colors">
+                    <td class="px-4 py-3">
+                      <span class="font-semibold text-content">{{ service.name }}</span>
+                      @if (service.urgent) {
+                        <span class="ml-2 px-1.5 py-0.5 rounded bg-red-100 text-[11px] font-semibold text-red-700 dark:bg-red-500/15 dark:text-red-300">{{ 'appointmentForm.service.urgent' | transloco }}</span>
+                      }
+                    </td>
+                    <td class="px-4 py-3 text-soft whitespace-nowrap">{{ 'appointmentForm.service.minutes' | transloco: { count: service.durationMinutes } }}</td>
+                    <td class="px-4 py-3 text-right text-content whitespace-nowrap">{{ 'payments.money' | transloco: { amount: service.priceLabel } }}</td>
+                    <td class="px-4 py-3">
+                      <div class="flex items-center justify-end gap-1">
+                        <button type="button" class="w-8 h-8 flex items-center justify-center rounded-lg text-muted hover:text-accent hover:bg-brand-50" [title]="'finance.edit' | transloco" (click)="openService(service)">
+                          <mat-icon fontSet="material-symbols-outlined" style="font-size: 20px; width: 20px; height: 20px;">edit</mat-icon>
+                        </button>
+                        <button type="button" class="w-8 h-8 flex items-center justify-center rounded-lg text-muted hover:text-red-600 hover:bg-red-50 dark:hover:text-red-400 dark:hover:bg-red-500/10" [title]="'finance.delete' | transloco" (click)="removeService(service)">
+                          <mat-icon fontSet="material-symbols-outlined" style="font-size: 20px; width: 20px; height: 20px;">delete</mat-icon>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Мобилка: карточки -->
+          <div class="md:hidden flex flex-col gap-2">
+            @for (service of services(); track service.id) {
+              <div class="rounded-2xl border border-line-strong p-3 flex items-center gap-3">
+                <div class="min-w-0 flex-1">
+                  <div class="text-[15px] font-semibold text-content">
+                    {{ service.name }}
+                    @if (service.urgent) {
+                      <span class="ml-1 px-1.5 py-0.5 rounded bg-red-100 text-[11px] font-semibold text-red-700 dark:bg-red-500/15 dark:text-red-300">{{ 'appointmentForm.service.urgent' | transloco }}</span>
+                    }
+                  </div>
+                  <div class="text-[13px] text-muted">{{ 'appointmentForm.service.minutes' | transloco: { count: service.durationMinutes } }} · {{ 'payments.money' | transloco: { amount: service.priceLabel } }}</div>
+                </div>
+                <button type="button" class="w-9 h-9 shrink-0 flex items-center justify-center rounded-lg bg-page text-soft" [title]="'finance.edit' | transloco" (click)="openService(service)">
+                  <mat-icon fontSet="material-symbols-outlined" style="font-size: 20px; width: 20px; height: 20px;">edit</mat-icon>
+                </button>
+                <button type="button" class="w-9 h-9 shrink-0 flex items-center justify-center rounded-lg bg-page text-red-600 dark:text-red-400" [title]="'finance.delete' | transloco" (click)="removeService(service)">
+                  <mat-icon fontSet="material-symbols-outlined" style="font-size: 20px; width: 20px; height: 20px;">delete</mat-icon>
+                </button>
+              </div>
+            }
+          </div>
+        }
+      </section>
+    }
+
+    <!-- Режим работы — только у врача -->
+    @if (tab() === 'workMode' && isDoctor()) {
+      <form [formGroup]="workForm" (ngSubmit)="saveWorkMode()" class="flex flex-col gap-4">
+        <section class="bg-surface border border-line-strong rounded-[20px] p-5 md:p-6 flex flex-col gap-5">
+          <div>
+            <h2 class="font-display text-lg font-bold text-content">{{ 'settings.sections.workMode' | transloco }}</h2>
+            <p class="text-[13px] text-muted">{{ 'settings.workMode.hint' | transloco }}</p>
+          </div>
+
+          <div class="flex flex-col gap-2">
+            <span class="text-[13px] font-semibold text-soft">{{ 'doctors.form.workDays' | transloco }}</span>
+            <div class="grid grid-cols-7 gap-1.5" role="group" [attr.aria-label]="'doctors.form.workDays' | transloco">
+              @for (d of weekDays(); track d.day) {
+                <button type="button" [attr.aria-pressed]="d.active" class="h-11 rounded-xl border text-sm font-semibold capitalize transition-colors" [class.bg-brand-700]="d.active" [class.border-brand-700]="d.active" [class.text-white]="d.active" [class.border-line-strong]="!d.active" [class.text-soft]="!d.active" (click)="toggleWorkDay(d.day)">{{ d.label }}</button>
+              }
+            </div>
+            @if (workForm.hasError('workDays')) {
+              <span class="text-xs text-red-600">{{ 'doctors.form.errors.workDays' | transloco }}</span>
+            }
+          </div>
+
+          <div class="flex flex-col gap-2">
+            <span class="text-[13px] font-semibold text-soft">{{ 'doctors.form.workHours' | transloco }}</span>
+            <div class="flex items-center gap-2 sm:max-w-sm">
+              <input type="time" formControlName="workStart" [attr.aria-label]="'settings.clinic.open' | transloco" class="flex-1 min-w-0 h-11 px-3 rounded-xl bg-surface border border-line-strong text-sm text-content outline-none focus:border-brand-300">
+              <span class="text-muted">—</span>
+              <input type="time" formControlName="workEnd" [attr.aria-label]="'settings.clinic.close' | transloco" class="flex-1 min-w-0 h-11 px-3 rounded-xl bg-surface border border-line-strong text-sm text-content outline-none focus:border-brand-300">
+            </div>
+            @if (workForm.hasError('timeRange')) {
+              <span class="text-xs text-red-600">{{ 'doctors.form.errors.timeRange' | transloco }}</span>
+            }
+          </div>
+        </section>
+
+        <div class="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 pb-2">
+          <button type="button" class="h-11 px-5 rounded-xl text-sm font-semibold text-content hover:bg-surface" [disabled]="workForm.pristine" [class.opacity-50]="workForm.pristine" (click)="resetWorkMode()">{{ 'settings.reset' | transloco }}</button>
+          <button type="submit" class="h-11 px-6 rounded-xl bg-brand-700 text-white text-sm font-semibold hover:bg-brand-800 disabled:opacity-60" [disabled]="workSaving() || workForm.invalid">{{ 'settings.save' | transloco }}</button>
+        </div>
+      </form>
+    }
+    </div>
   </div>
 </div>

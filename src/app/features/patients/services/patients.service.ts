@@ -33,6 +33,24 @@ const DIAGNOSES: Omit<Diagnosis, 'id' | 'date' | 'doctorName' | 'status'>[] = [
   { title: 'Скученность зубов', description: 'Консультация ортодонта. Предложено лечение элайнерами, сделаны слепки.' }
 ];
 
+// Пациенты из расписания — те же id, ФИО и телефоны, чтобы в карточке пациента были видны
+// его визиты, оплаты, план лечения и зубная формула
+// TODO: на API пациенты и расписание будут из одной базы — этот список не понадобится
+const SCHEDULE_PATIENTS: Record<number, Pick<Patient, 'fullName' | 'phone' | 'gender'>> = {
+  1: { fullName: 'Ковалёв Максим Дмитриевич', phone: '+998 93 555-12-34', gender: 'male' },
+  2: { fullName: 'Смирнов Артур Павлович', phone: '+998 90 123-45-67', gender: 'male' },
+  3: { fullName: 'Михайлова Дарья Игоревна', phone: '+998 97 700-11-22', gender: 'female' },
+  4: { fullName: 'Абдуллаева Нилуфар Рустамовна', phone: '+998 99 321-65-87', gender: 'female' },
+  5: { fullName: 'Турсунов Жасур Алишерович', phone: '+998 91 444-78-90', gender: 'male' },
+  6: { fullName: 'Петров Сергей Олегович', phone: '+998 94 222-33-44', gender: 'male' },
+  7: { fullName: 'Смирнова Елена Васильевна', phone: '+998 90 111-22-33', gender: 'female' },
+  8: { fullName: 'Кузнецов Артём Игоревич', phone: '+998 95 777-88-99', gender: 'male' },
+  9: { fullName: 'Юлдашева Малика Бахтиёровна', phone: '+998 95 610-20-30', gender: 'female' },
+  10: { fullName: 'Иванов Дмитрий Андреевич', phone: '+998 33 870-45-12', gender: 'male' },
+  11: { fullName: 'Хасанов Бекзод Улугбекович', phone: '+998 88 505-60-70', gender: 'male' },
+  12: { fullName: 'Сергеева Анна Викторовна', phone: '+998 90 909-18-27', gender: 'female' }
+};
+
 function dateKey(daysFromToday: number): string {
   const date = new Date();
   date.setDate(date.getDate() + daysFromToday);
@@ -75,7 +93,8 @@ function buildMock(count: number): Patient[] {
       lastVisit: status === 'primary' && i % 3 === 0 ? undefined : dateKey(-((i * 11) % 120) - 1),
       nextVisit: hasNext ? dateKey((i * 3) % 21 + 1) : undefined,
       nextVisitTime: hasNext ? TIMES[i % TIMES.length] : undefined,
-      diagnoses: buildDiagnoses(i, status)
+      diagnoses: buildDiagnoses(i, status),
+      ...(SCHEDULE_PATIENTS[i + 1] as Partial<Patient> | undefined)
     };
   });
 }

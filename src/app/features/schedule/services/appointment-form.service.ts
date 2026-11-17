@@ -1,6 +1,7 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { Observable, delay, of } from 'rxjs';
 import { PatientShort, VisitService } from '../models/appointment-form.model';
+import { ClinicServicesService } from '../../../shared/services/clinic-services.service';
 
 // Mock-база пациентов
 const PATIENTS: PatientShort[] = [
@@ -28,15 +29,12 @@ export class AppointmentFormService {
     return of(result).pipe(delay(300));
   }
 
+  private readonly clinicServices = inject(ClinicServicesService);
+
+  // Услуги — из справочника «Настройки → Услуги»
   // TODO: заменить на реальный запрос, когда будет API:
   // return this.http.get<VisitService[]>(`${apiUrl}/services`);
   getVisitServices(): Observable<VisitService[]> {
-    return of<VisitService[]>([
-      { id: 1, name: 'Лечение кариеса', durationMinutes: 45 },
-      { id: 2, name: 'Профессиональная гигиена AirFlow', durationMinutes: 60 },
-      { id: 3, name: 'Консультация и осмотр', durationMinutes: 30 },
-      { id: 4, name: 'Удаление зуба', durationMinutes: 40 },
-      { id: 5, name: 'Острая боль', durationMinutes: 30, urgent: true }
-    ]).pipe(delay(300));
+    return of(this.clinicServices.services()).pipe(delay(300));
   }
 }

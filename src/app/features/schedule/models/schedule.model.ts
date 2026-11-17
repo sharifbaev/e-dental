@@ -3,6 +3,9 @@ export type { PatientStatus } from '../../../shared/models/patient-status';
 import type { PatientStatus } from '../../../shared/models/patient-status';
 import type { PatientRating } from '../../../shared/models/patient-rating';
 
+// Как пациент подтвердил запись: ответил на SMS или по звонку
+export type AppointmentConfirmation = 'sms' | 'call';
+
 export interface ScheduleAppointment {
   id: number;
   date: string;                // 'YYYY-MM-DD'
@@ -18,6 +21,7 @@ export interface ScheduleAppointment {
   doctorName: string;          // 'Савина А. И.'
   status: PatientStatus;
   patientRating?: PatientRating;  // рейтинг пациента — цветной квадратик в карточке
+  confirmation?: AppointmentConfirmation;  // нет — запись не подтверждена
 }
 
 // Данные новой записи из формы (врач, дата и время пока подставляются автоматически)
@@ -30,4 +34,5 @@ export interface AppointmentDraft {
   durationMinutes: number;
   time?: string;               // 'HH:mm' — время из формы
   rating?: PatientRating;       // рейтинг пациента из формы
+  status?: PatientStatus;       // нет — «Первичный» (следующий визит по плану лечения — «В лечении»)
 }

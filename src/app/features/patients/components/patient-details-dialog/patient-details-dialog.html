@@ -23,7 +23,25 @@
     </button>
   </div>
 
+  <!-- Разделы карточки -->
+  @if (!editing()) {
+    <div class="px-6 pt-3">
+      <div class="flex gap-1 p-1 rounded-xl bg-page overflow-x-auto">
+        @for (item of sections; track item.id) {
+          <button type="button" class="flex-1 shrink-0 flex items-center justify-center gap-1.5 h-9 px-3 rounded-lg text-sm font-medium whitespace-nowrap transition-colors" [class.bg-surface]="section() === item.id" [class.shadow-sm]="section() === item.id" [class.text-accent]="section() === item.id" [class.text-muted]="section() !== item.id" (click)="selectSection(item.id)">
+            <mat-icon fontSet="material-symbols-outlined" class="hidden! sm:inline-block!" style="font-size: 18px; width: 18px; height: 18px;">{{ item.icon }}</mat-icon>
+            <span>{{ item.key | transloco }}</span>
+            @if (item.id === 'treatment' && debt() > 0) {
+              <span class="w-2 h-2 rounded-full bg-red-500"></span>
+            }
+          </button>
+        }
+      </div>
+    </div>
+  }
+
   <mat-dialog-content style="flex: 1 1 auto; max-height: none;">
+    @if (section() === 'overview') {
     <div class="flex flex-col gap-5 py-2">
 
       <!-- Общие данные -->
@@ -170,6 +188,183 @@
         }
       </section>
     </div>
+    }
+
+    <!-- Зубная формула -->
+    @if (section() === 'chart' && patient(); as patientData) {
+      <div class="py-2">
+        <app-dental-chart [patient]="patientData" />
+      </div>
+    }
+
+    <!-- План лечения и оплаты -->
+    @if (section() === 'treatment') {
+      <div class="flex flex-col gap-5 py-2">
+        <section class="flex flex-col gap-3">
+          <h3 class="text-xs font-semibold uppercase tracking-wider text-subtle">{{ 'treatmentPlan.title' | transloco }}</h3>
+          @if (plans().length === 0) {
+            <div class="py-6 rounded-2xl bg-page text-center text-sm text-subtle">{{ 'treatmentPlan.empty' | transloco }}</div>
+          }
+          @for (plan of plans(); track plan.id) {
+            <div class="rounded-2xl border border-line-strong p-4 flex flex-col gap-3">
+              <div class="flex flex-wrap items-center gap-2 text-xs">
+                <span class="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-page text-soft">
+                  <mat-icon fontSet="material-symbols-outlined" style="font-size: 14px; width: 14px; height: 14px;">calendar_today</mat-icon>
+                  {{ plan.createdLabel }}
+                </span>
+                <span class="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-page text-soft">
+                  <mat-icon fontSet="material-symbols-outlined" style="font-size: 14px; width: 14px; height: 14px;">stethoscope</mat-icon>
+                  {{ 'dashboard.doctorPrefix' | transloco }} {{ plan.doctorName }}
+                </span>
+              </div>
+              <div class="flex flex-wrap gap-1.5">
+                @for (procedure of plan.procedures; track $index) {
+                  <span class="px-2 py-1 rounded-lg bg-brand-50 text-sm text-brand-700">{{ procedure }}</span>
+                }
+              </div>
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
+                <div>
+                  <div class="text-xs text-subtle">{{ 'treatmentPlan.visits' | transloco }}</div>
+                  <div class="text-content">{{ plan.visits }}</div>
+                </div>
+                <div>
+                  <div class="text-xs text-subtle">{{ 'treatmentPlan.cost' | transloco }}</div>
+                  <div class="text-content">{{ 'payments.money' | transloco: { amount: plan.costLabel } }}</div>
+                </div>
+                <div>
+                  <div class="text-xs text-subtle">{{ 'treatmentPlan.next' | transloco }}</div>
+                  <div [class.text-brand-700]="plan.nextLabel" [class.font-medium]="plan.nextLabel" [class.text-content]="!plan.nextLabel">{{ plan.nextLabel || '—' }}</div>
+                </div>
+              </div>
+              @if (plan.notes) {
+                <p class="text-sm text-soft">{{ plan.notes }}</p>
+              }
+            </div>
+          }
+          <p class="text-xs text-subtle">{{ 'treatmentPlan.hint' | transloco }}</p>
+        </section>
+
+        <section class="flex flex-col gap-3">
+          <div class="flex items-center justify-between gap-2">
+            <h3 class="text-xs font-semibold uppercase tracking-wider text-subtle">{{ 'payments.title' | transloco }}</h3>
+            @if (debt() > 0) {
+              <button type="button" class="flex items-center gap-1 h-9 px-3 rounded-lg bg-brand-700 text-sm font-medium text-white hover:bg-brand-800" (click)="repay()">
+                <mat-icon fontSet="material-symbols-outlined" style="font-size: 18px; width: 18px; height: 18px;">payments</mat-icon>
+                {{ 'payments.repay' | transloco }}
+              </button>
+            }
+          </div>
+
+          <!-- Итог: долг или «долгов нет» -->
+          <div class="flex items-center gap-3 p-3 rounded-xl" [class.bg-red-50]="debt() > 0" [class.dark:bg-red-500/10]="debt() > 0" [class.bg-emerald-50]="debt() === 0" [class.dark:bg-emerald-500/10]="debt() === 0">
+            <mat-icon fontSet="material-symbols-outlined" [class.text-red-600]="debt() > 0" [class.text-emerald-600]="debt() === 0">{{ debt() > 0 ? 'error' : 'check_circle' }}</mat-icon>
+            <span class="text-sm font-semibold" [class.text-red-700]="debt() > 0" [class.dark:text-red-300]="debt() > 0" [class.text-emerald-700]="debt() === 0" [class.dark:text-emerald-300]="debt() === 0">
+              {{ debt() > 0 ? ('payments.debt' | transloco: { amount: debtLabel() }) : ('payments.noDebt' | transloco) }}
+            </span>
+          </div>
+
+          @if (payments().length === 0) {
+            <div class="py-6 rounded-2xl bg-page text-center text-sm text-subtle">{{ 'payments.empty' | transloco }}</div>
+          } @else {
+            <div class="flex flex-col divide-y divide-line rounded-2xl border border-line-strong">
+              @for (payment of payments(); track payment.id) {
+                <div class="flex items-center gap-3 p-3">
+                  <div class="min-w-0 flex-1">
+                    <div class="text-sm font-medium text-content truncate">{{ payment.kind === 'repayment' ? ('payments.repayment' | transloco) : payment.service }}</div>
+                    <div class="text-xs text-subtle">{{ payment.dateLabel }} · {{ payment.methodKey | transloco }}</div>
+                  </div>
+                  <div class="text-right shrink-0">
+                    <div class="text-sm font-semibold text-content">{{ 'payments.money' | transloco: { amount: payment.paidLabel } }}</div>
+                    @if (payment.owes) {
+                      <div class="text-xs text-red-600">{{ 'payments.ofAmount' | transloco: { amount: payment.amountLabel } }}</div>
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+          }
+        </section>
+      </div>
+    }
+
+    <!-- История визитов -->
+    @if (section() === 'visits') {
+      <div class="py-2 flex flex-col gap-3">
+        <!-- Фильтры визитов -->
+        @if (visitsTotal() > 0) {
+          <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            <label class="flex flex-col gap-1 min-w-0">
+              <span class="text-xs font-medium text-soft">{{ 'patients.visits.filters.status' | transloco }}</span>
+              <select class="w-full h-10 px-2 rounded-xl bg-page border border-transparent text-sm text-content outline-none cursor-pointer focus:border-brand-300" [value]="visitStatus()" (change)="visitStatus.set($any($event.target).value)">
+                <option value="">{{ 'patients.visits.filters.all' | transloco }}</option>
+                @for (status of visitStatuses; track status) {
+                  <option [value]="status" [selected]="visitStatus() === status">{{ ('schedule.status.' + status) | transloco }}</option>
+                }
+              </select>
+            </label>
+            <label class="flex flex-col gap-1 min-w-0">
+              <span class="text-xs font-medium text-soft">{{ 'patients.visits.filters.doctor' | transloco }}</span>
+              <select class="w-full h-10 px-2 rounded-xl bg-page border border-transparent text-sm text-content outline-none cursor-pointer focus:border-brand-300" (change)="visitDoctor.set($any($event.target).value)">
+                <option value="" [selected]="!visitDoctor()">{{ 'patients.visits.filters.allDoctors' | transloco }}</option>
+                @for (doctor of visitDoctors(); track doctor.id) {
+                  <option [value]="doctor.id" [selected]="visitDoctor() === doctor.id">{{ doctor.name }}</option>
+                }
+              </select>
+            </label>
+            <label class="flex flex-col gap-1 min-w-0">
+              <span class="text-xs font-medium text-soft">{{ 'patients.visits.filters.payment' | transloco }}</span>
+              <select class="w-full h-10 px-2 rounded-xl bg-page border border-transparent text-sm text-content outline-none cursor-pointer focus:border-brand-300" (change)="visitPayment.set($any($event.target).value)">
+                <option value="" [selected]="!visitPayment()">{{ 'patients.visits.filters.all' | transloco }}</option>
+                <option value="paid" [selected]="visitPayment() === 'paid'">{{ 'payments.badge.paid' | transloco }}</option>
+                <option value="debt" [selected]="visitPayment() === 'debt'">{{ 'payments.badge.debt' | transloco }}</option>
+                <option value="unpaid" [selected]="visitPayment() === 'unpaid'">{{ 'patients.visits.filters.unpaid' | transloco }}</option>
+              </select>
+            </label>
+            <label class="flex flex-col gap-1 min-w-0">
+              <span class="text-xs font-medium text-soft">{{ 'patients.visits.filters.from' | transloco }}</span>
+              <input type="date" class="w-full h-10 px-2 rounded-xl bg-page border border-transparent text-sm text-content outline-none focus:border-brand-300" [value]="visitFrom()" (change)="visitFrom.set($any($event.target).value)">
+            </label>
+            <label class="flex flex-col gap-1 min-w-0">
+              <span class="text-xs font-medium text-soft">{{ 'patients.visits.filters.to' | transloco }}</span>
+              <input type="date" class="w-full h-10 px-2 rounded-xl bg-page border border-transparent text-sm text-content outline-none focus:border-brand-300" [value]="visitTo()" (change)="visitTo.set($any($event.target).value)">
+            </label>
+            <div class="flex items-end">
+              <button type="button" class="w-full h-10 flex items-center justify-center gap-1 rounded-xl border border-line-strong text-sm font-medium text-soft hover:bg-page disabled:opacity-40" [disabled]="!hasVisitFilters()" (click)="resetVisitFilters()">
+                <mat-icon fontSet="material-symbols-outlined" style="font-size: 18px; width: 18px; height: 18px;">filter_alt_off</mat-icon>
+                {{ 'patients.visits.filters.reset' | transloco }}
+              </button>
+            </div>
+          </div>
+        }
+
+        @if (visitsTotal() > 0 && visits().length === 0) {
+          <div class="py-8 rounded-2xl bg-page text-center text-sm text-subtle">{{ 'patients.visits.filters.empty' | transloco }}</div>
+        } @else if (visits().length === 0) {
+          <div class="py-8 rounded-2xl bg-page text-center text-sm text-subtle">{{ 'patients.visits.empty' | transloco }}</div>
+        } @else {
+          <div class="flex flex-col divide-y divide-line rounded-2xl border border-line-strong">
+            @for (visit of visits(); track visit.id) {
+              <div class="flex items-center gap-3 p-3">
+                <div class="w-24 shrink-0">
+                  <div class="text-sm font-semibold text-content">{{ visit.dateLabel }}</div>
+                  <div class="text-xs text-subtle">{{ visit.start }} – {{ visit.end }}</div>
+                </div>
+                <div class="min-w-0 flex-1">
+                  <div class="text-sm text-content truncate">{{ visit.service }}</div>
+                  <div class="text-xs text-subtle truncate">{{ 'dashboard.doctorPrefix' | transloco }} {{ visit.doctorName }}</div>
+                </div>
+                <div class="shrink-0 flex flex-col items-end gap-1">
+                  <span class="px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap" [class]="visit.statusClass">{{ visit.statusKey | transloco }}</span>
+                  @if (visit.paymentKey) {
+                    <span class="text-xs font-medium" [class.text-red-600]="visit.paymentOwes" [class.text-emerald-600]="!visit.paymentOwes">{{ visit.paymentKey | transloco }}</span>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    }
   </mat-dialog-content>
 
   <!-- Кнопки режима изменения -->

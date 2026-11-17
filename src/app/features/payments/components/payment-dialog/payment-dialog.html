@@ -1,0 +1,64 @@
+<!-- Шапка -->
+<div class="flex items-center justify-between gap-2 px-6 pt-5 pb-2">
+  <h2 class="font-display text-lg font-bold text-content">{{ (isRepayment ? 'payments.dialog.repaymentTitle' : 'payments.dialog.title') | transloco }}</h2>
+  <button matIconButton mat-dialog-close type="button" [title]="'common.close' | transloco">
+    <mat-icon fontSet="material-symbols-outlined">close</mat-icon>
+  </button>
+</div>
+
+<mat-dialog-content>
+  <form [formGroup]="form" class="flex flex-col gap-4 pb-2" (ngSubmit)="save()">
+    <!-- Пациент и услуга -->
+    <div class="p-3 rounded-xl bg-page">
+      <div class="font-semibold text-content truncate">{{ data.patientName }}</div>
+      <div class="text-sm text-muted">
+        @if (isRepayment) {
+          {{ 'payments.dialog.debtNow' | transloco: { amount: suggestedLabel() } }}
+        } @else {
+          {{ data.service }}
+        }
+      </div>
+    </div>
+
+    @if (!isRepayment) {
+      <label class="flex flex-col gap-1">
+        <span class="text-xs font-medium text-soft">{{ 'payments.dialog.amount' | transloco }} <span class="text-red-500">*</span></span>
+        <input type="number" min="0" step="1000" formControlName="amount" class="w-full h-11 px-3 rounded-xl bg-page border text-sm text-content outline-none focus:border-brand-300 focus:bg-surface" [class.border-transparent]="!isInvalid('amount')" [class.border-red-300]="isInvalid('amount')">
+      </label>
+    }
+
+    <label class="flex flex-col gap-1">
+      <span class="text-xs font-medium text-soft">{{ 'payments.dialog.paid' | transloco }} <span class="text-red-500">*</span></span>
+      <input type="number" min="0" step="1000" formControlName="paid" class="w-full h-11 px-3 rounded-xl bg-page border text-sm text-content outline-none focus:border-brand-300 focus:bg-surface" [class.border-transparent]="!isInvalid('paid')" [class.border-red-300]="isInvalid('paid')">
+      @if (isInvalid('paid')) {
+        <span class="text-xs text-red-600">{{ (isRepayment ? 'payments.dialog.errorRepayment' : 'payments.dialog.errorPaid') | transloco }}</span>
+      }
+    </label>
+
+    <!-- Способ оплаты -->
+    <div class="flex flex-col gap-1">
+      <span class="text-xs font-medium text-soft">{{ 'payments.dialog.method' | transloco }}</span>
+      <div class="grid grid-cols-2 gap-2">
+        @for (m of methods; track m.method) {
+          <button type="button" class="flex items-center gap-2 h-11 px-3 rounded-xl border text-sm font-medium transition-colors" [class.border-brand-600]="form.controls.method.value === m.method" [class.bg-brand-50]="form.controls.method.value === m.method" [class.text-brand-700]="form.controls.method.value === m.method" [class.border-line-strong]="form.controls.method.value !== m.method" [class.text-soft]="form.controls.method.value !== m.method" (click)="selectMethod(m.method)">
+            <mat-icon fontSet="material-symbols-outlined" style="font-size: 20px; width: 20px; height: 20px;">{{ m.icon }}</mat-icon>
+            {{ m.key | transloco }}
+          </button>
+        }
+      </div>
+    </div>
+
+    <!-- Останется в долг -->
+    @if (debtLeft() > 0) {
+      <div class="flex items-center gap-2 p-3 rounded-xl bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-300 text-sm">
+        <mat-icon fontSet="material-symbols-outlined" class="shrink-0" style="font-size: 20px; width: 20px; height: 20px;">info</mat-icon>
+        {{ 'payments.dialog.debtLeft' | transloco: { amount: debtLabel() } }}
+      </div>
+    }
+  </form>
+</mat-dialog-content>
+
+<div class="px-6 pb-5 pt-2 flex flex-col-reverse sm:flex-row gap-2">
+  <button type="button" class="flex-1 px-4 py-3 rounded-lg border border-line-strong text-sm font-medium text-soft hover:bg-page" mat-dialog-close>{{ 'patients.details.cancel' | transloco }}</button>
+  <button type="button" class="flex-1 px-4 py-3 rounded-lg bg-brand-700 text-sm font-medium text-white hover:bg-brand-800" (click)="save()">{{ 'payments.dialog.save' | transloco }}</button>
+</div>

@@ -6,9 +6,15 @@ import { LoginRequest, LoginResponse, User } from '../models/auth.model';
 const TOKEN_KEY = 'e-dental.token';
 const USER_KEY = 'e-dental.user';
 
-// Демо-доступ до подключения API
-const DEMO_USERNAME = 'admin';
-const DEMO_PASSWORD = 'admin123';
+// Демо-доступ до подключения API: администратор и врач
+const DEMO_USERS: { username: string; password: string; user: User }[] = [
+  { username: 'admin', password: 'admin123', user: { id: 1, fullName: 'Administrator', username: 'admin', role: 'admin' } },
+  {
+    username: 'doctor',
+    password: 'doctor123',
+    user: { id: 2, fullName: 'Сидоров Алексей Петрович', username: 'doctor', role: 'doctor', doctorId: 1, doctorName: 'Сидоров А. П.' }
+  }
+];
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -47,11 +53,9 @@ export class AuthService {
   private loginRequest(credentials: LoginRequest): Observable<LoginResponse> {
     const username = credentials.username.trim();
 
-    if (username === DEMO_USERNAME && credentials.password === DEMO_PASSWORD) {
-      return of<LoginResponse>({
-        token: 'mock-token',
-        user: { id: 1, fullName: 'Administrator', username: 'admin', role: 'admin' }
-      }).pipe(delay(500));
+    const demo = DEMO_USERS.find(u => u.username === username && u.password === credentials.password);
+    if (demo) {
+      return of<LoginResponse>({ token: 'mock-token', user: demo.user }).pipe(delay(500));
     }
     return timer(500).pipe(
       switchMap(() => throwError(() => new Error('INVALID_CREDENTIALS')))

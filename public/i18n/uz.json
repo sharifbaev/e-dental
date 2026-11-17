@@ -4,7 +4,8 @@
   },
   "common": {
     "logout": "Chiqish",
-    "close": "Yopish"
+    "close": "Yopish",
+    "cancel": "Bekor qilish"
   },
   "header": {
     "search": "Bemor, shifokor yoki xizmatni qidirish",
@@ -26,7 +27,8 @@
     "schedule": "Jadval",
     "patients": "Bemorlar",
     "doctors": "Shifokorlar",
-    "settings": "Sozlamalar"
+    "settings": "Sozlamalar",
+    "finance": "Moliya"
   },
   "dashboard": {
     "greeting": {
@@ -131,14 +133,21 @@
       "minutes": "Daqiqa",
       "freeSlots": "Bo'sh vaqt",
       "noSlots": "Bu sanada shifokorda bunday davomiylikdagi bo'sh vaqt yo'q — boshqa sana yoki shifokorni tanlang",
-      "orTime": "yoki o'z vaqtingiz:"
+      "orTime": "yoki o'z vaqtingiz:",
+      "duration30": "30 daq",
+      "duration60": "1 soat",
+      "duration90": "1,5 soat",
+      "duration120": "2 soat",
+      "duration180": "3 soat",
+      "duration240": "4 soat"
     },
     "errors": {
       "required": "Majburiy maydon",
       "minLength": "Kamida 3 ta belgi",
       "phone": "Format: +998 XX XXX-XX-XX",
       "selectPatient": "Bazadan bemorni tanlang",
-      "selectService": "Xizmat yoki tashrif sababini tanlang"
+      "selectService": "Xizmat yoki tashrif sababini tanlang",
+      "phoneLocal": "Raqamning 9 ta raqamini kiriting: 90 123-45-67"
     },
     "editTitle": "Yozuvni o'zgartirish",
     "editSubtitle": "Bemor, xizmat yoki vaqtni o'zgartiring",
@@ -174,6 +183,10 @@
       "noShow": {
         "title": "Bemor kelmadi",
         "text": "{{patient}} {{time}} dagi Dr. {{doctor}} qabuliga kelmadi"
+      },
+      "statusOverdue": {
+        "title": "Qabul holatini yangilang",
+        "text": "{{patient}} ning {{time}} dagi Dr. {{doctor}} qabuli o'tdi, lekin holat hali ham «Birlamchi»"
       }
     }
   },
@@ -191,13 +204,18 @@
     "dayEmpty": "yozuv yo'q",
     "status": {
       "primary": "Birlamchi",
+      "awaitingDecision": "Qaror kutilmoqda",
       "inTreatment": "Davolanmoqda",
       "completed": "Yakunlangan",
+      "archived": "Arxivda",
+      "noShow": "Kelmadi",
       "cancelled": "Bekor qilingan"
     },
     "actions": {
       "edit": "O'zgartirish",
-      "cancel": "Bekor qilish"
+      "cancel": "Bekor qilish",
+      "status": "Holatni o'zgartirish",
+      "statusOverdue": "Qabul o'tdi — holatni o'zgartiring"
     },
     "cancelDialog": {
       "title": "Qabulni bekor qilish",
@@ -220,9 +238,36 @@
       "copy": "Nusxalash",
       "copied": "Nusxalandi",
       "edit": "O'zgartirish",
+      "status": "Holat",
       "cancel": "Qabulni bekor qilish"
     },
-    "doctor": "Shifokor"
+    "doctor": "Shifokor",
+    "statusDialog": {
+      "title": "Holatni o'zgartirish",
+      "overdueHint": "Qabul vaqti o'tdi, lekin holat hali ham «Birlamchi». Ko'rik natijasini belgilang.",
+      "decisionHint": "Ko'rik o'tkazildi. Shifokor hal qiladi: davolash yoki arxiv.",
+      "other": "Boshqa holatlar",
+      "back": "Bekor qilish",
+      "save": "Saqlash",
+      "hints": {
+        "primary": "Birinchi tashrif, ko'rik hali o'tkazilmagan",
+        "awaitingDecision": "Ko'rik o'tkazildi, shifokor hal qiladi: davolash yoki arxiv",
+        "inTreatment": "Bemorga davolash tayinlandi",
+        "completed": "Davolash yakunlandi",
+        "archived": "Davolash kerak emas yoki bemor rad etdi",
+        "noShow": "Bemor qabulga kelmadi",
+        "cancelled": "Qabul bekor qilindi"
+      }
+    },
+    "confirmation": {
+      "title": "Tasdiqlash",
+      "none": "Bemor hali yozuvni tasdiqlamagan",
+      "sms": "SMS orqali tasdiqladi",
+      "call": "Qo'ng'iroq orqali tasdiqladi",
+      "bySms": "SMS orqali",
+      "byCall": "Qo'ng'iroq orqali",
+      "reset": "Bekor qilish"
+    }
   },
   "feedback": {
     "ok": "Tushunarli",
@@ -236,7 +281,10 @@
     "doctorCreated": "Shifokor qo'shildi",
     "doctorUpdated": "Shifokor ma'lumotlari saqlandi",
     "doctorDeleted": "Shifokor o'chirildi",
-    "settingsSaved": "Sozlamalar saqlandi"
+    "settingsSaved": "Sozlamalar saqlandi",
+    "statusChanged": "Holat o'zgartirildi",
+    "paymentSaved": "To'lov saqlandi",
+    "planSaved": "Davolash rejasi saqlandi"
   },
   "patients": {
     "title": "Bemorlar",
@@ -276,6 +324,27 @@
       "edit": "O'zgartirish",
       "save": "Saqlash",
       "cancel": "Bekor qilish"
+    },
+    "sections": {
+      "overview": "Umumiy",
+      "chart": "Tish formulasi",
+      "treatment": "Davolash va to'lovlar",
+      "visits": "Tashriflar"
+    },
+    "visits": {
+      "empty": "Jadvalda tashriflar yo'q",
+      "filters": {
+        "status": "Holat",
+        "all": "Hammasi",
+        "doctor": "Shifokor",
+        "allDoctors": "Barcha shifokorlar",
+        "payment": "To'lov",
+        "unpaid": "To'lanmagan",
+        "from": "Sanadan",
+        "to": "Sanagacha",
+        "reset": "Tozalash",
+        "empty": "Tanlangan filtrlar bo'yicha tashriflar yo'q"
+      }
     }
   },
   "doctors": {
@@ -372,13 +441,15 @@
   },
   "settings": {
     "title": "Sozlamalar",
-    "subtitle": "Klinika ma'lumotlari, ko'rinish va bildirishnomalar",
+    "subtitle": "Klinika, ko'rinish, bildirishnomalar va xizmatlar",
     "save": "Saqlash",
     "reset": "O'zgarishlarni bekor qilish",
     "sections": {
       "clinic": "Klinika",
       "appearance": "Ko'rinish",
-      "notifications": "Bildirishnomalar"
+      "notifications": "Bildirishnomalar",
+      "services": "Xizmatlar",
+      "workMode": "Ish tartibi"
     },
     "clinic": {
       "logo": "Logotip",
@@ -419,6 +490,192 @@
         "title": "Administratorga kunlik hisobot",
         "hint": "Qabullar, to'lovlar va qarzlar soat 19:00 da"
       }
+    },
+    "services": {
+      "hint": "Xizmatlar qabul formasida va shifokor formasida chiqadi",
+      "add": "Xizmat qo'shish",
+      "addTitle": "Yangi xizmat",
+      "editTitle": "Xizmatni o'zgartirish",
+      "name": "Nomi",
+      "duration": "Davomiyligi, daq",
+      "durationError": "5 dan 480 daqiqagacha",
+      "price": "Narxi, so'm",
+      "urgent": "Shoshilinch xizmat",
+      "urgentHint": "Qabul formasida «Shoshilinch» belgisi bilan chiqadi",
+      "empty": "Hozircha xizmatlar yo'q — birinchisini qo'shing",
+      "created": "Xizmat qo'shildi",
+      "deleted": "Xizmat o'chirildi",
+      "deleteTitle": "Xizmatni o'chirish",
+      "deleteMessage": "«{{name}}» xizmatini o'chirasizmi? Yaratilgan yozuvlarda u qoladi"
+    },
+    "workMode": {
+      "hint": "Ish kunlaringiz va qabul soatlaringiz"
+    }
+  },
+  "payments": {
+    "title": "To'lov",
+    "money": "{{amount}} so'm",
+    "debt": "Qarz: {{amount}} so'm",
+    "noDebt": "Qarz yo'q",
+    "notPaid": "Hali to'lanmagan",
+    "pay": "To'lovni qabul qilish",
+    "repay": "Qarzni to'lash",
+    "repayment": "Qarzni to'lash",
+    "empty": "Hali to'lovlar yo'q",
+    "ofAmount": "{{amount}} so'mdan",
+    "badge": {
+      "paid": "To'langan",
+      "debt": "Qarz"
+    },
+    "methods": {
+      "cash": "Naqd",
+      "card": "Karta",
+      "click": "Click",
+      "payme": "Payme"
+    },
+    "dialog": {
+      "title": "Qabul uchun to'lov",
+      "repaymentTitle": "Qarzni to'lash",
+      "debtNow": "Hozirgi qarz: {{amount}} so'm",
+      "amount": "Narxi, so'm",
+      "paid": "To'landi, so'm",
+      "method": "To'lov usuli",
+      "debtLeft": "Qarzga qoladi: {{amount}} so'm",
+      "errorPaid": "To'lov narxdan ko'p bo'lishi mumkin emas",
+      "errorRepayment": "Qarzdan ko'p bo'lmagan summani kiriting",
+      "save": "To'lovni saqlash"
+    }
+  },
+  "treatmentPlan": {
+    "title": "Davolash rejasi",
+    "empty": "Hali davolash rejasi yo'q",
+    "visits": "Tashriflar",
+    "cost": "Taxminiy narx",
+    "next": "Keyingi qabul",
+    "hint": "Reja jadvalda qabulga «Davolanmoqda» holati qo'yilganda yaratiladi.",
+    "dialog": {
+      "title": "Davolash rejasi",
+      "procedures": "Muolajalar",
+      "otherPlaceholder": "Boshqa muolajalar vergul bilan",
+      "errorProcedures": "Kamida bitta muolajani tanlang",
+      "visits": "Nechta tashrif",
+      "cost": "Taxminiy narx, so'm",
+      "nextVisit": "Keyingi qabulga yozish",
+      "date": "Sana",
+      "duration": "Davomiyligi",
+      "minutes": "{{count}} daq",
+      "freeSlots": "Shifokorning bo'sh vaqti",
+      "noSlots": "Bu kunga bo'sh vaqt yo'q",
+      "selectedTime": "Qabul: {{from}} – {{to}}",
+      "errorTime": "Qabul vaqtini tanlang",
+      "notes": "Izohlar",
+      "skip": "Rejasiz",
+      "save": "Rejani saqlash"
+    }
+  },
+  "dentalChart": {
+    "right": "O'ng tomon",
+    "left": "Chap tomon",
+    "upper": "Yuqori jag",
+    "lower": "Pastki jag",
+    "tooth": "{{number}}-tish",
+    "hint": "Holatini belgilash uchun tishni bosing",
+    "states": {
+      "healthy": "Sog'lom",
+      "caries": "Karies",
+      "filling": "Plomba",
+      "rootCanal": "Kanallar",
+      "crown": "Toj",
+      "implant": "Implant",
+      "missing": "Yo'q"
+    }
+  },
+  "finance": {
+    "title": "Moliya",
+    "tabs": {
+      "expenses": "Xarajatlar",
+      "debts": "Qarzlar"
+    },
+    "filters": "Filtrlar",
+    "all": "Hammasi",
+    "from": "Sanadan",
+    "to": "Sanagacha",
+    "reset": "Tozalash",
+    "empty": "Hech narsa topilmadi",
+    "showMore": "Yana ko'rsatish",
+    "edit": "O'zgartirish",
+    "delete": "O'chirish",
+    "add": "Qo'shish",
+    "saveChanges": "O'zgarishlarni saqlash",
+    "deleteTitle": "Yozuvni o'chirish",
+    "expenses": {
+      "add": "Xarajat qo'shish",
+      "addTitle": "Yangi xarajat",
+      "editTitle": "Xarajatni o'zgartirish",
+      "search": "Tavsif bo'yicha qidirish",
+      "total": "Jami xarajatlar: {{count}}",
+      "descriptionPlaceholder": "Masalan: plomba materiali",
+      "deleteMessage": "«{{name}}» xarajatini o'chirasizmi?"
+    },
+    "debts": {
+      "add": "Qarz qo'shish",
+      "addTitle": "Yangi qarz",
+      "editTitle": "Qarzni o'zgartirish",
+      "search": "Ism, telefon yoki izoh bo'yicha qidirish",
+      "totalIncoming": "Bizga qarzdor",
+      "totalOutgoing": "Biz qarzdormiz",
+      "due": "{{date}} gacha",
+      "paidOf": "{{amount}} so'mdan {{paid}} to'langan",
+      "payInFull": "To'liq to'landi",
+      "deleteMessage": "«{{name}}» qarzini o'chirasizmi?"
+    },
+    "fields": {
+      "date": "Sana",
+      "category": "Toifa",
+      "description": "Tavsif",
+      "amount": "Summa, so'm",
+      "method": "To'lov usuli",
+      "counterparty": "Qarzdor / kreditor",
+      "phone": "Telefon",
+      "dueDate": "To'lash muddati",
+      "debtAmount": "Qarz summasi",
+      "paid": "To'langan",
+      "remaining": "Qoldiq",
+      "note": "Izoh",
+      "direction": "Turi",
+      "status": "Holat"
+    },
+    "categories": {
+      "rent": "Ijara",
+      "salary": "Ish haqi",
+      "materials": "Materiallar",
+      "equipment": "Uskunalar",
+      "utilities": "Kommunal",
+      "marketing": "Reklama",
+      "other": "Boshqa"
+    },
+    "methods": {
+      "cash": "Naqd",
+      "card": "Karta",
+      "transfer": "O'tkazma"
+    },
+    "directions": {
+      "incoming": "Bizga qarzdor",
+      "outgoing": "Biz qarzdormiz"
+    },
+    "statuses": {
+      "open": "To'lanmagan",
+      "partial": "Qisman",
+      "overdue": "Muddati o'tgan",
+      "closed": "To'langan"
+    },
+    "errors": {
+      "amount": "Noldan katta summani kiriting",
+      "paidTooMuch": "To'langan summa qarzdan ko'p bo'lishi mumkin emas"
+    },
+    "feedback": {
+      "saved": "Yozuv qo'shildi",
+      "deleted": "Yozuv o'chirildi"
     }
   }
 }

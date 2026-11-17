@@ -1,7 +1,8 @@
 import { Injectable, computed, signal } from '@angular/core';
 import { Observable, delay, map, of, tap } from 'rxjs';
-import { AppointmentDraft, PatientStatus, ScheduleAppointment } from '../models/schedule.model';
+import { AppointmentConfirmation, AppointmentDraft, PatientStatus, ScheduleAppointment } from '../models/schedule.model';
 import { mockPatientRating } from '../../../shared/models/patient-rating';
+import { NO_SHOW_AFTER_MINUTES } from '../../../shared/models/patient-status';
 
 // Шаблоны приёмов для mock-данных
 const TEMPLATES: Omit<ScheduleAppointment, 'id' | 'date' | 'status'>[] = [
@@ -21,13 +22,13 @@ const TEMPLATES: Omit<ScheduleAppointment, 'id' | 'date' | 'status'>[] = [
 
 // Сколько приёмов в день недели (по кругу) и какие статусы
 const COUNTS = [8, 9, 6, 8, 11, 5, 4];
-const TODAY_STATUSES: PatientStatus[] = ['completed', 'inTreatment', 'primary', 'completed', 'inTreatment', 'primary', 'primary', 'cancelled'];
+const TODAY_STATUSES: PatientStatus[] = ['completed', 'inTreatment', 'primary', 'awaitingDecision', 'inTreatment', 'primary', 'primary', 'cancelled'];
 const FUTURE_STATUSES: PatientStatus[] = ['primary', 'inTreatment', 'primary', 'primary', 'inTreatment', 'cancelled'];
 
 const MOCK_DAYS = 60;
 // Прошедшие дни в mock-данных — чтобы в календаре было что показать за прошлые даты
 const MOCK_PAST_DAYS = 30;
-const PAST_STATUSES: PatientStatus[] = ['completed', 'completed', 'cancelled', 'completed'];
+const PAST_STATUSES: PatientStatus[] = ['completed', 'archived', 'cancelled', 'completed'];
 
 // Имитация задержки ответа сервера
 const MOCK_DELAY_MS = 300;
@@ -44,6 +45,21 @@ export function addMinutes(time: string, minutes: number): string {
   const [hours, mins] = time.split(':').map(Number);
   const total = Math.min(hours * 60 + mins + minutes, 24 * 60 - 1);
   return `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`;
+}
+
+// Приём прошёл (время окончания уже наступило), а статус всё ещё «Первичный» — нужно поменять статус
+export function isStatusOverdue(appointment: ScheduleAppointment, now: Date): boolean {
+  if (appointment.status !== 'primary') return false;
+  const [year, month, day] = appointment.date.split('-').map(Number);
+  const [hours, minutes] = appointment.end.split(':').map(Number);
+  return new Date(year, month - 1, day, hours, minutes).getTime() <= now.getTime();
+}
+
+// С начала приёма прошло 15 минут — можно отметить «Не пришёл» (раньше вариант не показываем)
+export function canMarkNoShow(appointment: ScheduleAppointment, now: Date): boolean {
+  const [year, month, day] = appointment.date.split('-').map(Number);
+  const [hours, minutes] = appointment.start.split(':').map(Number);
+  return new Date(year, month - 1, day, hours, minutes + NO_SHOW_AFTER_MINUTES).getTime() <= now.getTime();
 }
 
 // Ближайшие полчаса от текущего времени: 14:10 → 14:30
@@ -71,7 +87,9 @@ function buildMock(): ScheduleAppointment[] {
         id: dayIndex < 0 ? 100000 + index * 100 + k + 1 : dayIndex * 100 + k + 1,
         date: toDateKey(date),
         status: statuses[(k + index) % statuses.length],
-        patientRating: mockPatientRating(template.patientId)
+        patientRating: mockPatientRating(template.patientId),
+        // Часть сегодняшних и будущих записей уже подтверждена
+        confirmation: dayIndex >= 0 ? (['sms', 'call', undefined] as const)[(k + index) % 3] : undefined
       });
     }
   }
@@ -111,7 +129,7 @@ export class ScheduleService {
       service: draft.serviceName,
       doctorId: doctor.doctorId,
       doctorName: doctor.doctorName,
-      status: 'primary',
+      status: draft.status ?? 'primary',
       patientRating: draft.rating ?? (draft.patientId ? mockPatientRating(draft.patientId) : 'good')
     };
 
@@ -130,6 +148,17 @@ export class ScheduleService {
       )),
       map(() => undefined)
     );
+  }
+
+  // TODO: на API — PATCH /appointments/:id/status
+  changeStatus(id: number, status: PatientStatus): Observable<void> {
+    return this.update(id, { status });
+  }
+
+  // Подтверждение записи; null — сбросить
+  // TODO: на API — PATCH /appointments/:id/confirmation
+  confirm(id: number, confirmation: AppointmentConfirmation | null): Observable<void> {
+    return this.update(id, { confirmation: confirmation ?? undefined });
   }
 
   // TODO: на API — POST /appointments/:id/cancel

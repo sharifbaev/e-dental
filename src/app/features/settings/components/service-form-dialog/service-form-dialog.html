@@ -1,0 +1,47 @@
+<!-- Шапка -->
+<div class="flex items-center justify-between gap-2 px-6 pt-5 pb-2">
+  <h2 class="font-display text-lg font-bold text-content">{{ (isEdit ? 'settings.services.editTitle' : 'settings.services.addTitle') | transloco }}</h2>
+  <button matIconButton mat-dialog-close type="button" [title]="'common.close' | transloco">
+    <mat-icon fontSet="material-symbols-outlined">close</mat-icon>
+  </button>
+</div>
+
+<mat-dialog-content>
+  <form [formGroup]="form" class="flex flex-col gap-4 pb-2" (ngSubmit)="save()">
+    <label class="flex flex-col gap-1">
+      <span class="text-xs font-medium text-soft">{{ 'settings.services.name' | transloco }} <span class="text-red-500">*</span></span>
+      <input type="text" formControlName="name" autocomplete="off" class="w-full h-11 px-3 rounded-xl bg-page border text-sm text-content outline-none focus:border-brand-300 focus:bg-surface" [class.border-transparent]="!isInvalid('name')" [class.border-red-300]="isInvalid('name')">
+      @if (isInvalid('name')) {
+        <span class="text-xs text-red-600">{{ 'appointmentForm.errors.minLength' | transloco }}</span>
+      }
+    </label>
+
+    <div class="grid grid-cols-2 gap-3">
+      <label class="flex flex-col gap-1 min-w-0">
+        <span class="text-xs font-medium text-soft">{{ 'settings.services.duration' | transloco }} <span class="text-red-500">*</span></span>
+        <input type="number" min="5" max="480" step="5" formControlName="durationMinutes" class="w-full h-11 px-3 rounded-xl bg-page border text-sm text-content outline-none focus:border-brand-300 focus:bg-surface" [class.border-transparent]="!isInvalid('durationMinutes')" [class.border-red-300]="isInvalid('durationMinutes')">
+        @if (isInvalid('durationMinutes')) {
+          <span class="text-xs text-red-600">{{ 'settings.services.durationError' | transloco }}</span>
+        }
+      </label>
+      <label class="flex flex-col gap-1 min-w-0">
+        <span class="text-xs font-medium text-soft">{{ 'settings.services.price' | transloco }}</span>
+        <input type="number" min="0" step="1000" formControlName="price" class="w-full h-11 px-3 rounded-xl bg-page border text-sm text-content outline-none focus:border-brand-300 focus:bg-surface" [class.border-transparent]="!isInvalid('price')" [class.border-red-300]="isInvalid('price')">
+      </label>
+    </div>
+
+    <label class="flex items-center gap-4 p-3 rounded-xl bg-page cursor-pointer">
+      <span class="flex-1 min-w-0 flex flex-col">
+        <span class="text-sm font-semibold text-content">{{ 'settings.services.urgent' | transloco }}</span>
+        <span class="text-[13px] text-muted">{{ 'settings.services.urgentHint' | transloco }}</span>
+      </span>
+      <input type="checkbox" role="switch" class="peer sr-only" formControlName="urgent">
+      <span aria-hidden="true" class="relative w-11 h-6 shrink-0 rounded-full bg-line-strong transition-colors peer-checked:bg-brand-700 peer-focus-visible:outline-2 peer-focus-visible:outline-brand-300 after:absolute after:top-0.5 after:left-0.5 after:w-5 after:h-5 after:rounded-full after:bg-white after:shadow-sm after:transition-transform peer-checked:after:translate-x-5"></span>
+    </label>
+  </form>
+</mat-dialog-content>
+
+<div class="px-6 py-4 flex flex-col-reverse sm:flex-row gap-2">
+  <button type="button" mat-dialog-close class="flex-1 px-4 py-3 rounded-xl border border-line-strong text-sm font-medium text-soft hover:bg-page">{{ 'common.cancel' | transloco }}</button>
+  <button type="button" class="flex-1 px-4 py-3 rounded-xl bg-brand-700 text-sm font-semibold text-white hover:bg-brand-800" (click)="save()">{{ (isEdit ? 'finance.saveChanges' : 'finance.add') | transloco }}</button>
+</div>

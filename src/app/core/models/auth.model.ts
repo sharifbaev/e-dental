@@ -5,6 +5,8 @@ export interface User {
   fullName: string;
   username: string;
   role: UserRole;
+  doctorId?: number;           // для роли «Врач» — его id в расписании
+  doctorName?: string;         // для роли «Врач» — 'Сидоров А. П.'
 }
 
 export interface LoginRequest {

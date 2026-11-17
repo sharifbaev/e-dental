@@ -6,7 +6,7 @@ import { MAT_DIALOG_DATA, MatDialogConfig, MatDialogModule, MatDialogRef } from 
 import { MatIconModule } from '@angular/material/icon';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { debounceTime, distinctUntilChanged, map, of, switchMap } from 'rxjs';
-import { Gender, PatientMode, PatientShort } from '../../models/appointment-form.model';
+import { PatientMode, PatientShort } from '../../models/appointment-form.model';
 import { ScheduleAppointment } from '../../models/schedule.model';
 import { AppointmentFormService } from '../../services/appointment-form.service';
 import { ScheduleService, addMinutes, nextHalfHour, toDateKey } from '../../services/schedule.service';
@@ -16,9 +16,23 @@ import { PATIENT_RATINGS, PATIENT_RATING_DOT, PatientRating, mockPatientRating }
 export const OTHER_SERVICE_ID = 0;
 const OTHER_SERVICE_MINUTES = 30;
 
-// Продолжительность приёма: готовые варианты или своя («Другое»)
-export type DurationOption = '30' | '45' | '60' | 'other';
-const DURATION_PRESETS = [30, 45, 60];
+// Продолжительность приёма, минуты: 30 мин, 1 ч, 1,5 ч, 2 ч, 3 ч, 4 ч
+export const DURATION_PRESETS = [30, 60, 90, 120, 180, 240];
+export type DurationOption = '30' | '60' | '90' | '120' | '180' | '240';
+
+// Код страны перед номером телефона — пользователь вводит только 9 цифр
+const PHONE_PREFIX = '+998';
+
+// 9 цифр → '90 123-45-67' (по мере ввода)
+function formatLocalPhone(value: string): string {
+  const d = value.replace(/\D/g, '').slice(0, 9);
+  const parts = [d.slice(0, 2), d.slice(2, 5), d.slice(5, 7), d.slice(7, 9)];
+  let result = parts[0];
+  if (parts[1]) result += ' ' + parts[1];
+  if (parts[2]) result += '-' + parts[2];
+  if (parts[3]) result += '-' + parts[3];
+  return result;
+}
 
 // Рабочий день для подбора свободного времени и шаг сетки, минуты
 const DAY_START_MINUTES = 9 * 60;
@@ -63,12 +77,11 @@ export interface AppointmentFormResult {
   rating?: PatientRating;      // рейтинг нового пациента
 }
 
-// Номер Узбекистана: 998 + 9 цифр (или просто 9 цифр без кода страны)
+// Номер без кода страны: ровно 9 цифр (+998 подставляется сам)
 function uzPhoneValidator(control: AbstractControl): ValidationErrors | null {
   const digits = String(control.value ?? '').replace(/\D/g, '');
   if (!digits) return null;
-  const valid = (digits.length === 12 && digits.startsWith('998')) || digits.length === 9;
-  return valid ? null : { phone: true };
+  return digits.length === 9 ? null : { phone: true };
 }
 
 // 'YYYY-MM-DD' → 'DD.MM.YYYY'
@@ -101,8 +114,7 @@ export class AppointmentFormDialog {
     newPatient: this.fb.nonNullable.group({
       fullName: ['', [Validators.required, Validators.minLength(3)]],
       phone: ['', [Validators.required, uzPhoneValidator]],
-      birthDate: [''],
-      gender: this.fb.nonNullable.control<Gender | ''>('')
+      birthDate: ['']
     }),
     serviceId: this.fb.control<number | null>(null, Validators.required),
     // Свой повод визита — только при выборе «Другое»
@@ -112,7 +124,6 @@ export class AppointmentFormDialog {
     // Несколько услуг сразу; serviceId выше — первая из них (для совместимости)
     serviceIds: this.fb.nonNullable.control<number[]>([]),
     duration: this.fb.nonNullable.control<DurationOption>('30'),
-    customMinutes: this.fb.nonNullable.control(30, [Validators.required, Validators.min(5), Validators.max(480)]),
     doctorId: this.fb.control<number | null>(null),
     // Рейтинг — только для нового пациента
     rating: this.fb.nonNullable.control<PatientRating>('good')
@@ -147,17 +158,6 @@ export class AppointmentFormDialog {
 
       this.applyDuration(this.servicesMinutes(ids));
     });
-
-    // Своя продолжительность проверяется только при «Другое»
-    this.form.controls.duration.valueChanges.pipe(takeUntilDestroyed()).subscribe(value => {
-      const custom = this.form.controls.customMinutes;
-      if (value === 'other') {
-        custom.enable({ emitEvent: false });
-      } else {
-        custom.disable({ emitEvent: false });
-      }
-    });
-    this.form.controls.customMinutes.disable();
 
     // Врач по умолчанию: переданный или первый из расписания
     this.form.controls.doctorId.setValue(this.data?.doctorId ?? this.doctors()[0]?.id ?? null);
@@ -244,8 +244,16 @@ export class AppointmentFormDialog {
 
   // ---- Пациент: новый ----
 
-  protected setGender(gender: Gender): void {
-    this.newPatient.gender.setValue(gender);
+  protected readonly phonePrefix = PHONE_PREFIX;
+
+  // Телефон: только цифры после +998, формат '90 123-45-67'. Вставленный номер с 998 — без кода
+  protected onPhoneInput(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    let digits = input.value.replace(/\D/g, '');
+    if (digits.length > 9 && digits.startsWith('998')) digits = digits.slice(3);
+    const formatted = formatLocalPhone(digits);
+    input.value = formatted;
+    this.newPatient.phone.setValue(formatted);
   }
 
   protected isInvalid(control: AbstractControl): boolean {
@@ -303,27 +311,22 @@ export class AppointmentFormDialog {
 
   // ---- Продолжительность ----
 
+  protected readonly durationOptions = DURATION_PRESETS.map(minutes => ({
+    value: String(minutes) as DurationOption,
+    key: `appointmentForm.dateTime.duration${minutes}`
+  }));
+
+  // Ближайший вариант не меньше нужного времени (больше 4 ч — 4 ч)
   private applyDuration(minutes: number): void {
-    if (DURATION_PRESETS.includes(minutes)) {
-      this.form.controls.duration.setValue(String(minutes) as DurationOption);
-    } else {
-      this.form.controls.duration.setValue('other');
-      this.form.controls.customMinutes.setValue(minutes);
-    }
+    const preset = DURATION_PRESETS.find(p => p >= minutes) ?? DURATION_PRESETS[DURATION_PRESETS.length - 1];
+    this.form.controls.duration.setValue(String(preset) as DurationOption);
   }
 
   private readonly durationValue = toSignal(this.form.controls.duration.valueChanges, {
     initialValue: this.form.controls.duration.value
   });
-  private readonly customMinutesValue = toSignal(this.form.controls.customMinutes.valueChanges, {
-    initialValue: this.form.controls.customMinutes.value
-  });
 
-  protected readonly isCustomDuration = computed(() => this.durationValue() === 'other');
-
-  protected readonly minutes = computed(() =>
-    this.durationValue() === 'other' ? Number(this.customMinutesValue()) || 0 : Number(this.durationValue())
-  );
+  protected readonly minutes = computed(() => Number(this.durationValue()) || 0);
 
   // ---- Врач и свободное время ----
 
@@ -428,7 +431,7 @@ export class AppointmentFormDialog {
     this.dialogRef.close({
       patientId: isSearch ? patient?.id ?? null : null,
       patientName: isSearch ? patient?.fullName ?? '' : this.newPatient.fullName.value.trim(),
-      phone: isSearch ? patient?.phone ?? '' : this.newPatient.phone.value.trim(),
+      phone: isSearch ? patient?.phone ?? '' : `${PHONE_PREFIX} ${this.newPatient.phone.value.trim()}`,
       serviceId,
       serviceName: serviceNames.join(', '),
       durationMinutes: this.minutes() || OTHER_SERVICE_MINUTES,

@@ -4,12 +4,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { AuthService } from '../../core/auth/auth.service';
 import { MatDialog } from '@angular/material/dialog';
-import { NOTIFICATIONS_DIALOG_CONFIG, NotificationsDialog } from '../../features/notifications/components/notifications-dialog/notifications-dialog';
 import { NotificationsService } from '../../features/notifications/services/notifications.service';
 import { ThemeService } from '../../core/theme/theme.service';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { map } from 'rxjs';
-import { DashboardService } from '../../features/dashboard/services/dashboard.service';
 
 @Component({
   selector: 'app-main-layout',
@@ -23,20 +19,25 @@ export class MainLayout {
   protected readonly isDark = computed(() => this.themeService.theme() === 'dark');
   private readonly dialog = inject(MatDialog);
   private readonly notificationsService = inject(NotificationsService);
-  private readonly dashboardService = inject(DashboardService);
 
   protected readonly lang = signal(this.transloco.getActiveLang());
 
-  protected readonly menu = [
-    { path: '/dashboard', label: 'menu.dashboard', icon: 'dashboard' },
-    { path: '/schedule', label: 'menu.schedule', icon: 'calendar_month' },
-    { path: '/patients', label: 'menu.patients', icon: 'groups' },
-    { path: '/doctors', label: 'menu.doctors', icon: 'stethoscope' },
-    { path: '/settings', label: 'menu.settings', icon: 'settings' }
+  private readonly allMenu = [
+    { path: '/dashboard', label: 'menu.dashboard', icon: 'dashboard', staffOnly: false },
+    { path: '/schedule', label: 'menu.schedule', icon: 'calendar_month', staffOnly: false },
+    { path: '/patients', label: 'menu.patients', icon: 'groups', staffOnly: false },
+    { path: '/doctors', label: 'menu.doctors', icon: 'stethoscope', staffOnly: true },
+    { path: '/finance', label: 'menu.finance', icon: 'account_balance_wallet', staffOnly: true },
+    { path: '/settings', label: 'menu.settings', icon: 'settings', staffOnly: false }
   ];
 
   // Текущий пользователь (из AuthService)
   protected readonly user = this.auth.user;
+
+  // Врачу «Врачи» и «Финансы» не показываем (и не пускаем — см. roleGuard)
+  protected readonly menu = computed(() =>
+    this.allMenu.filter(item => !item.staffOnly || this.user()?.role !== 'doctor')
+  );
 
   protected readonly initials = computed(() => {
     const name = this.user()?.fullName ?? '';
@@ -52,12 +53,6 @@ export class MainLayout {
 
   // Число непрочитанных уведомлений — из общего сервиса, обновляется сразу при прочтении
   protected readonly notificationsCount = this.notificationsService.unreadCount;
-  // Лист ожидания — из той же сводки, что и на «Главном» (null, пока не загрузилось)
-  protected readonly waitingListCount = toSignal(
-    this.dashboardService.getSummary().pipe(map(summary => summary.waitingList)),
-    { initialValue: null }
-  );
-
   protected setLang(lang: 'ru' | 'uz'): void {
     this.transloco.setActiveLang(lang);
     this.lang.set(lang);
@@ -72,6 +67,8 @@ export class MainLayout {
   }
 
   protected openNotifications(): void {
-    this.dialog.open(NotificationsDialog, NOTIFICATIONS_DIALOG_CONFIG);
+    // Окно уведомлений грузится при первом открытии — не входит в стартовый бандл
+    import('../../features/notifications/components/notifications-dialog/notifications-dialog')
+      .then(m => this.dialog.open(m.NotificationsDialog, m.NOTIFICATIONS_DIALOG_CONFIG));
   }
 }

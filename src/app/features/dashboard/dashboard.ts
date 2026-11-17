@@ -79,7 +79,15 @@ export class Dashboard {
 
   private readonly nowMinutes = computed(() => this.now().getHours() * 60 + this.now().getMinutes());
 
-  protected readonly firstName = computed(() => this.auth.user()?.fullName.split(' ')[0] ?? '');
+  // Врача — по имени и отчеству («Алексей Петрович»), администратора — по первому слову
+  protected readonly firstName = computed(() => {
+    const user = this.auth.user();
+    const parts = user?.fullName.split(' ') ?? [];
+    return user?.role === 'doctor' && parts.length >= 3 ? `${parts[1]} ${parts[2]}` : parts[0] ?? '';
+  });
+
+  // Врач видит только свои окна и приёмы — выбор врача скрыт
+  protected readonly isDoctor = computed(() => this.auth.user()?.role === 'doctor');
 
   protected readonly greetingKey = computed(() => {
     const hour = this.now().getHours();
@@ -101,7 +109,7 @@ export class Dashboard {
   // ---- Выбор врача с поиском (фильтрует свободные слоты и ближайшие приёмы) ----
 
   // Выбранный врач: 'all' — все врачи, иначе doctorId
-  protected readonly selectedDoctor = signal<string>('all');
+  protected readonly selectedDoctor = signal<string>(this.auth.user()?.role === 'doctor' && this.auth.user()?.doctorId ? String(this.auth.user()!.doctorId) : 'all');
 
   // Текст в поле поиска врача
   protected readonly doctorControl = new FormControl<string>('', { nonNullable: true });

@@ -1,10 +1,12 @@
-import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
+import { Component, DestroyRef, Injector, computed, inject, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
-import { MatDialogConfig, MatDialogModule } from '@angular/material/dialog';
+import { MatDialogConfig, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
+import { Router } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { NotificationType } from '../../models/notification.model';
 import { NotificationsService } from '../../services/notifications.service';
+import { ScheduleService } from '../../../schedule/services/schedule.service';
 
 // Настройки модалки: на ПК окно, на мобилке — на весь экран (см. styles.scss)
 export const NOTIFICATIONS_DIALOG_CONFIG: MatDialogConfig = {
@@ -21,7 +23,8 @@ const TYPE_VIEW: Record<NotificationType, { icon: string; classes: string }> = {
   onlineBooking: { icon: 'event_upcoming', classes: 'bg-brand-50 text-brand-700 dark:text-brand-300' },
   cancellation: { icon: 'event_busy', classes: 'bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400' },
   waitingList: { icon: 'hourglass_top', classes: 'bg-amber-50 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300' },
-  noShow: { icon: 'person_off', classes: 'bg-orange-50 text-orange-600 dark:bg-orange-500/15 dark:text-orange-300' }
+  noShow: { icon: 'person_off', classes: 'bg-orange-50 text-orange-600 dark:bg-orange-500/15 dark:text-orange-300' },
+  statusOverdue: { icon: 'published_with_changes', classes: 'bg-amber-50 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300' }
 };
 
 type Tab = 'all' | 'unread';
@@ -36,6 +39,10 @@ type Tab = 'all' | 'unread';
 export class NotificationsDialog {
   private readonly notificationsService = inject(NotificationsService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly dialogRef = inject(MatDialogRef<NotificationsDialog>);
+  private readonly router = inject(Router);
+  private readonly scheduleService = inject(ScheduleService);
+  private readonly injector = inject(Injector);
 
   protected readonly unreadCount = this.notificationsService.unreadCount;
 
@@ -80,6 +87,19 @@ export class NotificationsDialog {
   protected open(id: number): void {
     // TODO: когда будет раздел «Расписание» — переход к приёму
     this.notificationsService.markAsRead(id);
+
+    // «Обновите статус» — переходим в расписание и сразу открываем окно смены статуса
+    const notification = this.notificationsService.notifications().find(n => n.id === id);
+    if (notification?.type !== 'statusOverdue') return;
+
+    const appointment = this.scheduleService.appointments().find(a => a.id === notification.appointmentId);
+    if (!appointment) return;
+
+    this.dialogRef.close();
+    // Окно смены статуса (с планом лечения и формами) грузится только по нажатию — не утяжеляет старт приложения
+    this.router.navigateByUrl('/schedule')
+      .then(() => import('../../../schedule/services/status-change.service'))
+      .then(m => this.injector.get(m.StatusChangeService).open(appointment));
   }
 
   protected markAllAsRead(): void {

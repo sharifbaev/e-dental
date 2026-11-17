@@ -6,6 +6,7 @@ import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { PATIENT_STATUS_CLASSES, PATIENT_STATUSES, PatientStatus } from '../../../../shared/models/patient-status';
 import { PATIENT_RATING_DOT, mockPatientRating } from '../../../../shared/models/patient-rating';
 import { PatientsService } from '../../services/patients.service';
+import { AuthService } from '../../../../core/auth/auth.service';
 import { MatDialog } from '@angular/material/dialog';
 import { PATIENT_DETAILS_DIALOG_CONFIG, PatientDetailsDialog, PatientDetailsDialogData } from '../../components/patient-details-dialog/patient-details-dialog';
 
@@ -50,6 +51,14 @@ export class PatientList {
   private readonly patientsService = inject(PatientsService);
   private readonly transloco = inject(TranslocoService);
   private readonly dialog = inject(MatDialog);
+  private readonly auth = inject(AuthService);
+
+  // Врач видит только своих пациентов (он — лечащий врач)
+  private readonly visiblePatients = computed(() => {
+    const user = this.auth.user();
+    const all = this.patientsService.patients();
+    return user?.role === 'doctor' ? all.filter(p => p.doctorName === user.doctorName) : all;
+  });
 
   private readonly lang = toSignal(this.transloco.langChanges$, {
     initialValue: this.transloco.getActiveLang()
@@ -57,7 +66,7 @@ export class PatientList {
 
   private readonly locale = computed(() => LOCALES[this.lang()] ?? 'ru-RU');
 
-  protected readonly total = computed(() => this.patientsService.patients().length);
+  protected readonly total = computed(() => this.visiblePatients().length);
 
   // ---- Поиск ----
 
@@ -79,9 +88,9 @@ export class PatientList {
   private readonly searched = computed(() => {
     const text = this.query().trim().toLowerCase();
     const digits = this.query().replace(/\D/g, '');
-    if (!text) return this.patientsService.patients();
+    if (!text) return this.visiblePatients();
 
-    return this.patientsService.patients().filter(patient =>
+    return this.visiblePatients().filter(patient =>
       patient.fullName.toLowerCase().includes(text) ||
       (digits.length >= 2 && patient.phone.replace(/\D/g, '').includes(digits))
     );

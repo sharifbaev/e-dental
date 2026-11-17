@@ -1,0 +1,330 @@
+<div class="flex flex-col gap-4">
+  <!-- Заголовок -->
+  <section class="px-1 pt-1 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+    <h1 class="font-display text-2xl md:text-[30px] font-extrabold tracking-tight text-content">{{ 'finance.title' | transloco }}</h1>
+
+    <!-- Добавить — ПК -->
+    <button type="button" class="hidden md:flex items-center justify-center gap-1 h-11 px-5 rounded-xl bg-brand-700 text-white text-sm font-semibold hover:bg-brand-800" (click)="add()">
+      <mat-icon fontSet="material-symbols-outlined">add</mat-icon>
+      {{ (tab() === 'expenses' ? 'finance.expenses.add' : 'finance.debts.add') | transloco }}
+    </button>
+  </section>
+
+  <!-- Вкладки -->
+  <div class="grid grid-cols-2 gap-1 p-1 rounded-xl bg-surface border border-line-strong md:w-96" role="tablist">
+    @for (t of tabs; track t.id) {
+      <button type="button" role="tab" [attr.aria-selected]="tab() === t.id" class="flex items-center justify-center gap-1.5 h-10 rounded-lg text-sm font-semibold transition-colors" [class.bg-brand-700]="tab() === t.id" [class.text-white]="tab() === t.id" [class.text-muted]="tab() !== t.id" [class.hover:bg-page]="tab() !== t.id" (click)="setTab(t.id)">
+        <mat-icon fontSet="material-symbols-outlined" style="font-size: 20px; width: 20px; height: 20px;">{{ t.icon }}</mat-icon>
+        {{ t.key | transloco }}
+      </button>
+    }
+  </div>
+
+  @if (tab() === 'expenses') {
+    <!-- ===== Расходы ===== -->
+    <section class="bg-surface border border-line-strong rounded-[20px] p-3 md:p-4 flex flex-col gap-3">
+      <div class="flex gap-2">
+        <div class="relative flex-1 md:max-w-sm">
+          <mat-icon fontSet="material-symbols-outlined" class="absolute left-3 top-1/2 -translate-y-1/2 text-subtle pointer-events-none" style="font-size: 20px; width: 20px; height: 20px;">search</mat-icon>
+          <input type="text" class="w-full h-11 pl-10 pr-3 rounded-xl bg-page border border-line-strong text-sm text-content placeholder:text-subtle outline-none focus:border-brand-300 focus:bg-surface" [value]="expenseQuery()" (input)="expenseQuery.set($any($event.target).value)" [placeholder]="'finance.expenses.search' | transloco">
+        </div>
+        <!-- Мобилка: показать/скрыть фильтры -->
+        <button type="button" class="md:hidden relative shrink-0 w-11 h-11 flex items-center justify-center rounded-xl border border-line-strong text-soft" [class.bg-brand-50]="filtersOpen()" [attr.aria-expanded]="filtersOpen()" [title]="'finance.filters' | transloco" (click)="filtersOpen.set(!filtersOpen())">
+          <mat-icon fontSet="material-symbols-outlined">tune</mat-icon>
+          @if (expenseFiltersCount() > 0) {
+            <span class="absolute -top-1 -right-1 min-w-5 h-5 px-1 rounded-full bg-brand-700 text-white text-[11px] leading-5 text-center">{{ expenseFiltersCount() }}</span>
+          }
+        </button>
+      </div>
+
+      <div class="md:grid grid-cols-2 md:grid-cols-5 gap-2" [class.grid]="filtersOpen()" [class.hidden]="!filtersOpen()">
+        <label class="flex flex-col gap-1 min-w-0">
+          <span class="text-xs font-medium text-soft">{{ 'finance.fields.category' | transloco }}</span>
+          <select class="w-full h-10 px-2 rounded-xl bg-page border border-transparent text-sm text-content outline-none cursor-pointer focus:border-brand-300" (change)="expenseCategory.set($any($event.target).value)">
+            <option value="" [selected]="!expenseCategory()">{{ 'finance.all' | transloco }}</option>
+            @for (category of categories; track category) {
+              <option [value]="category" [selected]="expenseCategory() === category">{{ ('finance.categories.' + category) | transloco }}</option>
+            }
+          </select>
+        </label>
+        <label class="flex flex-col gap-1 min-w-0">
+          <span class="text-xs font-medium text-soft">{{ 'finance.fields.method' | transloco }}</span>
+          <select class="w-full h-10 px-2 rounded-xl bg-page border border-transparent text-sm text-content outline-none cursor-pointer focus:border-brand-300" (change)="expenseMethod.set($any($event.target).value)">
+            <option value="" [selected]="!expenseMethod()">{{ 'finance.all' | transloco }}</option>
+            @for (method of methods; track method) {
+              <option [value]="method" [selected]="expenseMethod() === method">{{ ('finance.methods.' + method) | transloco }}</option>
+            }
+          </select>
+        </label>
+        <label class="flex flex-col gap-1 min-w-0">
+          <span class="text-xs font-medium text-soft">{{ 'finance.from' | transloco }}</span>
+          <input type="date" class="w-full h-10 px-2 rounded-xl bg-page border border-transparent text-sm text-content outline-none focus:border-brand-300" [value]="expenseFrom()" (change)="expenseFrom.set($any($event.target).value)">
+        </label>
+        <label class="flex flex-col gap-1 min-w-0">
+          <span class="text-xs font-medium text-soft">{{ 'finance.to' | transloco }}</span>
+          <input type="date" class="w-full h-10 px-2 rounded-xl bg-page border border-transparent text-sm text-content outline-none focus:border-brand-300" [value]="expenseTo()" (change)="expenseTo.set($any($event.target).value)">
+        </label>
+        <div class="flex items-end col-span-2 md:col-span-1">
+          <button type="button" class="w-full h-10 flex items-center justify-center gap-1 rounded-xl border border-line-strong text-sm font-medium text-soft hover:bg-page disabled:opacity-40" [disabled]="expenseFiltersCount() === 0" (click)="resetExpenseFilters()">
+            <mat-icon fontSet="material-symbols-outlined" style="font-size: 18px; width: 18px; height: 18px;">filter_alt_off</mat-icon>
+            {{ 'finance.reset' | transloco }}
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Итого -->
+    <div class="flex items-center justify-between gap-3 px-4 py-3 rounded-2xl bg-brand-50 text-accent">
+      <span class="text-sm font-medium">{{ 'finance.expenses.total' | transloco: { count: expenses().length } }}</span>
+      <span class="font-display text-lg font-extrabold whitespace-nowrap">{{ 'payments.money' | transloco: { amount: expensesTotal() } }}</span>
+    </div>
+
+    @if (expenses().length === 0) {
+      <div class="bg-surface border border-line-strong rounded-[20px] py-12 text-center text-sm text-subtle">{{ 'finance.empty' | transloco }}</div>
+    } @else {
+      <!-- ПК: таблица -->
+      <section class="hidden md:block bg-surface border border-line-strong rounded-[20px] overflow-hidden">
+        <div class="overflow-auto max-h-[33rem] overscroll-contain [scrollbar-gutter:stable]">
+          <table class="w-full text-sm">
+            <thead class="sticky top-0 z-10 bg-surface shadow-[0_1px_0_0_var(--app-line)]">
+              <tr class="text-left text-xs font-semibold uppercase tracking-wider text-subtle">
+                <th class="px-4 py-3.5">{{ 'finance.fields.date' | transloco }}</th>
+                <th class="px-4 py-3.5">{{ 'finance.fields.category' | transloco }}</th>
+                <th class="px-4 py-3.5">{{ 'finance.fields.description' | transloco }}</th>
+                <th class="px-4 py-3.5">{{ 'finance.fields.method' | transloco }}</th>
+                <th class="px-4 py-3.5 text-right">{{ 'finance.fields.amount' | transloco }}</th>
+                <th class="px-4 py-3.5"></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (e of expenses(); track e.id) {
+                <tr class="border-b border-line last:border-0 hover:bg-page transition-colors">
+                  <td class="px-4 py-3 text-soft whitespace-nowrap">{{ e.dateLabel }}</td>
+                  <td class="px-4 py-3 whitespace-nowrap">
+                    <span class="inline-flex items-center gap-2 text-content">
+                      <span class="w-8 h-8 rounded-lg bg-brand-50 text-accent flex items-center justify-center">
+                        <mat-icon fontSet="material-symbols-outlined" style="font-size: 18px; width: 18px; height: 18px;">{{ e.icon }}</mat-icon>
+                      </span>
+                      {{ e.categoryKey | transloco }}
+                    </span>
+                  </td>
+                  <td class="px-4 py-3 text-content">{{ e.description }}</td>
+                  <td class="px-4 py-3 text-soft whitespace-nowrap">{{ e.methodKey | transloco }}</td>
+                  <td class="px-4 py-3 text-right font-semibold text-content whitespace-nowrap">{{ 'payments.money' | transloco: { amount: e.amountLabel } }}</td>
+                  <td class="px-4 py-3">
+                    <div class="flex items-center justify-end gap-1">
+                      <button type="button" class="w-8 h-8 flex items-center justify-center rounded-lg text-muted hover:text-accent hover:bg-brand-50" [title]="'finance.edit' | transloco" (click)="openExpense(e)">
+                        <mat-icon fontSet="material-symbols-outlined" style="font-size: 20px; width: 20px; height: 20px;">edit</mat-icon>
+                      </button>
+                      <button type="button" class="w-8 h-8 flex items-center justify-center rounded-lg text-muted hover:text-red-600 hover:bg-red-50 dark:hover:text-red-400 dark:hover:bg-red-500/10" [title]="'finance.delete' | transloco" (click)="removeExpense(e)">
+                        <mat-icon fontSet="material-symbols-outlined" style="font-size: 20px; width: 20px; height: 20px;">delete</mat-icon>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Мобилка: карточки -->
+      <section class="md:hidden flex flex-col gap-2">
+        @for (e of expenses().slice(0, mobileLimit()); track e.id) {
+          <div class="bg-surface border border-line-strong rounded-2xl p-3.5 flex flex-col gap-2">
+            <div class="flex items-start gap-3">
+              <span class="w-10 h-10 shrink-0 rounded-xl bg-brand-50 text-accent flex items-center justify-center">
+                <mat-icon fontSet="material-symbols-outlined" style="font-size: 20px; width: 20px; height: 20px;">{{ e.icon }}</mat-icon>
+              </span>
+              <div class="min-w-0 flex-1">
+                <div class="text-[15px] font-semibold text-content">{{ e.description }}</div>
+                <div class="text-[13px] text-muted">{{ e.categoryKey | transloco }} · {{ e.methodKey | transloco }}</div>
+              </div>
+              <div class="shrink-0 text-right">
+                <div class="font-display text-[15px] font-extrabold text-content whitespace-nowrap">{{ 'payments.money' | transloco: { amount: e.amountLabel } }}</div>
+                <div class="text-xs text-subtle">{{ e.dateLabel }}</div>
+              </div>
+            </div>
+            <div class="flex justify-end gap-1 pt-2 border-t border-line">
+              <button type="button" class="h-9 px-3 flex items-center gap-1 rounded-lg bg-page text-sm font-medium text-soft" (click)="openExpense(e)">
+                <mat-icon fontSet="material-symbols-outlined" style="font-size: 18px; width: 18px; height: 18px;">edit</mat-icon>
+                {{ 'finance.edit' | transloco }}
+              </button>
+              <button type="button" class="h-9 px-3 flex items-center gap-1 rounded-lg bg-page text-sm font-medium text-red-600 dark:text-red-400" (click)="removeExpense(e)">
+                <mat-icon fontSet="material-symbols-outlined" style="font-size: 18px; width: 18px; height: 18px;">delete</mat-icon>
+                {{ 'finance.delete' | transloco }}
+              </button>
+            </div>
+          </div>
+        }
+        @if (expenses().length > mobileLimit()) {
+          <button type="button" class="w-full px-4 py-3 rounded-xl border border-brand-200 dark:border-brand-800 bg-surface text-sm font-medium text-accent hover:bg-brand-50" (click)="showMore()">{{ 'finance.showMore' | transloco }}</button>
+        }
+      </section>
+    }
+  } @else {
+    <!-- ===== Долги ===== -->
+    <section class="bg-surface border border-line-strong rounded-[20px] p-3 md:p-4 flex flex-col gap-3">
+      <div class="flex gap-2">
+        <div class="relative flex-1 md:max-w-sm">
+          <mat-icon fontSet="material-symbols-outlined" class="absolute left-3 top-1/2 -translate-y-1/2 text-subtle pointer-events-none" style="font-size: 20px; width: 20px; height: 20px;">search</mat-icon>
+          <input type="text" class="w-full h-11 pl-10 pr-3 rounded-xl bg-page border border-line-strong text-sm text-content placeholder:text-subtle outline-none focus:border-brand-300 focus:bg-surface" [value]="debtQuery()" (input)="debtQuery.set($any($event.target).value)" [placeholder]="'finance.debts.search' | transloco">
+        </div>
+        <button type="button" class="md:hidden relative shrink-0 w-11 h-11 flex items-center justify-center rounded-xl border border-line-strong text-soft" [class.bg-brand-50]="filtersOpen()" [attr.aria-expanded]="filtersOpen()" [title]="'finance.filters' | transloco" (click)="filtersOpen.set(!filtersOpen())">
+          <mat-icon fontSet="material-symbols-outlined">tune</mat-icon>
+          @if (debtFiltersCount() > 0) {
+            <span class="absolute -top-1 -right-1 min-w-5 h-5 px-1 rounded-full bg-brand-700 text-white text-[11px] leading-5 text-center">{{ debtFiltersCount() }}</span>
+          }
+        </button>
+      </div>
+
+      <div class="md:grid grid-cols-2 md:grid-cols-5 gap-2" [class.grid]="filtersOpen()" [class.hidden]="!filtersOpen()">
+        <label class="flex flex-col gap-1 min-w-0">
+          <span class="text-xs font-medium text-soft">{{ 'finance.fields.direction' | transloco }}</span>
+          <select class="w-full h-10 px-2 rounded-xl bg-page border border-transparent text-sm text-content outline-none cursor-pointer focus:border-brand-300" (change)="debtDirection.set($any($event.target).value)">
+            <option value="" [selected]="!debtDirection()">{{ 'finance.all' | transloco }}</option>
+            @for (direction of directions; track direction) {
+              <option [value]="direction" [selected]="debtDirection() === direction">{{ ('finance.directions.' + direction) | transloco }}</option>
+            }
+          </select>
+        </label>
+        <label class="flex flex-col gap-1 min-w-0">
+          <span class="text-xs font-medium text-soft">{{ 'finance.fields.status' | transloco }}</span>
+          <select class="w-full h-10 px-2 rounded-xl bg-page border border-transparent text-sm text-content outline-none cursor-pointer focus:border-brand-300" (change)="debtStatusFilter.set($any($event.target).value)">
+            <option value="" [selected]="!debtStatusFilter()">{{ 'finance.all' | transloco }}</option>
+            @for (status of debtStatuses; track status) {
+              <option [value]="status" [selected]="debtStatusFilter() === status">{{ ('finance.statuses.' + status) | transloco }}</option>
+            }
+          </select>
+        </label>
+        <label class="flex flex-col gap-1 min-w-0">
+          <span class="text-xs font-medium text-soft">{{ 'finance.from' | transloco }}</span>
+          <input type="date" class="w-full h-10 px-2 rounded-xl bg-page border border-transparent text-sm text-content outline-none focus:border-brand-300" [value]="debtFrom()" (change)="debtFrom.set($any($event.target).value)">
+        </label>
+        <label class="flex flex-col gap-1 min-w-0">
+          <span class="text-xs font-medium text-soft">{{ 'finance.to' | transloco }}</span>
+          <input type="date" class="w-full h-10 px-2 rounded-xl bg-page border border-transparent text-sm text-content outline-none focus:border-brand-300" [value]="debtTo()" (change)="debtTo.set($any($event.target).value)">
+        </label>
+        <div class="flex items-end col-span-2 md:col-span-1">
+          <button type="button" class="w-full h-10 flex items-center justify-center gap-1 rounded-xl border border-line-strong text-sm font-medium text-soft hover:bg-page disabled:opacity-40" [disabled]="debtFiltersCount() === 0" (click)="resetDebtFilters()">
+            <mat-icon fontSet="material-symbols-outlined" style="font-size: 18px; width: 18px; height: 18px;">filter_alt_off</mat-icon>
+            {{ 'finance.reset' | transloco }}
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Итого: остаток долгов -->
+    <div class="grid grid-cols-2 gap-2">
+      <div class="px-4 py-3 rounded-2xl bg-emerald-50 text-emerald-800 dark:bg-emerald-500/15 dark:text-emerald-300">
+        <div class="text-xs font-medium">{{ 'finance.debts.totalIncoming' | transloco }}</div>
+        <div class="font-display text-lg font-extrabold">{{ 'payments.money' | transloco: { amount: debtTotals().incoming } }}</div>
+      </div>
+      <div class="px-4 py-3 rounded-2xl bg-red-50 text-red-800 dark:bg-red-500/10 dark:text-red-300">
+        <div class="text-xs font-medium">{{ 'finance.debts.totalOutgoing' | transloco }}</div>
+        <div class="font-display text-lg font-extrabold">{{ 'payments.money' | transloco: { amount: debtTotals().outgoing } }}</div>
+      </div>
+    </div>
+
+    @if (debts().length === 0) {
+      <div class="bg-surface border border-line-strong rounded-[20px] py-12 text-center text-sm text-subtle">{{ 'finance.empty' | transloco }}</div>
+    } @else {
+      <!-- ПК: таблица -->
+      <section class="hidden md:block bg-surface border border-line-strong rounded-[20px] overflow-hidden">
+        <div class="overflow-auto max-h-[33rem] overscroll-contain [scrollbar-gutter:stable]">
+          <table class="w-full text-sm">
+            <thead class="sticky top-0 z-10 bg-surface shadow-[0_1px_0_0_var(--app-line)]">
+              <tr class="text-left text-xs font-semibold uppercase tracking-wider text-subtle">
+                <th class="px-4 py-3.5">{{ 'finance.fields.counterparty' | transloco }}</th>
+                <th class="px-4 py-3.5">{{ 'finance.fields.direction' | transloco }}</th>
+                <th class="px-4 py-3.5">{{ 'finance.fields.date' | transloco }}</th>
+                <th class="px-4 py-3.5">{{ 'finance.fields.dueDate' | transloco }}</th>
+                <th class="px-4 py-3.5 text-right">{{ 'finance.fields.debtAmount' | transloco }}</th>
+                <th class="px-4 py-3.5 text-right">{{ 'finance.fields.remaining' | transloco }}</th>
+                <th class="px-4 py-3.5">{{ 'finance.fields.status' | transloco }}</th>
+                <th class="px-4 py-3.5"></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (d of debts(); track d.id) {
+                <tr class="border-b border-line last:border-0 hover:bg-page transition-colors">
+                  <td class="px-4 py-3">
+                    <div class="font-semibold text-content">{{ d.counterparty }}</div>
+                    <div class="text-xs text-muted">{{ d.phone }}@if (d.phone && d.note) { · }{{ d.note }}</div>
+                  </td>
+                  <td class="px-4 py-3 whitespace-nowrap">
+                    <span class="inline-flex items-center gap-1 text-soft">
+                      <mat-icon fontSet="material-symbols-outlined" style="font-size: 18px; width: 18px; height: 18px;" [class.text-emerald-600]="d.direction === 'incoming'" [class.text-red-600]="d.direction === 'outgoing'">{{ d.direction === 'incoming' ? 'south_west' : 'north_east' }}</mat-icon>
+                      {{ d.directionKey | transloco }}
+                    </span>
+                  </td>
+                  <td class="px-4 py-3 text-soft whitespace-nowrap">{{ d.dateLabel }}</td>
+                  <td class="px-4 py-3 whitespace-nowrap" [class.text-red-600]="d.status === 'overdue'" [class.font-medium]="d.status === 'overdue'" [class.text-soft]="d.status !== 'overdue'">{{ d.dueLabel || '—' }}</td>
+                  <td class="px-4 py-3 text-right text-soft whitespace-nowrap">{{ 'payments.money' | transloco: { amount: d.amountLabel } }}</td>
+                  <td class="px-4 py-3 text-right font-semibold text-content whitespace-nowrap">{{ 'payments.money' | transloco: { amount: d.remainingLabel } }}</td>
+                  <td class="px-4 py-3">
+                    <span class="px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap" [class]="d.statusClass">{{ d.statusKey | transloco }}</span>
+                  </td>
+                  <td class="px-4 py-3">
+                    <div class="flex items-center justify-end gap-1">
+                      <button type="button" class="w-8 h-8 flex items-center justify-center rounded-lg text-muted hover:text-accent hover:bg-brand-50" [title]="'finance.edit' | transloco" (click)="openDebt(d)">
+                        <mat-icon fontSet="material-symbols-outlined" style="font-size: 20px; width: 20px; height: 20px;">edit</mat-icon>
+                      </button>
+                      <button type="button" class="w-8 h-8 flex items-center justify-center rounded-lg text-muted hover:text-red-600 hover:bg-red-50 dark:hover:text-red-400 dark:hover:bg-red-500/10" [title]="'finance.delete' | transloco" (click)="removeDebt(d)">
+                        <mat-icon fontSet="material-symbols-outlined" style="font-size: 20px; width: 20px; height: 20px;">delete</mat-icon>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Мобилка: карточки -->
+      <section class="md:hidden flex flex-col gap-2">
+        @for (d of debts().slice(0, mobileLimit()); track d.id) {
+          <div class="bg-surface border border-line-strong rounded-2xl p-3.5 flex flex-col gap-2">
+            <div class="flex items-start gap-3">
+              <span class="w-10 h-10 shrink-0 rounded-xl flex items-center justify-center" [class]="d.direction === 'incoming' ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300' : 'bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-300'">
+                <mat-icon fontSet="material-symbols-outlined" style="font-size: 20px; width: 20px; height: 20px;">{{ d.direction === 'incoming' ? 'south_west' : 'north_east' }}</mat-icon>
+              </span>
+              <div class="min-w-0 flex-1">
+                <div class="text-[15px] font-semibold text-content">{{ d.counterparty }}</div>
+                <div class="text-[13px] text-muted">{{ d.directionKey | transloco }}@if (d.dueLabel) { · {{ 'finance.debts.due' | transloco: { date: d.dueLabel } }} }</div>
+              </div>
+              <span class="shrink-0 px-2 py-0.5 rounded-full text-xs font-semibold whitespace-nowrap" [class]="d.statusClass">{{ d.statusKey | transloco }}</span>
+            </div>
+            <div class="flex items-end justify-between gap-2">
+              <div class="text-xs text-subtle">{{ 'finance.debts.paidOf' | transloco: { paid: d.paidLabel, amount: d.amountLabel } }}</div>
+              <div class="text-right">
+                <div class="text-[11px] text-subtle">{{ 'finance.fields.remaining' | transloco }}</div>
+                <div class="font-display text-[15px] font-extrabold text-content whitespace-nowrap">{{ 'payments.money' | transloco: { amount: d.remainingLabel } }}</div>
+              </div>
+            </div>
+            <div class="flex justify-end gap-1 pt-2 border-t border-line">
+              <button type="button" class="h-9 px-3 flex items-center gap-1 rounded-lg bg-page text-sm font-medium text-soft" (click)="openDebt(d)">
+                <mat-icon fontSet="material-symbols-outlined" style="font-size: 18px; width: 18px; height: 18px;">edit</mat-icon>
+                {{ 'finance.edit' | transloco }}
+              </button>
+              <button type="button" class="h-9 px-3 flex items-center gap-1 rounded-lg bg-page text-sm font-medium text-red-600 dark:text-red-400" (click)="removeDebt(d)">
+                <mat-icon fontSet="material-symbols-outlined" style="font-size: 18px; width: 18px; height: 18px;">delete</mat-icon>
+                {{ 'finance.delete' | transloco }}
+              </button>
+            </div>
+          </div>
+        }
+        @if (debts().length > mobileLimit()) {
+          <button type="button" class="w-full px-4 py-3 rounded-xl border border-brand-200 dark:border-brand-800 bg-surface text-sm font-medium text-accent hover:bg-brand-50" (click)="showMore()">{{ 'finance.showMore' | transloco }}</button>
+        }
+      </section>
+    }
+  }
+</div>
+
+<!-- Добавить — мобилка: плавающая кнопка над нижним меню -->
+<button type="button" class="md:hidden fixed right-4 bottom-24 z-40 flex items-center gap-1 h-12 px-5 rounded-full bg-brand-700 text-white text-sm font-semibold shadow-lg hover:bg-brand-800" (click)="add()">
+  <mat-icon fontSet="material-symbols-outlined">add</mat-icon>
+  {{ (tab() === 'expenses' ? 'finance.expenses.add' : 'finance.debts.add') | transloco }}
+</button>

@@ -25,25 +25,25 @@
         <p class="mt-1 text-sm text-muted">{{ today() }}</p>
 
         <!-- Выбор врача — ПК: после приветствия -->
-        <div class="hidden md:block mt-3 w-72">
-          <ng-container [ngTemplateOutlet]="doctorSearch" />
-        </div>
+        @if (!isDoctor()) {
+          <div class="hidden md:block mt-3 w-72">
+            <ng-container [ngTemplateOutlet]="doctorSearch" />
+          </div>
+        }
       </div>
 
       <div class="flex flex-col md:flex-row gap-2">
-        <button type="button" class="hidden md:flex items-center gap-2 h-11 px-4 rounded-xl bg-surface border border-line-strong text-content text-sm font-semibold hover:bg-brand-50">
-          <mat-icon fontSet="material-symbols-outlined">hourglass_top</mat-icon>
-          {{ 'dashboard.waitingList' | transloco }} ({{ s.waitingList }})
-        </button>
         <button type="button" class="w-full md:w-auto flex items-center justify-center gap-1 h-11 px-5 rounded-xl bg-brand-700 text-white text-sm font-semibold hover:bg-brand-800" (click)="openAppointmentForm()">
           <mat-icon fontSet="material-symbols-outlined">add</mat-icon>
           {{ 'dashboard.quickAppointment' | transloco }}
         </button>
 
         <!-- Выбор врача — мобилка: после «Быстрая запись», на всю ширину -->
-        <div class="md:hidden w-full">
-          <ng-container [ngTemplateOutlet]="doctorSearch" />
-        </div>
+        @if (!isDoctor()) {
+          <div class="md:hidden w-full">
+            <ng-container [ngTemplateOutlet]="doctorSearch" />
+          </div>
+        }
       </div>
     </section>
 
