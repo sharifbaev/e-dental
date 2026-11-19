@@ -1,0 +1,174 @@
+<div class="flex flex-col gap-4 md:h-[calc(100dvh-105px)]">
+  <!-- Шапка и дни недели: на мобилке закреплены сверху, прокручивается только шкала -->
+  <div class="sticky top-0 z-20 -mx-4 px-4 pt-2 pb-2 -mt-2 -mb-2 bg-page flex flex-col gap-2 md:static md:m-0 md:p-0 md:bg-transparent md:gap-0">
+    <!-- Шапка: месяц, переключение недель, интервал, врач, новая запись.
+         На ПК шапка и лента дней выглядят одной карточкой, на мобилке лента — отдельная и прилипает к верху при прокрутке -->
+    <section class="bg-surface border border-line-strong rounded-[20px] p-3 md:p-4 md:pb-0 md:rounded-b-none md:border-b-0">
+      <div class="flex flex-wrap items-center gap-2 md:gap-3">
+        <!-- Месяц, стрелки, «Сегодня» и интервал — на мобилке в одну строку -->
+        <h1 class="flex-1 min-w-0 truncate font-display text-base md:text-xl font-extrabold tracking-tight text-content">{{ monthTitle() }}</h1>
+
+        <div class="flex items-center gap-0.5 md:gap-1 shrink-0">
+          @if (rangeLabel()) {
+            <!-- Выбранный интервал: клик — изменить, крестик — сбросить -->
+            <div class="flex items-center h-9 md:h-11 min-w-0 rounded-xl bg-brand-50 text-accent">
+              <button type="button" class="h-full min-w-0 flex items-center gap-1.5 pl-2.5 md:pl-3 pr-1.5 md:pr-2 rounded-l-xl text-sm font-medium hover:bg-brand-100" [title]="rangeLabel()" (click)="openInterval()">
+                <mat-icon fontSet="material-symbols-outlined" class="shrink-0" style="font-size: 18px; width: 18px; height: 18px;">date_range</mat-icon>
+                <span class="truncate max-w-[9.5rem] md:max-w-none whitespace-nowrap">{{ rangeLabel() }}</span>
+              </button>
+              <button type="button" class="h-full w-8 md:w-9 shrink-0 flex items-center justify-center rounded-r-xl hover:bg-brand-100" [title]="'schedule.clearPeriod' | transloco" [attr.aria-label]="'schedule.clearPeriod' | transloco" (click)="resetInterval()">
+                <mat-icon fontSet="material-symbols-outlined" style="font-size: 18px; width: 18px; height: 18px;">close</mat-icon>
+              </button>
+            </div>
+          } @else {
+            <button type="button" class="w-8 h-9 md:w-10 md:h-10 flex items-center justify-center rounded-xl text-soft hover:bg-page" [title]="'calendar.prevWeek' | transloco" [attr.aria-label]="'calendar.prevWeek' | transloco" (click)="prevWeek()">
+              <mat-icon fontSet="material-symbols-outlined">chevron_left</mat-icon>
+            </button>
+            <button type="button" class="h-9 md:h-10 px-2 md:px-3 rounded-xl text-sm font-semibold text-accent whitespace-nowrap hover:bg-brand-50" (click)="goToday()">{{ 'calendar.today' | transloco }}</button>
+            <button type="button" class="w-8 h-9 md:w-10 md:h-10 flex items-center justify-center rounded-xl text-soft hover:bg-page" [title]="'calendar.nextWeek' | transloco" [attr.aria-label]="'calendar.nextWeek' | transloco" (click)="nextWeek()">
+              <mat-icon fontSet="material-symbols-outlined">chevron_right</mat-icon>
+            </button>
+
+            <!-- Интервал — только иконка -->
+            <button type="button" class="ml-0.5 md:ml-1 w-9 h-9 md:w-11 md:h-11 flex items-center justify-center rounded-xl border border-line-strong text-soft hover:text-accent hover:border-brand-300" [title]="'calendar.interval' | transloco" [attr.aria-label]="'calendar.interval' | transloco" (click)="openInterval()">
+              <mat-icon fontSet="material-symbols-outlined" style="font-size: 20px; width: 20px; height: 20px;">date_range</mat-icon>
+            </button>
+          }
+        </div>
+
+        @if (!isDoctor()) {
+          <label class="w-full md:w-72 flex items-center gap-2 h-11 pl-3 pr-1 rounded-xl bg-surface border border-line-strong text-muted focus-within:border-brand-300">
+            <mat-icon fontSet="material-symbols-outlined" class="shrink-0" style="font-size: 18px; width: 18px; height: 18px;">stethoscope</mat-icon>
+            <span class="sr-only">{{ 'schedule.doctor' | transloco }}</span>
+            <select class="flex-1 min-w-0 h-full bg-transparent text-sm font-semibold text-content outline-none cursor-pointer" (change)="onDoctorChange($any($event.target).value)">
+              <option value="all" [selected]="selectedDoctor() === 'all'">{{ 'dashboard.kpi.allDoctors' | transloco }}</option>
+              @for (doctor of doctorOptions(); track doctor.id) {
+                <option [value]="doctor.id" [selected]="doctor.id === selectedDoctor()">{{ 'dashboard.doctorPrefix' | transloco }} {{ doctor.name }}</option>
+              }
+            </select>
+          </label>
+        }
+
+        <!-- Новая запись — ПК -->
+        <button type="button" class="hidden md:flex shrink-0 items-center justify-center gap-1 h-11 px-4 rounded-xl bg-brand-700 text-white text-sm font-medium hover:bg-brand-800" (click)="openNewAppointment()">
+          <mat-icon fontSet="material-symbols-outlined">add</mat-icon>
+          {{ 'schedule.add' | transloco }}
+        </button>
+      </div>
+    </section>
+
+    <!-- Дни недели -->
+    <section class="bg-surface border border-line-strong rounded-[20px] shadow-sm md:shadow-none p-2 md:p-4 md:pt-4 md:rounded-t-none md:border-t-0">
+      <div [class]="isRange() ? 'flex gap-1 overflow-x-auto' : 'grid grid-cols-7 gap-0.5 md:gap-1'">
+        @for (day of stripDays(); track day.key) {
+          <button type="button" class="min-w-0 flex flex-col items-center gap-1 py-1 md:py-1.5 rounded-xl transition-colors hover:bg-page" [class.flex-1]="isRange()" [class.min-w-12]="isRange()" [class.shrink-0]="isRange()" [attr.aria-pressed]="selectedDate() === day.key" (click)="pickDay(day.key)">
+            <span class="text-[11px] font-medium" [class.text-subtle]="!day.isWeekend" [class.text-muted]="day.isWeekend">{{ day.weekday }}</span>
+            <span class="w-9 h-9 md:w-10 md:h-10 flex items-center justify-center rounded-full text-base md:text-lg font-semibold transition-colors"
+                  [class.bg-brand-700]="selectedDate() === day.key"
+                  [class.text-white]="selectedDate() === day.key"
+                  [class.text-accent]="selectedDate() !== day.key && day.isToday"
+                  [class.text-content]="selectedDate() !== day.key && !day.isToday">{{ day.day }}</span>
+            @if (day.month) {
+              <span class="text-[10px] leading-none -mt-0.5 text-subtle">{{ day.month }}</span>
+            }
+            <!-- Точка — в этот день есть приёмы -->
+            <span class="w-1.5 h-1.5 rounded-full" [class.bg-brand-500]="day.count > 0" [class.bg-transparent]="day.count === 0"></span>
+          </button>
+        }
+      </div>
+    </section>
+  </div>
+
+  <!-- Шкала дня -->
+  <section class="bg-surface border border-line-strong rounded-[20px] flex flex-col md:flex-1 md:min-h-60 overflow-hidden">
+    <div class="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-3 border-b border-line">
+      <span class="font-semibold text-content">{{ dayTitle() }}</span>
+      @if (workHours().dayOff) {
+        <span class="px-2 py-0.5 rounded-full text-xs font-medium bg-page text-muted">{{ 'calendar.dayOff' | transloco }}</span>
+      } @else {
+        <span class="text-xs text-muted">{{ 'calendar.workHours' | transloco: { start: workHours().start, end: workHours().end } }}</span>
+      }
+      @if (events().length === 0) {
+        <span class="md:ml-auto text-xs text-subtle">{{ 'calendar.empty' | transloco }}</span>
+      }
+    </div>
+
+    <div #timeline class="md:flex-1 md:min-h-0 md:overflow-y-auto md:overscroll-contain px-2 md:px-4 py-3">
+      <div class="relative" [style.height.px]="timelineHeight()">
+        <!-- Подписи часов и линии -->
+        @for (hour of hours(); track hour.label) {
+          <div class="absolute inset-x-0 flex items-center" [style.top.px]="hour.top">
+            <span class="w-12 md:w-14 shrink-0 -translate-y-1/2 pr-2 text-right text-[11px] text-subtle tabular-nums" [class.invisible]="hour.hidden">{{ hour.label }}</span>
+            <span class="flex-1 border-t border-line"></span>
+          </div>
+        }
+
+        <!-- Область приёмов (правее подписей часов) -->
+        <div class="absolute top-0 bottom-0 left-12 md:left-14 right-0 cursor-pointer" [title]="'calendar.clickToAdd' | transloco" (click)="addAtPosition($event)">
+          <!-- Нерабочее время -->
+          @for (block of offHours(); track $index) {
+            <div class="absolute inset-x-0 bg-page/70 pointer-events-none" [style.top.px]="block.top" [style.height.px]="block.height"></div>
+          }
+
+          @for (event of events(); track event.id) {
+            <div class="absolute p-px" [style.top.px]="event.top" [style.height.px]="event.height" [style.left.%]="event.left" [style.width.%]="event.width">
+              <div role="button" tabindex="0"
+                   class="h-full rounded-lg border-l-4 border-current px-2 overflow-hidden cursor-pointer transition-shadow hover:shadow-md focus-visible:outline-2 focus-visible:outline-brand-300"
+                   [class]="event.statusClass"
+                   [class.opacity-50]="event.isCancelled"
+                   [class.ring-2]="event.overdue"
+                   [class.ring-amber-400]="event.overdue"
+                   [class.ring-inset]="event.overdue"
+                   [class.py-1]="!event.compact"
+                   [class.py-0.5]="event.compact"
+                   [title]="event.start + '–' + event.end + ' · ' + event.patientName + ' · ' + event.service"
+                   (click)="$event.stopPropagation(); openDetails(event)" (keydown.enter)="$event.stopPropagation(); openDetails(event)">
+                @if (event.compact) {
+                  <div class="flex items-center gap-1.5 text-xs leading-tight min-w-0">
+                    <span class="w-2 h-2 shrink-0 rounded-[2px]" [class]="event.ratingDot"></span>
+                    <span class="font-semibold truncate" [class.line-through]="event.isCancelled">{{ event.patientName }}</span>
+                    <span class="shrink-0 opacity-80 tabular-nums">{{ event.start }}</span>
+                    @if (event.overdue) {
+                      <mat-icon fontSet="material-symbols-outlined" class="shrink-0 ml-auto text-amber-600 dark:text-amber-300" [title]="'schedule.actions.statusOverdue' | transloco" style="font-size: 14px; width: 14px; height: 14px;">warning</mat-icon>
+                    }
+                  </div>
+                } @else {
+                  <div class="flex items-center gap-1.5 min-w-0">
+                    <span class="w-2 h-2 shrink-0 rounded-[2px]" [class]="event.ratingDot"></span>
+                    <span class="text-sm font-semibold truncate" [class.line-through]="event.isCancelled">{{ event.patientName }}</span>
+                    @if (event.overdue) {
+                      <mat-icon fontSet="material-symbols-outlined" class="shrink-0 ml-auto text-amber-600 dark:text-amber-300" [title]="'schedule.actions.statusOverdue' | transloco" style="font-size: 16px; width: 16px; height: 16px;">warning</mat-icon>
+                    }
+                  </div>
+                  <div class="text-xs opacity-80 truncate tabular-nums">{{ event.start }}–{{ event.end }} · {{ 'schedule.cabinet' | transloco: { number: event.cabinet } }}@if (event.visitTotal) { · {{ 'schedule.visitOf' | transloco: { index: event.visitIndex, total: event.visitTotal } }}}</div>
+                  @if (!event.medium) {
+                  <div class="text-xs opacity-80 truncate">{{ event.service }} · {{ 'dashboard.doctorPrefix' | transloco }} {{ event.doctorName }}</div>
+                  }
+                }
+              </div>
+            </div>
+          }
+
+          <!-- Текущее время -->
+          @if (nowLine(); as now) {
+            <div class="absolute inset-x-0 z-10 flex items-center pointer-events-none" [style.top.px]="now.top">
+              <span class="w-2.5 h-2.5 -ml-1.5 rounded-full bg-red-500"></span>
+              <span class="flex-1 border-t-2 border-red-500"></span>
+            </div>
+          }
+        </div>
+
+        <!-- Время «сейчас» поверх подписей часов -->
+        @if (nowLine(); as now) {
+          <span class="absolute left-0 z-10 w-12 md:w-14 -translate-y-1/2 pr-2 text-right text-[11px] font-semibold text-red-500 bg-surface tabular-nums pointer-events-none" [style.top.px]="now.top">{{ now.label }}</span>
+        }
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- Новая запись — мобилка: плавающая кнопка над нижним меню -->
+<button type="button" class="md:hidden fixed right-4 bottom-24 z-40 flex items-center gap-1 h-12 px-5 rounded-full bg-brand-700 text-white text-sm font-semibold shadow-lg hover:bg-brand-800" (click)="openNewAppointment()">
+  <mat-icon fontSet="material-symbols-outlined">add</mat-icon>
+  {{ 'schedule.add' | transloco }}
+</button>

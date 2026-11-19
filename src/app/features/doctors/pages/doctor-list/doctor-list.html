@@ -27,7 +27,7 @@
     </div>
 
     <!-- Мобилка: статус — выпадающий список -->
-    <select class="md:hidden w-36 shrink-0 h-11 px-2 rounded-xl bg-page border border-line-strong text-sm font-semibold text-content outline-none" [attr.aria-label]="'doctors.columns.status' | transloco" (change)="onStatusSelect($any($event.target).value)">
+    <select class="md:hidden w-28 shrink-0 h-11 px-2 rounded-xl bg-page border border-line-strong text-sm font-semibold text-content outline-none" [attr.aria-label]="'doctors.columns.status' | transloco" (change)="onStatusSelect($any($event.target).value)">
       <option value="" [selected]="allStatusesActive()">{{ 'doctors.statusAll' | transloco }}</option>
       @for (chip of statusChips(); track chip.status) {
         <option [value]="chip.status" [selected]="chip.active && selectedStatuses().length === 1">{{ chip.key | transloco }} ({{ chip.count }})</option>

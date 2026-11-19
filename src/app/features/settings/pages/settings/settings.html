@@ -7,7 +7,7 @@
 
   <div class="flex flex-col md:flex-row gap-4 md:gap-6 md:items-start">
  <!-- Вкладки: на ПК — слева столбиком, на мобилке — лента сверху -->
-    <nav class="flex md:flex-col md:sticky md:top-4 md:w-60 shrink-0 gap-1 p-1.5 md:p-2 rounded-[20px] bg-surface border border-line-strong overflow-x-auto" role="tablist" [attr.aria-label]="'settings.title' | transloco">
+    <nav class="sticky top-0 z-20 shadow-sm md:shadow-none flex md:flex-col md:top-4 md:w-60 shrink-0 gap-1 p-1.5 md:p-2 rounded-[20px] bg-surface border border-line-strong overflow-x-auto" role="tablist" [attr.aria-label]="'settings.title' | transloco">
       @for (t of tabs(); track t.id) {
         <button type="button" role="tab" [attr.aria-selected]="tab() === t.id" class="shrink-0 flex items-center gap-2 md:gap-3 min-h-10 md:min-h-11 px-3 rounded-xl text-sm font-medium text-left whitespace-nowrap transition-colors" [class.bg-brand-100]="tab() === t.id" [class.text-accent]="tab() === t.id" [class.font-semibold]="tab() === t.id" [class.text-soft]="tab() !== t.id" [class.hover:bg-page]="tab() !== t.id" (click)="setTab(t.id)">
           <mat-icon fontSet="material-symbols-outlined" style="font-size: 20px; width: 20px; height: 20px;">{{ t.icon }}</mat-icon>
@@ -20,7 +20,7 @@
     <form [formGroup]="form" (ngSubmit)="save()" class="flex flex-col gap-4" [class.hidden]="tab() === 'services' || tab() === 'workMode'">
       <!-- Клиника -->
       @if (tab() === 'clinic') {
-      <section id="clinic" class="scroll-mt-4 bg-surface border border-line-strong rounded-[20px] p-5 md:p-6 flex flex-col gap-5">
+      <section id="clinic" class="scroll-mt-20 md:scroll-mt-4 bg-surface border border-line-strong rounded-[20px] p-5 md:p-6 flex flex-col gap-5">
         <h2 class="font-display text-lg font-bold text-content">{{ 'settings.sections.clinic' | transloco }}</h2>
 
         <div class="flex items-center gap-4">
@@ -76,7 +76,7 @@
 
       <!-- Внешний вид -->
       @if (tab() === 'appearance') {
-      <section id="appearance" class="scroll-mt-4 bg-surface border border-line-strong rounded-[20px] p-5 md:p-6 flex flex-col gap-5">
+      <section id="appearance" class="scroll-mt-20 md:scroll-mt-4 bg-surface border border-line-strong rounded-[20px] p-5 md:p-6 flex flex-col gap-5">
         <h2 class="font-display text-lg font-bold text-content">{{ 'settings.sections.appearance' | transloco }}</h2>
 
         <div class="flex flex-col gap-2">
@@ -121,7 +121,7 @@
 
       <!-- Уведомления -->
       @if (tab() === 'notifications') {
-      <section id="notifications" formGroupName="notifications" class="scroll-mt-4 bg-surface border border-line-strong rounded-[20px] p-5 md:p-6 flex flex-col">
+      <section id="notifications" formGroupName="notifications" class="scroll-mt-20 md:scroll-mt-4 bg-surface border border-line-strong rounded-[20px] p-5 md:p-6 flex flex-col">
         <h2 class="font-display text-lg font-bold text-content mb-2">{{ 'settings.sections.notifications' | transloco }}</h2>
         @for (item of notificationItems; track item.control) {
           <label class="flex items-center gap-4 py-3 border-t border-line cursor-pointer">

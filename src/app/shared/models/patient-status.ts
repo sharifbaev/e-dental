@@ -12,6 +12,12 @@ export const APPOINTMENT_STATUSES: PatientStatus[] = ['primary', 'awaitingDecisi
 // Через сколько минут после начала приёма можно отметить «Не пришёл»
 export const NO_SHOW_AFTER_MINUTES = 15;
 
+// Через сколько минут после окончания приёма напоминать, что статус всё ещё «Первичный»
+export const STATUS_OVERDUE_AFTER_MINUTES = 30;
+
+// За сколько минут до конца смены врача напоминать о пациентах «Ожидает решения»
+export const PENDING_DECISION_BEFORE_END_MINUTES = 30;
+
 // Цвета статусов пациента — одинаковые во всём приложении (светлая и тёмная тема)
 export const PATIENT_STATUS_CLASSES: Record<PatientStatus, string> = {
   primary: 'bg-sky-50 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300',

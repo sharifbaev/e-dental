@@ -2,7 +2,7 @@ import { Injectable, computed, signal } from '@angular/core';
 import { Observable, delay, map, of, tap } from 'rxjs';
 import { AppointmentConfirmation, AppointmentDraft, PatientStatus, ScheduleAppointment } from '../models/schedule.model';
 import { mockPatientRating } from '../../../shared/models/patient-rating';
-import { NO_SHOW_AFTER_MINUTES } from '../../../shared/models/patient-status';
+import { NO_SHOW_AFTER_MINUTES, STATUS_OVERDUE_AFTER_MINUTES } from '../../../shared/models/patient-status';
 
 // Шаблоны приёмов для mock-данных
 const TEMPLATES: Omit<ScheduleAppointment, 'id' | 'date' | 'status'>[] = [
@@ -47,12 +47,12 @@ export function addMinutes(time: string, minutes: number): string {
   return `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`;
 }
 
-// Приём прошёл (время окончания уже наступило), а статус всё ещё «Первичный» — нужно поменять статус
+// После окончания приёма прошло 30 минут, а статус всё ещё «Первичный» — нужно поменять статус
 export function isStatusOverdue(appointment: ScheduleAppointment, now: Date): boolean {
   if (appointment.status !== 'primary') return false;
   const [year, month, day] = appointment.date.split('-').map(Number);
   const [hours, minutes] = appointment.end.split(':').map(Number);
-  return new Date(year, month - 1, day, hours, minutes).getTime() <= now.getTime();
+  return new Date(year, month - 1, day, hours, minutes + STATUS_OVERDUE_AFTER_MINUTES).getTime() <= now.getTime();
 }
 
 // С начала приёма прошло 15 минут — можно отметить «Не пришёл» (раньше вариант не показываем)

@@ -1,0 +1,404 @@
+import { AfterViewInit, Component, DestroyRef, ElementRef, computed, effect, inject, signal, untracked, viewChild } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { MatIconModule } from '@angular/material/icon';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
+import { MatDialog } from '@angular/material/dialog';
+import { filter, switchMap } from 'rxjs';
+import { APPOINTMENT_FORM_DIALOG_CONFIG, AppointmentFormData, AppointmentFormDialog, AppointmentFormResult } from '../components/appointment-form-dialog/appointment-form-dialog';
+import { FeedbackService } from '../../../shared/services/feedback.service';
+import { Schedule } from '../schedule';
+import { ScheduleService, isStatusOverdue, toDateKey } from '../services/schedule.service';
+import { DoctorsService } from '../../doctors/services/doctors.service';
+import { PATIENT_STATUS_CLASSES } from '../../../shared/models/patient-status';
+import { PATIENT_RATING_DOT } from '../../../shared/models/patient-rating';
+import { ScheduleAppointment } from '../models/schedule.model';
+
+const LOCALES: Record<string, string> = { ru: 'ru-RU', uz: 'uz-Latn-UZ' };
+
+// Высота одного часа на шкале, px
+const HOUR_PX = 100;
+
+// Шаг времени при клике по пустому месту шкалы, мин
+const CLICK_STEP_MINUTES = 15;
+
+// Режим работы по умолчанию — если врач не найден в справочнике
+const DEFAULT_START = '09:00';
+const DEFAULT_END = '18:00';
+
+// 'YYYY-MM-DD' → Date по местному времени
+function fromDateKey(key: string): Date {
+  const [year, month, day] = key.split('-').map(Number);
+  return new Date(year, month - 1, day);
+}
+
+// 'HH:mm' → минуты от начала суток
+function toMinutes(time: string): number {
+  const [hours, minutes] = time.split(':').map(Number);
+  return hours * 60 + minutes;
+}
+
+// Понедельник недели, в которую входит дата
+function startOfWeek(date: Date): Date {
+  const shift = (date.getDay() + 6) % 7; // пн — 0 … вс — 6
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate() - shift);
+}
+
+// День недели в формате справочника врачей: 1 — пн … 7 — вс
+function isoWeekday(date: Date): number {
+  return date.getDay() === 0 ? 7 : date.getDay();
+}
+
+// Календарь дня как у iPhone: сверху неделя, снизу шкала времени с приёмами.
+// Окна просмотра, изменения, оплаты и отмены — те же, что в «Расписании» (наследуем Schedule)
+@Component({
+  selector: 'app-schedule-calendar',
+  imports: [MatIconModule, TranslocoPipe],
+  templateUrl: './calendar.html'
+})
+export class ScheduleCalendar extends Schedule implements AfterViewInit {
+  private readonly calendarSchedule = inject(ScheduleService);
+  private readonly doctorsService = inject(DoctorsService);
+  private readonly calendarTransloco = inject(TranslocoService);
+  private readonly calendarDialog = inject(MatDialog);
+  private readonly calendarFeedback = inject(FeedbackService);
+
+  private readonly calendarLang = toSignal(this.calendarTransloco.langChanges$, {
+    initialValue: this.calendarTransloco.getActiveLang()
+  });
+  private readonly calendarLocale = computed(() => LOCALES[this.calendarLang()] ?? 'ru-RU');
+
+  protected readonly hourPx = HOUR_PX;
+  protected readonly todayDateKey = toDateKey(new Date());
+
+  // Прокручиваемая шкала (на ПК) — чтобы при открытии показать текущее время / первый приём
+  private readonly timeline = viewChild<ElementRef<HTMLElement>>('timeline');
+
+  // Текущее время для красной линии — раз в минуту
+  private readonly clock = signal(new Date());
+
+  constructor() {
+    super();
+    const timer = setInterval(() => this.clock.set(new Date()), 60_000);
+    inject(DestroyRef).onDestroy(() => clearInterval(timer));
+
+    // Выбран интервал — выбранный день должен быть внутри него (иначе берём первый день интервала).
+    // rangeDay держим равным выбранному дню — «Добавить запись» создаёт запись на этот день
+    effect(() => {
+      const days = this.isRange() ? this.rangeDays() : [];
+      untracked(() => {
+        if (!days.length) return;
+        if (!days.some(day => day.key === this.selectedDate())) {
+          this.selectDay(days[0].key);
+          setTimeout(() => this.scrollToFocus());
+        }
+        this.rangeDay.set(this.selectedDate());
+      });
+    });
+  }
+
+  // Интервал: то же окно выбора, что в «Расписании»
+  protected openInterval(): void {
+    this.editRange();
+  }
+
+  // Сброс интервала — обратно к текущей неделе и сегодняшнему дню
+  protected resetInterval(): void {
+    this.clearRange();
+    this.goToday();
+  }
+
+  ngAfterViewInit(): void {
+    this.scrollToFocus();
+  }
+
+  // ---- Неделя ----
+
+  // Понедельник показываемой недели
+  protected readonly weekStart = signal<Date>(startOfWeek(new Date()));
+
+  protected prevWeek(): void {
+    const start = this.weekStart();
+    this.weekStart.set(new Date(start.getFullYear(), start.getMonth(), start.getDate() - 7));
+    this.selectDay(toDateKey(this.weekStart()));
+  }
+
+  protected nextWeek(): void {
+    const start = this.weekStart();
+    this.weekStart.set(new Date(start.getFullYear(), start.getMonth(), start.getDate() + 7));
+    this.selectDay(toDateKey(this.weekStart()));
+  }
+
+  protected goToday(): void {
+    this.weekStart.set(startOfWeek(new Date()));
+    this.selectDay(this.todayDateKey);
+    setTimeout(() => this.scrollToFocus());
+  }
+
+  // Выбор дня в ленте — дата берётся и для «Добавить запись»
+  protected pickDay(key: string): void {
+    this.selectDay(key);
+    if (this.isRange()) this.rangeDay.set(key);
+    setTimeout(() => this.scrollToFocus());
+  }
+
+  // Заголовок: «Ноябрь 2026» (или «Ноябрь – Декабрь 2026», если неделя на стыке)
+  protected readonly monthTitle = computed(() => {
+    if (this.isRange()) {
+      const selected = fromDateKey(this.selectedDate());
+      const text = new Intl.DateTimeFormat(this.calendarLocale(), { month: 'long', year: 'numeric' }).format(selected).replace(/\s?г\.?$/, '');
+      return text.charAt(0).toUpperCase() + text.slice(1);
+    }
+    const first = this.weekStart();
+    const last = new Date(first.getFullYear(), first.getMonth(), first.getDate() + 6);
+    const month = new Intl.DateTimeFormat(this.calendarLocale(), { month: 'long' });
+    const cap = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);
+    return first.getMonth() === last.getMonth()
+      ? `${cap(month.format(first))} ${first.getFullYear()}`
+      : `${cap(month.format(first))} – ${cap(month.format(last))} ${last.getFullYear()}`;
+  });
+
+  // Приёмы выбранного врача (все даты, без отменённых — для точек в ленте)
+  private readonly visibleAppointments = computed(() => {
+    const doctor = this.selectedDoctor();
+    return this.calendarSchedule.appointments()
+      .filter(a => doctor === 'all' || String(a.doctorId) === doctor);
+  });
+
+  protected readonly days = computed(() => {
+    const weekdayFormat = new Intl.DateTimeFormat(this.calendarLocale(), { weekday: 'short' });
+    const counts = new Map<string, number>();
+    for (const a of this.visibleAppointments()) {
+      if (a.status !== 'cancelled') counts.set(a.date, (counts.get(a.date) ?? 0) + 1);
+    }
+    const start = this.weekStart();
+
+    return Array.from({ length: 7 }, (_, index) => {
+      const date = new Date(start.getFullYear(), start.getMonth(), start.getDate() + index);
+      const key = toDateKey(date);
+      return {
+        key,
+        weekday: weekdayFormat.format(date).replace('.', '').toUpperCase(),
+        day: date.getDate(),
+        isToday: key === this.todayDateKey,
+        isWeekend: index >= 5,
+        count: counts.get(key) ?? 0
+      };
+    });
+  });
+
+  // Лента дней: при выбранном интервале — дни интервала, иначе — текущая неделя
+  protected readonly stripDays = computed(() => {
+    if (!this.isRange()) return this.days().map(day => ({ ...day, month: '' }));
+    return this.rangeDays().map(day => {
+      const weekday = isoWeekday(fromDateKey(day.key));
+      return {
+        key: day.key,
+        weekday: day.weekday,
+        day: day.day,
+        month: day.month,
+        isToday: day.key === this.todayDateKey,
+        isWeekend: weekday >= 6,
+        count: day.count
+      };
+    });
+  });
+
+  // «Вторник, 17 ноября»
+  protected readonly dayTitle = computed(() => {
+    const text = new Intl.DateTimeFormat(this.calendarLocale(), { weekday: 'long', day: 'numeric', month: 'long' })
+      .format(fromDateKey(this.selectedDate()));
+    return text.charAt(0).toUpperCase() + text.slice(1);
+  });
+
+  // ---- Режим работы ----
+
+  // Приёмы выбранного дня
+  private readonly dayAppointments = computed(() =>
+    this.visibleAppointments().filter(a => a.date === this.selectedDate())
+  );
+
+  // Режим работы на выбранный день: врач — его часы, «Все врачи» — от самого раннего до самого позднего
+  // среди врачей расписания, работающих в этот день
+  protected readonly workHours = computed(() => {
+    const weekday = isoWeekday(fromDateKey(this.selectedDate()));
+    const all = this.doctorsService.doctors();
+    const selected = this.selectedDoctor();
+    const ids = selected === 'all' ? this.doctorOptions().map(d => Number(d.id)) : [Number(selected)];
+    const doctors = all.filter(d => ids.includes(d.id));
+    const working = doctors.filter(d => d.workDays.includes(weekday));
+
+    if (working.length === 0) {
+      // Врач не найден в справочнике — 09:00–18:00; найден, но не работает — выходной
+      const fallback = selected !== 'all' && doctors[0] ? doctors[0] : null;
+      return {
+        start: fallback?.workStart ?? DEFAULT_START,
+        end: fallback?.workEnd ?? DEFAULT_END,
+        dayOff: doctors.length > 0
+      };
+    }
+
+    const start = working.map(d => d.workStart).sort()[0];
+    const end = working.map(d => d.workEnd).sort().at(-1)!;
+    return { start, end, dayOff: false };
+  });
+
+  // Границы шкалы в минутах: режим работы, расширенный до приёмов вне его, по целым часам
+  private readonly range = computed(() => {
+    let from = toMinutes(this.workHours().start);
+    let to = toMinutes(this.workHours().end);
+    for (const a of this.dayAppointments()) {
+      from = Math.min(from, toMinutes(a.start));
+      to = Math.max(to, toMinutes(a.end));
+    }
+    from = Math.floor(from / 60) * 60;
+    to = Math.max(Math.ceil(to / 60) * 60, from + 60);
+    return { from, to };
+  });
+
+  protected readonly timelineHeight = computed(() => ((this.range().to - this.range().from) / 60) * HOUR_PX);
+
+  // Подписи часов: 09:00, 10:00 …
+  protected readonly hours = computed(() => {
+    const { from, to } = this.range();
+    // Подпись часа рядом с красной линией «сейчас» скрываем — иначе они налезают друг на друга
+    const now = this.nowLine();
+    const list: { label: string; top: number; hidden: boolean }[] = [];
+    for (let m = from; m <= to; m += 60) {
+      const top = ((m - from) / 60) * HOUR_PX;
+      list.push({ label: `${String(m / 60).padStart(2, '0')}:00`, top, hidden: !!now && Math.abs(now.top - top) < 18 });
+    }
+    return list;
+  });
+
+  // Нерабочее время внутри шкалы — затемняем (до начала и после конца режима работы)
+  protected readonly offHours = computed(() => {
+    const { from, to } = this.range();
+    const work = this.workHours();
+    if (work.dayOff) return [{ top: 0, height: this.timelineHeight() }];
+    const start = toMinutes(work.start);
+    const end = toMinutes(work.end);
+    const blocks: { top: number; height: number }[] = [];
+    if (start > from) blocks.push({ top: 0, height: ((start - from) / 60) * HOUR_PX });
+    if (end < to) blocks.push({ top: ((end - from) / 60) * HOUR_PX, height: ((to - end) / 60) * HOUR_PX });
+    return blocks;
+  });
+
+  // Красная линия «сейчас» — только на сегодняшнем дне и в пределах шкалы
+  protected readonly nowLine = computed(() => {
+    if (this.selectedDate() !== this.todayDateKey) return null;
+    const now = this.clock();
+    const minutes = now.getHours() * 60 + now.getMinutes();
+    const { from, to } = this.range();
+    if (minutes < from || minutes > to) return null;
+    return {
+      top: ((minutes - from) / 60) * HOUR_PX,
+      label: `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
+    };
+  });
+
+  // ---- Приёмы на шкале ----
+
+  // Позиция блоков; пересекающиеся приёмы встают в колонки рядом друг с другом
+  protected readonly events = computed(() => {
+    const { from } = this.range();
+    const now = this.clock();
+    const list = [...this.dayAppointments()].sort((a, b) => a.start.localeCompare(b.start) || b.end.localeCompare(a.end));
+
+    type Placed = { appointment: ScheduleAppointment; column: number; group: number };
+    const placed: Placed[] = [];
+    const groupColumns: number[] = [];
+    let group = -1;
+    let groupEnd = -1;
+    let columnsEnd: number[] = [];
+
+    for (const appointment of list) {
+      const start = toMinutes(appointment.start);
+      const end = toMinutes(appointment.end);
+      // Новая группа, если приём не пересекается ни с одним из текущей группы
+      if (start >= groupEnd) {
+        group++;
+        columnsEnd = [];
+        groupColumns[group] = 0;
+      }
+      let column = columnsEnd.findIndex(columnEnd => columnEnd <= start);
+      if (column === -1) {
+        column = columnsEnd.length;
+        columnsEnd.push(end);
+      } else {
+        columnsEnd[column] = end;
+      }
+      groupEnd = Math.max(start >= groupEnd ? end : groupEnd, end);
+      groupColumns[group] = Math.max(groupColumns[group], columnsEnd.length);
+      placed.push({ appointment, column, group });
+    }
+
+    return placed.map(({ appointment, column, group: g }) => {
+      const start = toMinutes(appointment.start);
+      const end = toMinutes(appointment.end);
+      const columns = groupColumns[g];
+      const height = Math.max(((end - start) / 60) * HOUR_PX - 2, 22);
+      return {
+        ...appointment,
+        top: ((start - from) / 60) * HOUR_PX + 1,
+        height,
+        left: (column / columns) * 100,
+        width: 100 / columns,
+        // < 44px — одна строка, < 64px — имя и время, иначе — полностью
+        compact: height < 44,
+        medium: height >= 44 && height < 64,
+        isCancelled: appointment.status === 'cancelled',
+        // 30 мин после приёма, а статус всё ещё «Первичный» — подсвечиваем
+        overdue: isStatusOverdue(appointment, now),
+        statusKey: `schedule.status.${appointment.status}`,
+        statusClass: PATIENT_STATUS_CLASSES[appointment.status],
+        ratingDot: PATIENT_RATING_DOT[appointment.patientRating ?? 'good']
+      };
+    });
+  });
+
+  // ---- Новая запись кликом по шкале ----
+
+  // Клик по пустому месту: время — по позиции клика (с шагом 15 мин), дата — выбранный день,
+  // врач — выбранный в фильтре. Продолжительность выбирают в форме вручную
+  protected addAtPosition(event: MouseEvent): void {
+    const area = event.currentTarget as HTMLElement;
+    const y = event.clientY - area.getBoundingClientRect().top;
+    const { from, to } = this.range();
+    const raw = from + (y / HOUR_PX) * 60;
+    const minutes = Math.min(Math.max(Math.floor(raw / CLICK_STEP_MINUTES) * CLICK_STEP_MINUTES, from), to - CLICK_STEP_MINUTES);
+    const time = `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`;
+
+    const date = this.selectedDate();
+    const doctorId = this.selectedDoctor() === 'all' ? undefined : Number(this.selectedDoctor());
+
+    this.calendarDialog
+      .open<AppointmentFormDialog, AppointmentFormData, AppointmentFormResult>(AppointmentFormDialog, {
+        ...APPOINTMENT_FORM_DIALOG_CONFIG,
+        data: { date, doctorId, time }
+      })
+      .afterClosed()
+      .pipe(
+        filter((result): result is AppointmentFormResult => !!result),
+        switchMap(result => this.calendarSchedule.add(result, result.date, result.doctorId ?? doctorId))
+      )
+      .subscribe({
+        next: created => {
+          const dateText = new Intl.DateTimeFormat(this.calendarLocale(), { day: 'numeric', month: 'long' }).format(fromDateKey(created.date));
+          this.calendarFeedback.success('feedback.created', 'feedback.createdMessage', {
+            patient: created.patientName,
+            date: dateText,
+            time: created.start
+          });
+        },
+        error: () => this.calendarFeedback.error()
+      });
+  }
+
+  // Прокрутить шкалу к текущему времени (сегодня) или к первому приёму
+  private scrollToFocus(): void {
+    const element = this.timeline()?.nativeElement;
+    if (!element) return;
+    const target = this.nowLine()?.top ?? this.events()[0]?.top ?? 0;
+    element.scrollTo({ top: Math.max(target - HOUR_PX, 0), behavior: 'smooth' });
+  }
+}

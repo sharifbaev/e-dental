@@ -21,6 +21,7 @@ export const routes: Routes = [
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
       { path: 'dashboard', loadComponent: () => import('./features/dashboard/dashboard').then(m => m.Dashboard) },
       { path: 'schedule', loadComponent: () => import('./features/schedule/schedule').then(m => m.Schedule) },
+      { path: 'calendar', loadComponent: () => import('./features/schedule/calendar/calendar').then(m => m.ScheduleCalendar) },
       { path: 'patients', loadChildren: () => import('./features/patients/patients.routes').then(m => m.PATIENTS_ROUTES) },
       // «Врачи» и «Финансы» — только администратор и регистратор
       { path: 'doctors', canActivate: [roleGuard(['admin', 'receptionist'])], loadComponent: () => import('./features/doctors/pages/doctor-list/doctor-list').then(m => m.DoctorList) },

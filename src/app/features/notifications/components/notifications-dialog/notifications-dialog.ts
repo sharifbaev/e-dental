@@ -1,6 +1,6 @@
 import { Component, DestroyRef, Injector, computed, inject, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
-import { MatDialogConfig, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
+import { MatDialog, MatDialogConfig, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { Router } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { TranslocoPipe } from '@jsverse/transloco';
@@ -24,7 +24,8 @@ const TYPE_VIEW: Record<NotificationType, { icon: string; classes: string }> = {
   cancellation: { icon: 'event_busy', classes: 'bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400' },
   waitingList: { icon: 'hourglass_top', classes: 'bg-amber-50 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300' },
   noShow: { icon: 'person_off', classes: 'bg-orange-50 text-orange-600 dark:bg-orange-500/15 dark:text-orange-300' },
-  statusOverdue: { icon: 'published_with_changes', classes: 'bg-amber-50 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300' }
+  statusOverdue: { icon: 'published_with_changes', classes: 'bg-amber-50 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300' },
+  pendingDecision: { icon: 'hourglass_top', classes: 'bg-amber-50 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300' }
 };
 
 type Tab = 'all' | 'unread';
@@ -43,6 +44,7 @@ export class NotificationsDialog {
   private readonly router = inject(Router);
   private readonly scheduleService = inject(ScheduleService);
   private readonly injector = inject(Injector);
+  private readonly dialog = inject(MatDialog);
 
   protected readonly unreadCount = this.notificationsService.unreadCount;
 
@@ -73,7 +75,7 @@ export class NotificationsDialog {
           iconClasses: TYPE_VIEW[n.type].classes,
           titleKey: `notifications.types.${n.type}.title`,
           textKey: `notifications.types.${n.type}.text`,
-          textParams: { patient: n.patientName, doctor: n.doctorName, time: n.time },
+          textParams: { patient: n.patientName, doctor: n.doctorName, time: n.time, count: n.count ?? 0 },
           agoKey: minutes < 1 ? 'notifications.ago.justNow' : hours < 1 ? 'notifications.ago.minutes' : 'notifications.ago.hours',
           agoParams: { count: hours < 1 ? minutes : hours }
         };
@@ -90,6 +92,16 @@ export class NotificationsDialog {
 
     // «Обновите статус» — переходим в расписание и сразу открываем окно смены статуса
     const notification = this.notificationsService.notifications().find(n => n.id === id);
+
+    // «Ожидают решения» — список пациентов врача, у каждого кнопка «Изменить статус»
+    if (notification?.type === 'pendingDecision' && notification.doctorId) {
+      const doctorId = notification.doctorId;
+      this.dialogRef.close();
+      import('../pending-decision-dialog/pending-decision-dialog')
+        .then(m => this.dialog.open(m.PendingDecisionDialog, { ...m.PENDING_DECISION_DIALOG_CONFIG, data: { doctorId } }));
+      return;
+    }
+
     if (notification?.type !== 'statusOverdue') return;
 
     const appointment = this.scheduleService.appointments().find(a => a.id === notification.appointmentId);

@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
-import { Observable, filter, map, of, switchMap } from 'rxjs';
+import { Observable, concatMap, filter, forkJoin, from, map, of, switchMap, toArray } from 'rxjs';
 import { FeedbackService } from '../../../shared/services/feedback.service';
 import { PatientStatus } from '../../../shared/models/patient-status';
 import { STATUS_CHANGE_DIALOG_CONFIG, StatusChangeDialog, StatusChangeDialogData } from '../components/status-change-dialog/status-change-dialog';
@@ -41,7 +41,7 @@ export class StatusChangeService {
   }
 
   // «В лечении»: сначала план лечения. Закрыли окно крестиком — ничего не меняем;
-  // «Пропустить» — только статус; «Сохранить план» — статус, план и следующий приём
+  // «Пропустить» — только статус; «Сохранить план» — статус, план и все визиты серии
   private withTreatmentPlan(appointment: ScheduleAppointment): Observable<string> {
     return this.dialog
       .open<TreatmentPlanDialog, TreatmentPlanDialogData, TreatmentPlanDialogResult>(TreatmentPlanDialog, {
@@ -55,24 +55,36 @@ export class StatusChangeService {
           const status$ = this.scheduleService.changeStatus(appointment.id, 'inTreatment');
           if (result === 'skip') return status$.pipe(map(() => 'feedback.statusChanged'));
 
-          // Следующий приём — к тому же врачу, сразу со статусом «В лечении»
-          const next$ = result.next
-            ? this.scheduleService.add({
-                patientId: appointment.patientId,
-                patientName: appointment.patientName,
-                phone: appointment.phone,
-                serviceId: result.next.serviceId,
-                serviceName: result.next.serviceName,
-                durationMinutes: result.next.durationMinutes,
-                time: result.next.time,
-                rating: appointment.patientRating,
-                status: 'inTreatment'
-              }, result.next.date, appointment.doctorId).pipe(map(created => created.id))
-            : of(undefined);
+          // Визиты серии — к тому же врачу, сразу со статусом «В лечении».
+          // По одному (concatMap): так у каждой записи свой id
+          // TODO: на API — один запрос POST /treatment-plans/:id/visits
+          const visits = result.series ?? (result.next ? [result.next] : []);
+          const created$ = visits.length
+            ? from(visits).pipe(
+                concatMap(visit => this.scheduleService.add({
+                  patientId: appointment.patientId,
+                  patientName: appointment.patientName,
+                  phone: appointment.phone,
+                  serviceId: visit.serviceId,
+                  serviceName: visit.serviceName,
+                  durationMinutes: visit.durationMinutes,
+                  time: visit.time,
+                  rating: appointment.patientRating,
+                  status: 'inTreatment'
+                }, visit.date, appointment.doctorId)),
+                map(created => created.id),
+                toArray()
+              )
+            : of([] as number[]);
 
           return status$.pipe(
-            switchMap(() => next$),
-            switchMap(nextId => this.plansService.add(result.plan, nextId)),
+            switchMap(() => created$),
+            switchMap(ids => this.plansService.add(result.plan, ids[0], ids).pipe(
+              // Визитам — ссылка на план и «Визит N из M»
+              switchMap(plan => ids.length
+                ? forkJoin(ids.map((id, index) => this.scheduleService.update(id, { planId: plan.id, visitIndex: index + 1, visitTotal: ids.length })))
+                : of([]))
+            )),
             map(() => 'feedback.planSaved')
           );
         })

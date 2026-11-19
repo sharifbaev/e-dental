@@ -1,0 +1,40 @@
+<!-- Шапка -->
+<div class="flex items-center justify-between gap-2 px-6 pt-5 pb-2">
+  <div class="min-w-0">
+    <h2 class="font-display text-lg font-bold text-content">{{ 'notifications.pendingDialog.title' | transloco }}</h2>
+    <div class="text-sm text-muted truncate">{{ 'notifications.pendingDialog.subtitle' | transloco: { doctor: doctorName() } }}</div>
+  </div>
+  <button matIconButton mat-dialog-close type="button" [title]="'common.close' | transloco">
+    <mat-icon fontSet="material-symbols-outlined">close</mat-icon>
+  </button>
+</div>
+
+<mat-dialog-content>
+  @if (items().length === 0) {
+    <div class="py-10 flex flex-col items-center gap-2 text-center">
+      <mat-icon fontSet="material-symbols-outlined" class="text-emerald-600" style="font-size: 40px; width: 40px; height: 40px;">task_alt</mat-icon>
+      <span class="text-sm text-subtle">{{ 'notifications.pendingDialog.empty' | transloco }}</span>
+    </div>
+  } @else {
+    <div class="flex flex-col gap-3 pb-2">
+      <div class="flex items-start gap-2 p-3 rounded-xl bg-amber-50 text-amber-800 dark:bg-amber-500/15 dark:text-amber-200 text-sm">
+        <mat-icon fontSet="material-symbols-outlined" class="shrink-0" style="font-size: 20px; width: 20px; height: 20px;">hourglass_top</mat-icon>
+        <span>{{ 'notifications.pendingDialog.hint' | transloco }}</span>
+      </div>
+
+      @for (item of items(); track item.id) {
+        <div class="flex items-center gap-3 p-3 rounded-xl border border-line-strong">
+          <div class="min-w-0 flex-1">
+            <div class="text-sm font-semibold text-content truncate">{{ item.patientName }}</div>
+            <div class="text-xs text-muted truncate tabular-nums">{{ item.start }}–{{ item.end }} · {{ item.service }}</div>
+          </div>
+          <button type="button" class="shrink-0 px-3 py-2 rounded-lg bg-brand-700 text-sm font-medium text-white hover:bg-brand-800" (click)="change(item)">{{ 'notifications.pendingDialog.change' | transloco }}</button>
+        </div>
+      }
+    </div>
+  }
+</mat-dialog-content>
+
+<div class="px-6 pb-5 pt-2">
+  <button type="button" class="w-full px-4 py-3 rounded-lg border border-line-strong text-sm font-medium text-soft hover:bg-page" mat-dialog-close>{{ 'common.close' | transloco }}</button>
+</div>

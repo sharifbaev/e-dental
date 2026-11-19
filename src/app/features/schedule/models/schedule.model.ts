@@ -22,6 +22,9 @@ export interface ScheduleAppointment {
   status: PatientStatus;
   patientRating?: PatientRating;  // рейтинг пациента — цветной квадратик в карточке
   confirmation?: AppointmentConfirmation;  // нет — запись не подтверждена
+  planId?: number;             // план лечения, к которому относится визит
+  visitIndex?: number;         // номер визита в серии плана (с 1)
+  visitTotal?: number;         // всего визитов в серии
 }
 
 // Данные новой записи из формы (врач, дата и время пока подставляются автоматически)

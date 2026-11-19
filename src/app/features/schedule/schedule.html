@@ -1,13 +1,14 @@
-<div class="flex flex-col gap-4">
+<div class="flex flex-col gap-4 md:h-[calc(100dvh-105px)]">
   <!-- Фильтры -->
-  <section class="bg-surface border border-line-strong rounded-[20px] p-4 flex flex-col gap-4">
-    <div class="flex flex-col md:flex-row gap-3">
+  <!-- Фильтры: на мобилке закреплены сверху, прокручивается только список -->
+  <section class="sticky top-0 z-20 shadow-sm md:static md:shadow-none bg-surface border border-line-strong rounded-[20px] p-3 md:p-4 flex flex-col gap-3 md:gap-4">
+    <div class="flex flex-col md:flex-row md:flex-wrap gap-3">
       <!-- Период -->
-      <div class="grid grid-cols-3 gap-1 p-1 rounded-xl bg-page md:w-96">
+      <div class="grid grid-cols-3 gap-1 p-1 rounded-xl bg-page md:w-96 md:shrink-0">
         <button type="button" class="flex items-center justify-center gap-1 h-9 rounded-lg text-sm font-medium transition-colors" [class.bg-surface]="period() === 'today'" [class.shadow-sm]="period() === 'today'" [class.text-accent]="period() === 'today'" [class.text-muted]="period() !== 'today'" (click)="setPeriod('today')">{{ 'schedule.periods.today' | transloco }}</button>
         <button type="button" class="flex items-center justify-center gap-1 h-9 rounded-lg text-sm font-medium transition-colors" [class.bg-surface]="period() === 'week'" [class.shadow-sm]="period() === 'week'" [class.text-accent]="period() === 'week'" [class.text-muted]="period() !== 'week'" (click)="setPeriod('week')">{{ 'schedule.periods.week' | transloco }}</button>
         <button type="button" class="flex items-center justify-center gap-1 h-9 rounded-lg text-sm font-medium transition-colors" [class.bg-surface]="period() === 'calendar'" [class.shadow-sm]="period() === 'calendar'" [class.text-accent]="period() === 'calendar'" [class.text-muted]="period() !== 'calendar'" (click)="setPeriod('calendar')">
-          <mat-icon fontSet="material-symbols-outlined" style="font-size: 18px; width: 18px; height: 18px;">calendar_month</mat-icon>
+          <mat-icon fontSet="material-symbols-outlined" class="hidden! sm:inline-block!" style="font-size: 18px; width: 18px; height: 18px;">calendar_month</mat-icon>
           {{ 'schedule.periods.calendar' | transloco }}
         </button>
       </div>
@@ -93,7 +94,7 @@
   @if (items().length === 0) {
     <div class="bg-surface border border-line-strong rounded-[20px] py-12 text-center text-sm text-subtle">{{ 'schedule.empty' | transloco }}</div>
   } @else {
-    <section class="grid md:grid-cols-2 xl:grid-cols-3 gap-3 content-start md:max-h-[48vh] md:overflow-y-auto md:overscroll-contain md:pr-1 [scrollbar-gutter:stable]">
+    <section class="grid md:grid-cols-2 xl:grid-cols-3 gap-3 content-start md:flex-1 md:min-h-60 md:overflow-y-auto md:overscroll-contain md:pr-1 [scrollbar-gutter:stable]">
       @for (item of items(); track item.id) {
         <div role="button" tabindex="0" class="bg-surface border border-line-strong rounded-[18px] p-4 flex flex-col gap-3 cursor-pointer transition-shadow hover:shadow-md focus-visible:outline-2 focus-visible:outline-brand-300" [class.opacity-60]="item.isCancelled" (click)="openDetails(item)" (keydown.enter)="openDetails(item)">
           <!-- Дата (в режиме интервала), время, кабинет, статус -->
@@ -106,6 +107,9 @@
               {{ item.start }} – {{ item.end }}
             </span>
             <span class="px-1.5 py-0.5 rounded bg-page text-xs text-muted">{{ 'schedule.cabinet' | transloco: { number: item.cabinet } }}</span>
+            @if (item.visitTotal) {
+              <span class="px-1.5 py-0.5 rounded bg-brand-50 text-xs font-medium text-accent">{{ 'schedule.visitOf' | transloco: { index: item.visitIndex, total: item.visitTotal } }}</span>
+            }
             <span class="ml-auto px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap" [class]="item.statusClass">{{ item.statusKey | transloco }}</span>
           </div>
 

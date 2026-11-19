@@ -57,3 +57,38 @@ body {
     }
   }
 }
+
+// Мобильные браузеры (iOS Safari и др.) приближают страницу при фокусе на поле с шрифтом меньше 16px.
+// На мобилке делаем шрифт полей 16px — приближения нет, масштабирование жестом остаётся
+@media (max-width: 767px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
+
+// Поля в сетке (grid-cols-2 и т. п.) не должны распирать свою колонку и налезать на соседнюю
+.grid > label {
+  min-width: 0;
+}
+
+// iOS Safari: поля даты и времени не сжимаются по ширине колонки и налезают на соседние поля.
+// Сбрасываем нативный вид (выбор даты/времени при нажатии остаётся) и разрешаем сжиматься
+@media (max-width: 767px) {
+  input[type='date'],
+  input[type='time'],
+  input[type='datetime-local'],
+  input[type='month'] {
+    -webkit-appearance: none;
+    appearance: none;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  // Значение даты/времени в Safari по умолчанию по центру — выравниваем как остальные поля
+  input::-webkit-date-and-time-value {
+    text-align: left;
+    min-height: 1.5em;
+  }
+}

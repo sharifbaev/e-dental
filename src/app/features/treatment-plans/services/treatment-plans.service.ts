@@ -24,8 +24,8 @@ export class TreatmentPlansService {
   }
 
   // TODO: на API — POST /patients/:id/treatment-plans
-  add(draft: TreatmentPlanDraft, nextAppointmentId?: number): Observable<TreatmentPlan> {
-    const plan: TreatmentPlan = { ...draft, id: Date.now(), createdAt: toDateKey(new Date()), nextAppointmentId };
+  add(draft: TreatmentPlanDraft, nextAppointmentId?: number, appointmentIds?: number[]): Observable<TreatmentPlan> {
+    const plan: TreatmentPlan = { ...draft, id: Date.now(), createdAt: toDateKey(new Date()), nextAppointmentId, appointmentIds };
     return of(plan).pipe(
       delay(MOCK_DELAY_MS),
       tap(created => this._plans.update(list => [...list, created]))

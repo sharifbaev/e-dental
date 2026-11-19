@@ -1,34 +1,45 @@
 <div class="flex min-h-screen bg-page">
   <!-- Боковое меню — только ПК -->
-  <aside class="hidden md:flex w-60 border-r border-line bg-surface p-4 flex-col gap-1">
-    <div class="flex items-center gap-3 mb-7 px-2">
+  <!-- Свёрнутая панель (кнопка в шапке): только иконки, название — во всплывающей подсказке -->
+  <aside class="hidden md:flex shrink-0 border-r border-line bg-surface p-4 flex-col gap-1 transition-[width] duration-200" [class.w-60]="!sidebarCollapsed()" [class.w-20]="sidebarCollapsed()">
+    <div class="flex items-center gap-3 mb-7" [class.px-2]="!sidebarCollapsed()" [class.justify-center]="sidebarCollapsed()">
       <span class="w-10 h-10 shrink-0 rounded-xl bg-brand-700 flex items-center justify-center">
         <img src="favicon.svg" alt="" class="w-6 h-6 brightness-0 invert">
       </span>
-      <span class="font-display text-xl font-extrabold tracking-tight text-content">{{ 'app.title' | transloco }}</span>
+      @if (!sidebarCollapsed()) {
+        <span class="font-display text-xl font-extrabold tracking-tight text-content whitespace-nowrap">{{ 'app.title' | transloco }}</span>
+      }
     </div>
 
-    <div class="px-3 mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted">{{ 'sidebar.navigation' | transloco }}</div>
+    @if (!sidebarCollapsed()) {
+      <div class="px-3 mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted">{{ 'sidebar.navigation' | transloco }}</div>
+    } @else {
+      <div class="mx-2 mb-2 border-t border-line"></div>
+    }
 
     @for (item of menu(); track item.path) {
-      <a [routerLink]="item.path" routerLinkActive #rlaSide="routerLinkActive" class="flex items-center gap-3 px-3 min-h-11 rounded-xl text-sm transition-colors" [class.bg-brand-100]="rlaSide.isActive" [class.text-accent]="rlaSide.isActive" [class.font-semibold]="rlaSide.isActive" [class.text-soft]="!rlaSide.isActive" [class.font-medium]="!rlaSide.isActive" [class.hover:bg-page]="!rlaSide.isActive">
-        <mat-icon fontSet="material-symbols-outlined">{{ item.icon }}</mat-icon>
-        <span>{{ item.label | transloco }}</span>
+      <a [routerLink]="item.path" routerLinkActive #rlaSide="routerLinkActive" [attr.title]="sidebarCollapsed() ? (item.label | transloco) : null" [attr.aria-label]="item.label | transloco" [class.justify-center]="sidebarCollapsed()" class="flex items-center gap-3 px-3 min-h-11 rounded-xl text-sm transition-colors" [class.bg-brand-100]="rlaSide.isActive" [class.text-accent]="rlaSide.isActive" [class.font-semibold]="rlaSide.isActive" [class.text-soft]="!rlaSide.isActive" [class.font-medium]="!rlaSide.isActive" [class.hover:bg-page]="!rlaSide.isActive">
+        <mat-icon fontSet="material-symbols-outlined" class="shrink-0">{{ item.icon }}</mat-icon>
+        @if (!sidebarCollapsed()) {
+          <span class="whitespace-nowrap">{{ item.label | transloco }}</span>
+        }
       </a>
     }
 
     <!-- Карточка пользователя -->
-    <div class="mt-auto p-3 rounded-2xl bg-page flex items-center gap-3">
+    <div class="mt-auto rounded-2xl flex items-center gap-3" [class.p-3]="!sidebarCollapsed()" [class.bg-page]="!sidebarCollapsed()" [class.justify-center]="sidebarCollapsed()" [attr.title]="sidebarCollapsed() ? user()?.fullName : null">
       <div class="w-10 h-10 shrink-0 rounded-full bg-brand-100 text-accent flex items-center justify-center font-semibold">{{ initials() }}</div>
-      <div class="min-w-0">
-        <div class="text-sm font-semibold text-content truncate">{{ user()?.fullName }}</div>
-        <div class="text-xs text-muted truncate">{{ roleKey() | transloco }}</div>
-      </div>
+      @if (!sidebarCollapsed()) {
+        <div class="min-w-0">
+          <div class="text-sm font-semibold text-content truncate">{{ user()?.fullName }}</div>
+          <div class="text-xs text-muted truncate">{{ roleKey() | transloco }}</div>
+        </div>
+      }
     </div>
   </aside>
 
   <div class="flex-1 flex flex-col min-w-0">
-    <header class="bg-surface border-b border-line p-4 flex items-center justify-between gap-3">
+    <header class="bg-surface border-b border-line px-3 py-4 md:p-4 flex items-center justify-between gap-2 md:gap-3">
       <!-- Логотип в шапке — только мобилка -->
       <div class="flex items-center gap-2 md:hidden">
         <span class="w-9 h-9 shrink-0 rounded-xl bg-brand-700 flex items-center justify-center">
@@ -37,8 +48,13 @@
         <span class="font-display text-lg font-extrabold tracking-tight text-content whitespace-nowrap">{{ 'app.title' | transloco }}</span>
       </div>
 
+      <!-- Свернуть / развернуть боковую панель — только ПК -->
+      <button type="button" class="hidden md:flex w-10 h-10 items-center justify-center rounded-xl text-soft hover:bg-page" [title]="(sidebarCollapsed() ? 'sidebar.expand' : 'sidebar.collapse') | transloco" [attr.aria-label]="(sidebarCollapsed() ? 'sidebar.expand' : 'sidebar.collapse') | transloco" [attr.aria-expanded]="!sidebarCollapsed()" (click)="toggleSidebar()">
+        <mat-icon fontSet="material-symbols-outlined">{{ sidebarCollapsed() ? 'left_panel_open' : 'left_panel_close' }}</mat-icon>
+      </button>
+
       <!-- ml-auto — на ПК (без логотипа) кнопки остаются справа -->
-      <div class="ml-auto flex items-center gap-2">
+      <div class="ml-auto flex items-center gap-1 md:gap-2">
         <!-- Уведомления -->
         <button type="button" class="relative w-10 h-10 flex items-center justify-center rounded-xl text-soft hover:bg-page" [title]="'header.notifications' | transloco" (click)="openNotifications()">
           <mat-icon fontSet="material-symbols-outlined">notifications</mat-icon>
@@ -59,15 +75,15 @@
         </div>
 
         <!-- Выход -->
-        <button type="button" class="ml-1 flex items-center gap-1 h-10 px-2 rounded-xl text-soft hover:text-red-600 hover:bg-red-50 dark:hover:text-red-400 dark:hover:bg-red-500/10 transition-colors" [title]="'common.logout' | transloco" (click)="logout()">
+        <button type="button" class="md:ml-1 flex items-center gap-1 h-10 px-2 rounded-xl text-soft hover:text-red-600 hover:bg-red-50 dark:hover:text-red-400 dark:hover:bg-red-500/10 transition-colors" [title]="'common.logout' | transloco" (click)="logout()">
           <mat-icon fontSet="material-symbols-outlined">logout</mat-icon>
           <span class="hidden md:inline text-sm">{{ 'common.logout' | transloco }}</span>
         </button>
       </div>
     </header>
 
-    <!-- pb-24 на мобилке, чтобы контент не прятался под нижней панелью -->
-    <main class="p-4 pb-24 md:pb-4 flex-1">
+    <!-- pb-40 на мобилке: контент не прячется под нижней панелью и плавающей кнопкой «Добавить …» -->
+    <main class="p-4 pb-40 md:pb-4 flex-1">
       <router-outlet />
     </main>
   </div>
@@ -76,10 +92,11 @@
   <nav class="md:hidden fixed bottom-0 inset-x-0 z-50 bg-surface border-t border-line flex pb-[env(safe-area-inset-bottom)]">
     @for (item of menu(); track item.path) {
       <a [routerLink]="item.path" routerLinkActive #rla="routerLinkActive" class="flex-1 flex flex-col items-center justify-center gap-0.5 py-2 min-w-0" [class.text-accent]="rla.isActive" [class.text-muted]="!rla.isActive">
-        <span class="flex items-center justify-center w-14 h-8 rounded-full transition-colors" [class.bg-brand-100]="rla.isActive">
+        <span class="flex items-center justify-center w-full max-w-14 h-8 rounded-full transition-colors" [class.bg-brand-100]="rla.isActive">
           <mat-icon fontSet="material-symbols-outlined">{{ item.icon }}</mat-icon>
         </span>
-        <span class="text-[10px] leading-tight truncate max-w-full px-1" [class.font-semibold]="rla.isActive">{{ item.label | transloco }}</span>
+        <!-- Короткие подписи: в нижнем меню до 7 пунктов, полные названия не помещаются -->
+        <span class="text-[9px] leading-tight truncate max-w-full px-0.5" [class.font-semibold]="rla.isActive">{{ item.label.replace('menu.', 'menuShort.') | transloco }}</span>
       </a>
     }
   </nav>

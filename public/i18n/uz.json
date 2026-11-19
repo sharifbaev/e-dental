@@ -15,7 +15,9 @@
     "themeDark": "Qorong'i mavzu"
   },
   "sidebar": {
-    "navigation": "Navigatsiya"
+    "navigation": "Navigatsiya",
+    "collapse": "Menyuni yig'ish",
+    "expand": "Menyuni yoyish"
   },
   "roles": {
     "admin": "Administrator",
@@ -25,10 +27,20 @@
   "menu": {
     "dashboard": "Bosh sahifa",
     "schedule": "Jadval",
+    "calendar": "Kalendar",
     "patients": "Bemorlar",
     "doctors": "Shifokorlar",
     "settings": "Sozlamalar",
     "finance": "Moliya"
+  },
+  "menuShort": {
+    "dashboard": "Asosiy",
+    "schedule": "Jadval",
+    "calendar": "Kalendar",
+    "patients": "Bemorlar",
+    "doctors": "Shifokorlar",
+    "finance": "Moliya",
+    "settings": "Sozlamalar"
   },
   "dashboard": {
     "greeting": {
@@ -139,7 +151,9 @@
       "duration90": "1,5 soat",
       "duration120": "2 soat",
       "duration180": "3 soat",
-      "duration240": "4 soat"
+      "duration240": "4 soat",
+      "chooseDuration": "Davomiylikni tanlang",
+      "time": "Vaqt"
     },
     "errors": {
       "required": "Majburiy maydon",
@@ -187,7 +201,18 @@
       "statusOverdue": {
         "title": "Qabul holatini yangilang",
         "text": "{{patient}} ning {{time}} dagi Dr. {{doctor}} qabuli o'tdi, lekin holat hali ham «Birlamchi»"
+      },
+      "pendingDecision": {
+        "title": "Bemorlar qaror kutmoqda",
+        "text": "Dr. {{doctor}} da «Qaror kutilmoqda» holatidagi bemorlar: {{count}}. Smena oxirigacha ({{time}}) holatni yangilang"
       }
+    },
+    "pendingDialog": {
+      "title": "Qaror kutilmoqda",
+      "subtitle": "Bugun · Dr. {{doctor}}",
+      "hint": "Ko'rik o'tkazildi, lekin qaror qabul qilinmagan. Har bir bemor uchun tanlang: davolash, arxiv yoki boshqa holat.",
+      "change": "Holatni o'zgartirish",
+      "empty": "Barcha holatlar yangilandi"
     }
   },
   "schedule": {
@@ -267,7 +292,8 @@
       "bySms": "SMS orqali",
       "byCall": "Qo'ng'iroq orqali",
       "reset": "Bekor qilish"
-    }
+    },
+    "visitOf": "{{total}} tadan {{index}}-tashrif"
   },
   "feedback": {
     "ok": "Tushunarli",
@@ -570,7 +596,29 @@
       "errorTime": "Qabul vaqtini tanlang",
       "notes": "Izohlar",
       "skip": "Rejasiz",
-      "save": "Rejani saqlash"
+      "save": "Rejani saqlash",
+      "series": "Davolash tashriflariga yozish",
+      "firstDate": "Birinchi tashrif",
+      "repeat": "Takrorlash",
+      "repeats": {
+        "daily": "Har kuni",
+        "everyOther": "Kunora",
+        "weekly": "Haftada bir marta",
+        "weekdays": "Hafta kunlari bo'yicha"
+      },
+      "dayOff": "Shifokorning dam olish kuni",
+      "commonTime": "Barcha tashriflar uchun bir xil vaqt ({{count}})",
+      "noCommon": "Barcha kunlarda bo'sh vaqt yo'q. Eng yaxshi variantni tanlang — qolgan kunlarni pastda to'g'rilang",
+      "coverage": "{{total}} tadan {{free}} tasi bo'sh",
+      "time": "Vaqt",
+      "rowState": {
+        "busy": "vaqt band",
+        "noTime": "vaqtni tanlang",
+        "dayOff": "shifokorning dam olish kuni"
+      },
+      "removeVisit": "Tashrifni olib tashlash",
+      "addVisit": "Tashrif qo'shish",
+      "errorSeries": "Har bir tashrif uchun bo'sh vaqtni tanlang"
     }
   },
   "dentalChart": {
@@ -677,5 +725,15 @@
       "saved": "Yozuv qo'shildi",
       "deleted": "Yozuv o'chirildi"
     }
+  },
+  "calendar": {
+    "today": "Bugun",
+    "prevWeek": "Oldingi hafta",
+    "nextWeek": "Keyingi hafta",
+    "dayOff": "Shifokorning dam olish kuni",
+    "workHours": "Ish vaqti: {{start}}–{{end}}",
+    "empty": "Bu kunga qabullar yo'q",
+    "interval": "Oraliq",
+    "clickToAdd": "Qabul qo'shish uchun bo'sh vaqtni bosing"
   }
 }

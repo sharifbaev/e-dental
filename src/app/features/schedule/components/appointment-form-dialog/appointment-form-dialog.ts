@@ -10,6 +10,7 @@ import { PatientMode, PatientShort } from '../../models/appointment-form.model';
 import { ScheduleAppointment } from '../../models/schedule.model';
 import { AppointmentFormService } from '../../services/appointment-form.service';
 import { ScheduleService, addMinutes, nextHalfHour, toDateKey } from '../../services/schedule.service';
+import { AuthService } from '../../../../core/auth/auth.service';
 import { PATIENT_RATINGS, PATIENT_RATING_DOT, PatientRating, mockPatientRating } from '../../../../shared/models/patient-rating';
 
 // «Другое» в списке услуг: повод визита пишется вручную
@@ -60,6 +61,7 @@ export interface AppointmentFormData {
   appointment?: ScheduleAppointment;
   date?: string;               // 'YYYY-MM-DD' — дата по умолчанию для новой записи
   doctorId?: number;           // врач по умолчанию (например, выбранный в фильтре расписания)
+  time?: string;               // 'HH:mm' — время по умолчанию (клик по пустому месту в календаре); продолжительность тогда выбирают вручную
 }
 
 // Что возвращает форма при сохранении
@@ -103,9 +105,16 @@ export class AppointmentFormDialog {
   private readonly dialogRef = inject<MatDialogRef<AppointmentFormDialog, AppointmentFormResult>>(MatDialogRef);
   private readonly data = inject<AppointmentFormData | null>(MAT_DIALOG_DATA, { optional: true });
   private readonly scheduleService = inject(ScheduleService);
+  private readonly auth = inject(AuthService);
+
+  // Врач записывает только к себе — выбор врача в форме скрыт
+  protected readonly isDoctor = this.auth.user()?.role === 'doctor';
 
   // Режим изменения: форма открыта для существующего приёма
   protected readonly isEdit = !!this.data?.appointment;
+
+  // Открыта кликом по времени в календаре: продолжительность не подставляем — её выбирает врач или администратор
+  private readonly manualDuration = !!this.data?.time && !this.data?.appointment;
 
   // ---- Форма ----
 
@@ -123,7 +132,7 @@ export class AppointmentFormDialog {
     time: this.fb.nonNullable.control('', Validators.required),
     // Несколько услуг сразу; serviceId выше — первая из них (для совместимости)
     serviceIds: this.fb.nonNullable.control<number[]>([]),
-    duration: this.fb.nonNullable.control<DurationOption>('30'),
+    duration: this.fb.nonNullable.control<DurationOption | ''>('30', Validators.required),
     doctorId: this.fb.control<number | null>(null),
     // Рейтинг — только для нового пациента
     rating: this.fb.nonNullable.control<PatientRating>('good')
@@ -156,14 +165,24 @@ export class AppointmentFormDialog {
         other.disable();
       }
 
-      this.applyDuration(this.servicesMinutes(ids));
+      if (!this.manualDuration) this.applyDuration(this.servicesMinutes(ids));
     });
 
     // Врач по умолчанию: переданный или первый из расписания
     this.form.controls.doctorId.setValue(this.data?.doctorId ?? this.doctors()[0]?.id ?? null);
+    // Вошёл врач — запись всегда к нему самому
+    if (this.isDoctor && this.auth.user()?.doctorId) {
+      this.form.controls.doctorId.setValue(this.auth.user()!.doctorId!);
+    }
 
     // Время по умолчанию: сегодня — ближайшие полчаса, другой день — 09:00
     this.form.controls.time.setValue(this.defaultTime(this.form.controls.date.value));
+
+    // Время из календаря — подставляем, продолжительность — пустая, выбирается вручную
+    if (this.manualDuration) {
+      this.form.controls.time.setValue(this.data!.time!);
+      this.form.controls.duration.setValue('');
+    }
 
     // Режим изменения: подставляем пациента и услугу из приёма
     const appointment = this.data?.appointment;
