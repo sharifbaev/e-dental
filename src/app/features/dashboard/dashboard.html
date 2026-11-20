@@ -17,7 +17,9 @@
 </mat-autocomplete>
 
 @if (summary(); as s) {
-  <div class="flex flex-col gap-4">
+  <!-- Мобилка: главная ровно на экран (минус шапка 75px, нижнее меню 62px и отступы) — страница не скроллится,
+       прокручиваются только ближайшие приёмы; -mb-36 гасит общий pb-40 у <main> -->
+  <div class="flex flex-col gap-4 max-md:h-[calc(100dvh_-_169px_-_env(safe-area-inset-bottom))] max-md:-mb-36">
     <!-- Приветствие -->
     <section class="px-1 pt-1 flex flex-col md:flex-row md:items-end md:justify-between gap-4">
       <div class="min-w-0">
@@ -49,42 +51,42 @@
       </div>
     </section>
 
-    <!-- Карточки показателей (на мобилке — только если включены в настройках) -->
+    <!-- Карточки показателей (на мобилке — только если включены в настройках; там только название и число) -->
     <section class="grid-cols-2 md:grid lg:grid-cols-3 gap-4" [class.grid]="showKpiMobile()" [class.hidden]="!showKpiMobile()">
       <!-- Пациенты сегодня — открывает модалку -->
-      <button type="button" class="text-left bg-surface border border-line-strong rounded-[18px] p-5 flex flex-col gap-2 cursor-pointer transition-shadow hover:shadow-md focus-visible:outline-2 focus-visible:outline-brand-300" (click)="openPatientsDialog()">
+      <button type="button" class="text-left bg-surface border border-line-strong rounded-[18px] p-4 md:p-5 flex flex-col gap-2 cursor-pointer transition-shadow hover:shadow-md focus-visible:outline-2 focus-visible:outline-brand-300" (click)="openPatientsDialog()">
         <div class="w-full flex items-start justify-between gap-2">
           <span class="text-sm text-muted">{{ 'dashboard.kpi.patientsToday' | transloco }}</span>
-          <span class="w-9 h-9 shrink-0 rounded-[10px] bg-brand-100 text-accent flex items-center justify-center">
+          <span class="max-md:hidden w-9 h-9 shrink-0 rounded-[10px] bg-brand-100 text-accent flex items-center justify-center">
             <mat-icon fontSet="material-symbols-outlined">groups</mat-icon>
           </span>
         </div>
         <div class="flex items-center gap-2">
           <span class="font-display text-[34px] leading-none font-extrabold tracking-tight text-content">{{ s.patientsToday }}</span>
-          <span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300">+{{ s.patientsTrend }}%</span>
+          <span class="max-md:hidden px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300">+{{ s.patientsTrend }}%</span>
         </div>
-        <span class="text-xs text-subtle">{{ 'dashboard.kpi.patientsHint' | transloco }}</span>
+        <span class="max-md:hidden text-xs text-subtle">{{ 'dashboard.kpi.patientsHint' | transloco }}</span>
       </button>
 
       <!-- Свободные слоты — открывает модалку -->
-      <button type="button" class="text-left bg-surface border border-line-strong rounded-[18px] p-5 flex flex-col gap-2 cursor-pointer transition-shadow hover:shadow-md focus-visible:outline-2 focus-visible:outline-brand-300" (click)="openSlotsDialog()">
+      <button type="button" class="text-left bg-surface border border-line-strong rounded-[18px] p-4 md:p-5 flex flex-col gap-2 cursor-pointer transition-shadow hover:shadow-md focus-visible:outline-2 focus-visible:outline-brand-300" (click)="openSlotsDialog()">
         <div class="w-full flex items-start justify-between gap-2">
           <div class="min-w-0">
             <div class="text-sm text-muted">{{ 'dashboard.kpi.freeSlots' | transloco }}</div>
-            <div class="text-xs text-accent truncate">{{ selectedDoctorName() || ('dashboard.kpi.allDoctors' | transloco) }}</div>
+            <div class="max-md:hidden text-xs text-accent truncate">{{ selectedDoctorName() || ('dashboard.kpi.allDoctors' | transloco) }}</div>
           </div>
-          <span class="w-9 h-9 shrink-0 rounded-[10px] bg-brand-100 text-accent flex items-center justify-center">
+          <span class="max-md:hidden w-9 h-9 shrink-0 rounded-[10px] bg-brand-100 text-accent flex items-center justify-center">
             <mat-icon fontSet="material-symbols-outlined">event_available</mat-icon>
           </span>
         </div>
 
         <div class="flex items-baseline gap-1">
           <span class="font-display text-[34px] leading-none font-extrabold tracking-tight text-content">{{ visibleSlots().length }}</span>
-          <span class="text-sm text-muted">{{ 'dashboard.kpi.slotsUnit' | transloco }}</span>
+          <span class="max-md:hidden text-sm text-muted">{{ 'dashboard.kpi.slotsUnit' | transloco }}</span>
         </div>
 
         @if (visibleSlots().length > 0) {
-          <div class="flex flex-wrap gap-1">
+          <div class="max-md:hidden flex flex-wrap gap-1">
             @for (slot of shownSlots(); track slot) {
               <span class="px-1.5 py-0.5 rounded bg-brand-50 text-xs text-accent">{{ slot }}</span>
             }
@@ -93,7 +95,7 @@
             }
           </div>
         } @else {
-          <span class="text-xs text-subtle">{{ 'dashboard.kpi.noSlots' | transloco }}</span>
+          <span class="max-md:hidden text-xs text-subtle">{{ 'dashboard.kpi.noSlots' | transloco }}</span>
         }
       </button>
 
@@ -113,10 +115,10 @@
       </button>
     </section>
 
-    <!-- Ближайшие приёмы -->
-    <section class="bg-surface border border-line-strong rounded-[20px] p-5 md:p-6 flex flex-col gap-4">
+    <!-- Ближайшие приёмы (мобилка: занимают остаток экрана, список прокручивается внутри) -->
+    <section class="max-md:flex-1 max-md:min-h-0 bg-surface border border-line-strong rounded-[20px] py-5 px-3 md:p-6 flex flex-col gap-4">
       <!-- Мобилка: заголовок прилипает к верху экрана, приёмы прокручиваются под ним -->
-      <div class="min-w-0 max-md:sticky max-md:top-0 max-md:z-10 max-md:-mx-5 max-md:-mt-5 max-md:px-5 max-md:pt-5 max-md:pb-3 max-md:-mb-3 max-md:rounded-t-[20px] bg-surface">
+      <div class="min-w-0 max-md:sticky max-md:top-0 max-md:z-10 max-md:-mx-3 max-md:-mt-5 max-md:px-3 max-md:pt-5 max-md:pb-3 max-md:-mb-3 max-md:rounded-t-[20px] bg-surface">
         <div class="flex items-center gap-2">
           <h2 class="font-display text-lg font-bold text-content">{{ 'dashboard.appointments.title' | transloco }}</h2>
           @if (!appointmentsLoading()) {
@@ -134,7 +136,7 @@
       } @else if (upcomingAppointments().length === 0) {
         <div class="py-8 text-center text-sm text-subtle">{{ 'dashboard.appointments.empty' | transloco }}</div>
       } @else {
-        <div class="grid lg:grid-cols-2 gap-1 sm:gap-3 content-start md:max-h-[23rem] md:overflow-y-auto md:overscroll-contain md:pr-1 [scrollbar-gutter:stable]">
+        <div class="grid lg:grid-cols-2 gap-1 sm:gap-3 content-start max-md:flex-1 max-md:min-h-0 max-md:overflow-y-auto max-md:overscroll-contain md:max-h-[23rem] md:overflow-y-auto md:overscroll-contain md:pr-1 [scrollbar-gutter:stable]">
           @for (appointment of upcomingAppointments(); track appointment.id) {
             <!-- Карточка приёма: клик — подробности -->
             <div role="button" tabindex="0" class="min-w-0 rounded-2xl bg-page p-2 sm:p-4 flex flex-col gap-3 cursor-pointer transition-shadow hover:shadow-md focus-visible:outline-2 focus-visible:outline-brand-300" (click)="openAppointmentDialog(appointment)" (keydown.enter)="openAppointmentDialog(appointment)">
