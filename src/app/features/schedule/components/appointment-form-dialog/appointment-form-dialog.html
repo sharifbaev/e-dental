@@ -240,7 +240,15 @@
         </label>
         }
 
-        <label class="flex flex-col gap-1 min-w-0 sm:col-span-1" [class.col-span-2]="isDoctor">
+        <!-- Мобилка, вошёл врач: врач (только чтение) — рядом с датой, как селект у админа -->
+        @if (isDoctor) {
+          <div class="sm:hidden flex flex-col gap-1 min-w-0">
+            <span class="text-xs font-medium text-soft">{{ 'appointmentForm.dateTime.doctor' | transloco }}</span>
+            <div class="h-10 leading-10 px-3 rounded-xl bg-page text-sm text-content truncate" [title]="doctorName()">{{ 'dashboard.doctorPrefix' | transloco }} {{ doctorName() }}</div>
+          </div>
+        }
+
+        <label class="flex flex-col gap-1 min-w-0 sm:col-span-1">
           <span class="text-xs font-medium text-soft">{{ 'appointmentForm.dateTime.date' | transloco }} <span class="text-red-500">*</span></span>
           <!-- Мобилка: системный текст даты скрыт, поверх — дд.мм.гг; календарь открывается как обычно -->
           <div class="relative">

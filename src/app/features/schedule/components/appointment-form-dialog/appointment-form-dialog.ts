@@ -375,6 +375,8 @@ export class AppointmentFormDialog {
     const [year, month, day] = (this.dateValue() ?? '').split('-');
     return year && month && day ? `${day}.${month}.${year.slice(-2)}` : '';
   });
+  // Мобилка, вошёл врач: имя выбранного врача — в поле рядом с датой
+  protected readonly doctorName = computed(() => this.doctors().find(d => d.id === this.doctorIdValue())?.name ?? '');
   protected readonly timeValue = toSignal(this.form.controls.time.valueChanges, {
     initialValue: this.form.controls.time.value
   });
