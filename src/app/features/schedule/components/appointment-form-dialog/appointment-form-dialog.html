@@ -8,7 +8,7 @@
 <!-- Форма — прокручивается внутри окна -->
 <!-- Мобилка: меньше отступы, чтобы форма помещалась на экран без прокрутки -->
 <mat-dialog-content class="max-sm:!px-3 max-sm:!py-3" style="flex: 1 1 auto; max-height: none;">
-  <div class="flex flex-col gap-3 sm:gap-4 py-1 sm:py-2">
+  <div class="flex flex-col gap-3 sm:gap-4 py-1 sm:py-2 max-sm:h-full">
 
     <!-- Блок: Пациент -->
     <section class="rounded-2xl border border-line-strong bg-surface p-3 sm:p-4 flex flex-col gap-3 sm:gap-4">
@@ -100,7 +100,7 @@
             }
           </label>
 
-          <!-- Телефон и дата рождения — в один ряд -->
+          <!-- Телефон и дата рождения — в один ряд (мобилка: телефон и рейтинг) -->
           <div class="grid grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)] gap-2 sm:gap-3">
             <label class="flex flex-col gap-1 min-w-0">
               <span class="text-xs font-medium text-soft">{{ 'appointmentForm.patient.phone' | transloco }} <span class="text-red-500">*</span></span>
@@ -114,26 +114,27 @@
               }
             </label>
 
-            <label class="flex flex-col gap-1 min-w-0">
+            <!-- Дата рождения: на мобилке скрыта, на её месте рейтинг -->
+            <label class="max-sm:hidden flex flex-col gap-1 min-w-0">
               <span class="text-xs font-medium text-soft">{{ 'appointmentForm.patient.birthDate' | transloco }}</span>
               <input type="date" class="w-full h-10 sm:h-11 px-2 sm:px-3 rounded-xl bg-page border border-transparent text-sm text-content outline-none focus:border-brand-300 focus:bg-surface" [formControl]="newPatient.birthDate">
             </label>
-          </div>
 
-          <!-- Рейтинг пациента -->
-          <div class="flex flex-col gap-1">
-            <span class="max-sm:hidden text-xs font-medium text-soft">{{ 'rating.label' | transloco }}</span>
-            <div class="grid grid-cols-3 gap-1.5 sm:gap-2" role="radiogroup" [attr.aria-label]="'rating.label' | transloco">
-              @for (rating of ratings; track rating) {
-                <button type="button" role="radio" [attr.aria-checked]="isRating(rating)" [title]="('rating.' + rating) | transloco" [attr.aria-label]="('rating.' + rating) | transloco" class="flex items-center justify-center sm:justify-start gap-1 sm:gap-2.5 min-h-10 sm:min-h-12 px-1.5 sm:px-3 py-1.5 sm:py-2 rounded-xl border text-left transition-colors" [class.border-brand-700]="isRating(rating)" [class.bg-brand-50]="isRating(rating)" [class.border-line-strong]="!isRating(rating)" (click)="setRating(rating)">
-                  <span class="w-5 h-5 sm:w-4 sm:h-4 shrink-0 rounded-[4px]" [class]="ratingDot[rating]"></span>
-                  <!-- Мобилка: только квадратик, название — в title/aria-label -->
-                  <span class="max-sm:hidden min-w-0 flex flex-col">
-                    <span class="text-xs sm:text-sm font-semibold leading-tight text-content">{{ ('rating.' + rating) | transloco }}</span>
-                    <span class="hidden sm:block text-[11px] leading-tight text-muted">{{ ('rating.' + rating + 'Hint') | transloco }}</span>
-                  </span>
-                </button>
-              }
+            <!-- Рейтинг пациента: мобилка — справа от телефона вместо даты рождения, ПК — отдельной строкой -->
+            <div class="flex flex-col gap-1 min-w-0 max-sm:mt-5 sm:col-span-2">
+              <span class="max-sm:hidden text-xs font-medium text-soft">{{ 'rating.label' | transloco }}</span>
+              <div class="grid grid-cols-3 gap-1.5 sm:gap-2" role="radiogroup" [attr.aria-label]="'rating.label' | transloco">
+                @for (rating of ratings; track rating) {
+                  <button type="button" role="radio" [attr.aria-checked]="isRating(rating)" [title]="('rating.' + rating) | transloco" [attr.aria-label]="('rating.' + rating) | transloco" class="flex items-center justify-center sm:justify-start gap-1 sm:gap-2.5 h-10 sm:h-auto sm:min-h-12 px-1 sm:px-3 py-1.5 sm:py-2 rounded-xl border text-left transition-colors" [class.border-brand-700]="isRating(rating)" [class.bg-brand-50]="isRating(rating)" [class.border-line-strong]="!isRating(rating)" (click)="setRating(rating)">
+                    <span class="w-5 h-5 sm:w-4 sm:h-4 shrink-0 rounded-[4px]" [class]="ratingDot[rating]"></span>
+                    <!-- Мобилка: только квадратик, название — в title/aria-label -->
+                    <span class="max-sm:hidden min-w-0 flex flex-col">
+                      <span class="text-xs sm:text-sm font-semibold leading-tight text-content">{{ ('rating.' + rating) | transloco }}</span>
+                      <span class="hidden sm:block text-[11px] leading-tight text-muted">{{ ('rating.' + rating + 'Hint') | transloco }}</span>
+                    </span>
+                  </button>
+                }
+              </div>
             </div>
           </div>
         </div>
@@ -215,8 +216,8 @@
       }
     </section>
 
-    <!-- Блок: Дата и время -->
-    <section class="rounded-2xl border border-line-strong bg-surface p-3 sm:p-4 flex flex-col gap-2.5 sm:gap-3">
+    <!-- Блок: Дата и время (мобилка: тянется до низа, если есть место) -->
+    <section class="max-sm:flex-1 rounded-2xl border border-line-strong bg-surface p-3 sm:p-4 flex flex-col gap-2.5 sm:gap-3">
       <div class="flex items-center gap-2">
         <span class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-brand-50 text-brand-700 flex items-center justify-center">
           <mat-icon fontSet="material-symbols-outlined" style="font-size: 20px; width: 20px; height: 20px;">event</mat-icon>
@@ -277,14 +278,14 @@
         </label>
       </div>
 
-      <!-- Свободные интервалы выбранного врача -->
-      <div class="flex flex-col gap-1.5 sm:gap-2">
+      <!-- Свободные интервалы выбранного врача (мобилка: заполняют оставшееся место, лишние — прокруткой) -->
+      <div class="max-sm:flex-1 flex flex-col gap-1.5 sm:gap-2">
         <span class="text-xs font-medium text-soft">{{ 'appointmentForm.dateTime.freeSlots' | transloco }}</span>
         @if (freeSlots().length > 0) {
-          <!-- Мобилка: одна строка с прокруткой вбок; ПК: сетка -->
-          <div class="flex gap-2 overflow-x-auto -mx-3 px-3 pb-1 sm:mx-0 sm:px-0 sm:pb-0 sm:grid sm:grid-cols-3 sm:overflow-visible" role="radiogroup" [attr.aria-label]="'appointmentForm.dateTime.freeSlots' | transloco">
+          <!-- Мобилка: сетка в 2 колонки на всё свободное место, прокрутка вниз; ПК: сетка в 3 колонки -->
+          <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 content-start max-sm:flex-1 max-sm:min-h-10 max-sm:basis-0 max-sm:overflow-y-auto" role="radiogroup" [attr.aria-label]="'appointmentForm.dateTime.freeSlots' | transloco">
             @for (slot of freeSlots(); track slot.start) {
-              <button type="button" role="radio" [attr.aria-checked]="timeValue() === slot.start" class="shrink-0 px-3 sm:px-0 h-10 sm:h-11 rounded-xl border text-sm font-semibold whitespace-nowrap transition-colors" [class.bg-brand-700]="timeValue() === slot.start" [class.border-brand-700]="timeValue() === slot.start" [class.text-white]="timeValue() === slot.start" [class.border-line-strong]="timeValue() !== slot.start" [class.text-content]="timeValue() !== slot.start" (click)="selectSlot(slot.start)">{{ slot.start }} – {{ slot.end }}</button>
+              <button type="button" role="radio" [attr.aria-checked]="timeValue() === slot.start" class="shrink-0 h-10 sm:h-11 rounded-xl border text-sm font-semibold whitespace-nowrap transition-colors" [class.bg-brand-700]="timeValue() === slot.start" [class.border-brand-700]="timeValue() === slot.start" [class.text-white]="timeValue() === slot.start" [class.border-line-strong]="timeValue() !== slot.start" [class.text-content]="timeValue() !== slot.start" (click)="selectSlot(slot.start)">{{ slot.start }} – {{ slot.end }}</button>
             }
           </div>
         } @else if (minutes() > 0) {
