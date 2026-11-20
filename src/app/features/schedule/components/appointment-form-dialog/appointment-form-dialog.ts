@@ -370,6 +370,11 @@ export class AppointmentFormDialog {
   private readonly dateValue = toSignal(this.form.controls.date.valueChanges, {
     initialValue: this.form.controls.date.value
   });
+  // Мобилка: дата в поле показывается как дд.мм.гг (2026-11-21 → 21.11.26)
+  protected readonly dateLabel = computed(() => {
+    const [year, month, day] = (this.dateValue() ?? '').split('-');
+    return year && month && day ? `${day}.${month}.${year.slice(-2)}` : '';
+  });
   protected readonly timeValue = toSignal(this.form.controls.time.valueChanges, {
     initialValue: this.form.controls.time.value
   });

@@ -242,7 +242,11 @@
 
         <label class="flex flex-col gap-1 min-w-0 sm:col-span-1" [class.col-span-2]="isDoctor">
           <span class="text-xs font-medium text-soft">{{ 'appointmentForm.dateTime.date' | transloco }} <span class="text-red-500">*</span></span>
-          <input type="date" class="w-full h-10 sm:h-11 px-3 rounded-xl bg-page border text-sm text-content placeholder:text-subtle outline-none focus:border-brand-300 focus:bg-surface" [class.border-transparent]="!isInvalid(form.controls.date)" [class.border-red-300]="isInvalid(form.controls.date)" [formControl]="form.controls.date">
+          <!-- Мобилка: системный текст даты скрыт, поверх — дд.мм.гг; календарь открывается как обычно -->
+          <div class="relative">
+            <input type="date" class="w-full h-10 sm:h-11 px-3 rounded-xl bg-page border text-sm text-content max-sm:text-transparent placeholder:text-subtle outline-none focus:border-brand-300 focus:bg-surface" [class.border-transparent]="!isInvalid(form.controls.date)" [class.border-red-300]="isInvalid(form.controls.date)" [formControl]="form.controls.date">
+            <span class="sm:hidden absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none text-sm text-content">{{ dateLabel() }}</span>
+          </div>
           @if (isInvalid(form.controls.date)) {
             <span class="text-xs text-red-600">{{ 'appointmentForm.errors.required' | transloco }}</span>
           }
