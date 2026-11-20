@@ -126,6 +126,19 @@
           <input type="checkbox" role="switch" class="peer sr-only" [checked]="dashboardPrefs.showKpiMobile()" (change)="dashboardPrefs.setShowKpiMobile($any($event.target).checked)">
           <span aria-hidden="true" class="relative w-11 h-6 shrink-0 rounded-full bg-line-strong transition-colors peer-checked:bg-brand-700 peer-focus-visible:outline-2 peer-focus-visible:outline-brand-300 after:absolute after:top-0.5 after:left-0.5 after:w-5 after:h-5 after:rounded-full after:bg-white after:shadow-sm after:transition-transform peer-checked:after:translate-x-5"></span>
         </label>
+
+        <!-- Только для врача: показывать других врачей (фильтр «Все врачи») — применяется сразу -->
+        @if (isDoctor()) {
+          <label class="flex items-center gap-4 pt-4 border-t border-line cursor-pointer">
+            <span class="flex-1 min-w-0 flex flex-col">
+              <span class="text-sm font-semibold text-content">{{ 'settings.appearance.otherDoctors.title' | transloco }}</span>
+              <span class="text-[13px] text-muted">{{ 'settings.appearance.otherDoctors.hint' | transloco }}</span>
+            </span>
+            <!-- Переключатель -->
+            <input type="checkbox" role="switch" class="peer sr-only" [checked]="dashboardPrefs.showOtherDoctors()" (change)="dashboardPrefs.setShowOtherDoctors($any($event.target).checked)">
+            <span aria-hidden="true" class="relative w-11 h-6 shrink-0 rounded-full bg-line-strong transition-colors peer-checked:bg-brand-700 peer-focus-visible:outline-2 peer-focus-visible:outline-brand-300 after:absolute after:top-0.5 after:left-0.5 after:w-5 after:h-5 after:rounded-full after:bg-white after:shadow-sm after:transition-transform peer-checked:after:translate-x-5"></span>
+          </label>
+        }
       </section>
 
       }

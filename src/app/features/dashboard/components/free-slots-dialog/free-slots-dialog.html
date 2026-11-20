@@ -8,8 +8,8 @@
   </button>
 </div>
 
-<!-- Фильтр по врачу (врачу не нужен — он видит только своих) -->
-@if (!isDoctor()) {
+<!-- Фильтр по врачу (врачу — только если включено в настройках) -->
+@if (showDoctorFilter()) {
   <div class="px-6 pb-3">
     <div class="relative">
       <mat-icon fontSet="material-symbols-outlined" class="absolute left-2 top-1/2 -translate-y-1/2 text-subtle pointer-events-none" style="font-size: 18px; width: 18px; height: 18px;">search</mat-icon>

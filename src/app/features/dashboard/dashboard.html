@@ -25,7 +25,7 @@
         <p class="mt-1 text-sm text-muted">{{ today() }}</p>
 
         <!-- Выбор врача — ПК: после приветствия -->
-        @if (!isDoctor()) {
+        @if (showDoctorFilter()) {
           <div class="hidden md:block mt-3 w-72">
             <ng-container [ngTemplateOutlet]="doctorSearch" />
           </div>
@@ -35,16 +35,16 @@
       <!-- Мобилка: поиск врача и кнопка «+» в один ряд; ПК: кнопка «Быстрая запись» -->
       <div class="flex flex-row items-center gap-2">
         <!-- Выбор врача — мобилка: слева от кнопки «+» -->
-        @if (!isDoctor()) {
+        @if (showDoctorFilter()) {
           <div class="md:hidden flex-1 min-w-0">
             <ng-container [ngTemplateOutlet]="doctorSearch" />
           </div>
         }
 
-        <button type="button" class="shrink-0 md:w-auto flex items-center justify-center gap-1 h-11 md:px-5 rounded-xl bg-brand-700 text-white text-sm font-semibold hover:bg-brand-800" [class.w-11]="!isDoctor()" [class.w-full]="isDoctor()" [class.px-5]="isDoctor()" [attr.aria-label]="'dashboard.quickAppointment' | transloco" [title]="'dashboard.quickAppointment' | transloco" (click)="openAppointmentForm()">
+        <button type="button" class="shrink-0 md:w-auto flex items-center justify-center gap-1 h-11 md:px-5 rounded-xl bg-brand-700 text-white text-sm font-semibold hover:bg-brand-800" [class.w-11]="showDoctorFilter()" [class.w-full]="!showDoctorFilter()" [class.px-5]="!showDoctorFilter()" [attr.aria-label]="'dashboard.quickAppointment' | transloco" [title]="'dashboard.quickAppointment' | transloco" (click)="openAppointmentForm()">
           <mat-icon fontSet="material-symbols-outlined">add</mat-icon>
-          <!-- На мобилке у кнопки только иконка (кроме врача — у него нет поиска) -->
-          <span [class.hidden]="!isDoctor()" class="md:inline">{{ 'dashboard.quickAppointment' | transloco }}</span>
+          <!-- На мобилке у кнопки только иконка (если поиска нет — с текстом) -->
+          <span [class.hidden]="showDoctorFilter()" class="md:inline">{{ 'dashboard.quickAppointment' | transloco }}</span>
         </button>
       </div>
     </section>

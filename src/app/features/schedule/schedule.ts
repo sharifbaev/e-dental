@@ -17,6 +17,7 @@ import { StatusChangeService } from './services/status-change.service';
 import { PaymentsService } from '../payments/services/payments.service';
 import { PaymentDraft, SERVICE_PRICES } from '../payments/models/payment.model';
 import { PAYMENT_DIALOG_CONFIG, PaymentDialog, PaymentDialogData } from '../payments/components/payment-dialog/payment-dialog';
+import { DashboardPrefsService } from '../dashboard/services/dashboard-prefs.service';
 import { AuthService } from '../../core/auth/auth.service';
 import { ClinicServicesService } from '../../shared/services/clinic-services.service';
 
@@ -63,6 +64,9 @@ export class Schedule {
 
   // Врач видит только своё расписание — выбор врача скрыт
   protected readonly isDoctor = computed(() => this.auth.user()?.role === 'doctor');
+  private readonly prefs = inject(DashboardPrefsService);
+  // Фильтр по врачам: всем, кроме врача; врачу — если в настройках включено «Показывать других врачей»
+  protected readonly showDoctorFilter = computed(() => !this.isDoctor() || this.prefs.showOtherDoctors());
 
   // Текущее время — раз в минуту, чтобы подсветка «Обновите статус» появлялась без перезагрузки
   private readonly now = signal(new Date());

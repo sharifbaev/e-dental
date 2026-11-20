@@ -92,6 +92,9 @@ export class Dashboard {
 
   // Врач видит только свои окна и приёмы — выбор врача скрыт
   protected readonly isDoctor = computed(() => this.auth.user()?.role === 'doctor');
+  private readonly prefs = inject(DashboardPrefsService);
+  // Фильтр по врачам: всем, кроме врача; врачу — если в настройках включено «Показывать других врачей»
+  protected readonly showDoctorFilter = computed(() => !this.isDoctor() || this.prefs.showOtherDoctors());
 
   protected readonly greetingKey = computed(() => {
     const hour = this.now().getHours();
@@ -116,7 +119,8 @@ export class Dashboard {
   protected readonly selectedDoctor = signal<string>(this.auth.user()?.role === 'doctor' && this.auth.user()?.doctorId ? String(this.auth.user()!.doctorId) : 'all');
 
   // Текст в поле поиска врача
-  protected readonly doctorControl = new FormControl<string>('', { nonNullable: true });
+  // Врачу (если ему показан фильтр) сразу подставляем его самого
+  protected readonly doctorControl = new FormControl<string>(this.auth.user()?.role === 'doctor' ? this.auth.user()?.doctorName ?? '' : '', { nonNullable: true });
   private readonly doctorQuery = toSignal(this.doctorControl.valueChanges, { initialValue: '' });
 
   protected readonly selectedDoctorName = computed(() => {

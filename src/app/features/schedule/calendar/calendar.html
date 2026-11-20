@@ -36,7 +36,7 @@
           }
         </div>
 
-        @if (!isDoctor()) {
+        @if (showDoctorFilter()) {
           <label class="w-full md:w-72 flex items-center gap-2 h-11 pl-3 pr-1 rounded-xl bg-surface border border-line-strong text-muted focus-within:border-brand-300">
             <mat-icon fontSet="material-symbols-outlined" class="shrink-0" style="font-size: 18px; width: 18px; height: 18px;">stethoscope</mat-icon>
             <span class="sr-only">{{ 'schedule.doctor' | transloco }}</span>

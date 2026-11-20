@@ -7,6 +7,7 @@ import { MatDialogModule } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { AuthService } from '../../../../core/auth/auth.service';
+import { DashboardPrefsService } from '../../services/dashboard-prefs.service';
 import { DashboardService } from '../../services/dashboard.service';
 
 // «Ковалёв Максим Дмитриевич» → «КМ», «Савина А. И.» → «СА»
@@ -31,8 +32,11 @@ export class PatientsTodayDialog {
   private readonly dashboardService = inject(DashboardService);
   private readonly auth = inject(AuthService);
 
-  // Врач видит только своих — фильтр по врачам скрыт
+  private readonly prefs = inject(DashboardPrefsService);
+
+  // Врач видит только своих — фильтр по врачам скрыт, если в настройках не включено «Показывать других врачей»
   protected readonly isDoctor = computed(() => this.auth.user()?.role === 'doctor');
+  protected readonly showDoctorFilter = computed(() => !this.isDoctor() || this.prefs.showOtherDoctors());
 
   private readonly patients = toSignal(this.dashboardService.getTodayPatients());
 

@@ -7,6 +7,7 @@ import { MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { AuthService } from '../../../../core/auth/auth.service';
+import { DashboardPrefsService } from '../../services/dashboard-prefs.service';
 import { DoctorSlots } from '../../models/dashboard.model';
 
 // Данные, которые передаёт главная при открытии модалки
@@ -54,8 +55,11 @@ export class FreeSlotsDialog {
   private readonly destroyRef = inject(DestroyRef);
   private readonly auth = inject(AuthService);
 
-  // Врач видит только своих — фильтр по врачам скрыт
+  private readonly prefs = inject(DashboardPrefsService);
+
+  // Врач видит только своих — фильтр по врачам скрыт, если в настройках не включено «Показывать других врачей»
   protected readonly isDoctor = computed(() => this.auth.user()?.role === 'doctor');
+  protected readonly showDoctorFilter = computed(() => !this.isDoctor() || this.prefs.showOtherDoctors());
 
   // Текущее время — обновляется раз в минуту, чтобы прошедшие окна исчезали сами
   private readonly now = signal(new Date());

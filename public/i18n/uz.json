@@ -501,6 +501,10 @@
       "dashboardKpi": {
         "title": "Bosh sahifadagi kartochkalar (mobil versiya)",
         "hint": "«Bugungi bemorlar» va «Bo‘sh vaqtlar»"
+      },
+      "otherDoctors": {
+        "title": "Boshqa shifokorlarni ko‘rsatish",
+        "hint": "Bosh sahifa, yozuvlar va kalendardagi «Barcha shifokorlar» filtri"
       }
     },
     "notifications": {
