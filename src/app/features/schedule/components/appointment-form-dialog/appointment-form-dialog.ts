@@ -297,6 +297,9 @@ export class AppointmentFormDialog {
 
   protected readonly servicesOpen = signal(false);
 
+  // Мобилка: свободное время скрыто, открывается кнопкой рядом с полем «Время»
+  protected readonly slotsOpen = signal(false);
+
   protected toggleServicesList(): void {
     this.servicesOpen.update(open => !open);
   }

@@ -8,7 +8,7 @@
 <!-- Форма — прокручивается внутри окна -->
 <!-- Мобилка: меньше отступы, чтобы форма помещалась на экран без прокрутки -->
 <mat-dialog-content class="max-sm:!px-3 max-sm:!py-3" style="flex: 1 1 auto; max-height: none;">
-  <div class="flex flex-col gap-3 sm:gap-4 py-1 sm:py-2 max-sm:h-full">
+  <div class="flex flex-col gap-3 sm:gap-4 py-1 sm:py-2">
 
     <!-- Блок: Пациент -->
     <section class="rounded-2xl border border-line-strong bg-surface p-3 sm:p-4 flex flex-col gap-3 sm:gap-4">
@@ -215,8 +215,8 @@
       }
     </section>
 
-    <!-- Блок: Дата и время (мобилка: тянется до низа, если есть место) -->
-    <section class="max-sm:flex-1 rounded-2xl border border-line-strong bg-surface p-3 sm:p-4 flex flex-col gap-2.5 sm:gap-3">
+    <!-- Блок: Дата и время -->
+    <section class="rounded-2xl border border-line-strong bg-surface p-3 sm:p-4 flex flex-col gap-2.5 sm:gap-3">
       <div class="flex items-center gap-2">
         <span class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-brand-50 text-brand-700 flex items-center justify-center">
           <mat-icon fontSet="material-symbols-outlined" style="font-size: 20px; width: 20px; height: 20px;">event</mat-icon>
@@ -250,7 +250,13 @@
 
         <label class="flex flex-col gap-1 min-w-0">
           <span class="text-xs font-medium text-soft">{{ 'appointmentForm.dateTime.time' | transloco }} <span class="text-red-500">*</span></span>
-          <input type="time" step="300" class="w-full h-10 sm:h-11 px-3 rounded-xl bg-page border text-sm text-content outline-none focus:border-brand-300 focus:bg-surface" [class.border-transparent]="!isInvalid(form.controls.time)" [class.border-red-300]="isInvalid(form.controls.time)" [formControl]="form.controls.time">
+          <div class="flex gap-1.5">
+            <input type="time" step="300" class="w-full min-w-0 h-10 sm:h-11 px-3 rounded-xl bg-page border text-sm text-content outline-none focus:border-brand-300 focus:bg-surface" [class.border-transparent]="!isInvalid(form.controls.time)" [class.border-red-300]="isInvalid(form.controls.time)" [formControl]="form.controls.time">
+            <!-- Мобилка: кнопка «Свободное время» — показывает/скрывает все свободные интервалы -->
+            <button type="button" class="sm:hidden w-10 h-10 shrink-0 rounded-xl border flex items-center justify-center transition-colors" [class.bg-brand-700]="slotsOpen()" [class.border-brand-700]="slotsOpen()" [class.text-white]="slotsOpen()" [class.bg-page]="!slotsOpen()" [class.border-transparent]="!slotsOpen()" [class.text-brand-700]="!slotsOpen()" [title]="'appointmentForm.dateTime.freeSlots' | transloco" [attr.aria-label]="'appointmentForm.dateTime.freeSlots' | transloco" [attr.aria-expanded]="slotsOpen()" (click)="slotsOpen.set(!slotsOpen())">
+              <mat-icon fontSet="material-symbols-outlined" style="font-size: 20px; width: 20px; height: 20px;">event_available</mat-icon>
+            </button>
+          </div>
           @if (isInvalid(form.controls.time)) {
             <span class="text-xs text-red-600">{{ 'appointmentForm.errors.required' | transloco }}</span>
           }
@@ -277,14 +283,14 @@
         </label>
       </div>
 
-      <!-- Свободные интервалы выбранного врача (мобилка: заполняют оставшееся место, лишние — прокруткой) -->
-      <div class="max-sm:flex-1 flex flex-col gap-1.5 sm:gap-2">
+      <!-- Свободные интервалы выбранного врача (мобилка: только по кнопке рядом с «Временем», все сразу) -->
+      <div class="flex flex-col gap-1.5 sm:gap-2" [class.max-sm:hidden]="!slotsOpen()">
         <span class="text-xs font-medium text-soft">{{ 'appointmentForm.dateTime.freeSlots' | transloco }}</span>
         @if (freeSlots().length > 0) {
-          <!-- Мобилка: сетка в 2 колонки на всё свободное место, прокрутка вниз; ПК: сетка в 3 колонки -->
-          <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 content-start max-sm:flex-1 max-sm:min-h-10 max-sm:basis-0 max-sm:overflow-y-auto" role="radiogroup" [attr.aria-label]="'appointmentForm.dateTime.freeSlots' | transloco">
+          <!-- Мобилка: сетка в 2 колонки; ПК: в 3 колонки -->
+          <div class="grid grid-cols-2 sm:grid-cols-3 gap-2" role="radiogroup" [attr.aria-label]="'appointmentForm.dateTime.freeSlots' | transloco">
             @for (slot of freeSlots(); track slot.start) {
-              <button type="button" role="radio" [attr.aria-checked]="timeValue() === slot.start" class="shrink-0 h-10 sm:h-11 rounded-xl border text-sm font-semibold whitespace-nowrap transition-colors" [class.bg-brand-700]="timeValue() === slot.start" [class.border-brand-700]="timeValue() === slot.start" [class.text-white]="timeValue() === slot.start" [class.border-line-strong]="timeValue() !== slot.start" [class.text-content]="timeValue() !== slot.start" (click)="selectSlot(slot.start)">{{ slot.start }} – {{ slot.end }}</button>
+              <button type="button" role="radio" [attr.aria-checked]="timeValue() === slot.start" class="shrink-0 h-10 sm:h-11 rounded-xl border text-sm font-semibold whitespace-nowrap transition-colors" [class.bg-brand-700]="timeValue() === slot.start" [class.border-brand-700]="timeValue() === slot.start" [class.text-white]="timeValue() === slot.start" [class.border-line-strong]="timeValue() !== slot.start" [class.text-content]="timeValue() !== slot.start" (click)="selectSlot(slot.start); slotsOpen.set(false)">{{ slot.start }} – {{ slot.end }}</button>
             }
           </div>
         } @else if (minutes() > 0) {
