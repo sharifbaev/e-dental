@@ -497,7 +497,11 @@
       "theme": "Mavzu",
       "light": "Yorug'",
       "dark": "Qorong'i",
-      "system": "Tizimdagidek"
+      "system": "Tizimdagidek",
+      "dashboardKpi": {
+        "title": "Bosh sahifadagi kartochkalar (mobil versiya)",
+        "hint": "«Bugungi bemorlar» va «Bo‘sh vaqtlar»"
+      }
     },
     "notifications": {
       "sms24h": {

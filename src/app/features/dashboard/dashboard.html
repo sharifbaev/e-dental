@@ -32,23 +32,25 @@
         }
       </div>
 
-      <div class="flex flex-col md:flex-row gap-2">
-        <button type="button" class="w-full md:w-auto flex items-center justify-center gap-1 h-11 px-5 rounded-xl bg-brand-700 text-white text-sm font-semibold hover:bg-brand-800" (click)="openAppointmentForm()">
-          <mat-icon fontSet="material-symbols-outlined">add</mat-icon>
-          {{ 'dashboard.quickAppointment' | transloco }}
-        </button>
-
-        <!-- Выбор врача — мобилка: после «Быстрая запись», на всю ширину -->
+      <!-- Мобилка: поиск врача и кнопка «+» в один ряд; ПК: кнопка «Быстрая запись» -->
+      <div class="flex flex-row items-center gap-2">
+        <!-- Выбор врача — мобилка: слева от кнопки «+» -->
         @if (!isDoctor()) {
-          <div class="md:hidden w-full">
+          <div class="md:hidden flex-1 min-w-0">
             <ng-container [ngTemplateOutlet]="doctorSearch" />
           </div>
         }
+
+        <button type="button" class="shrink-0 md:w-auto flex items-center justify-center gap-1 h-11 md:px-5 rounded-xl bg-brand-700 text-white text-sm font-semibold hover:bg-brand-800" [class.w-11]="!isDoctor()" [class.w-full]="isDoctor()" [class.px-5]="isDoctor()" [attr.aria-label]="'dashboard.quickAppointment' | transloco" [title]="'dashboard.quickAppointment' | transloco" (click)="openAppointmentForm()">
+          <mat-icon fontSet="material-symbols-outlined">add</mat-icon>
+          <!-- На мобилке у кнопки только иконка (кроме врача — у него нет поиска) -->
+          <span [class.hidden]="!isDoctor()" class="md:inline">{{ 'dashboard.quickAppointment' | transloco }}</span>
+        </button>
       </div>
     </section>
 
-    <!-- Карточки показателей -->
-    <section class="grid grid-cols-2 lg:grid-cols-3 gap-4">
+    <!-- Карточки показателей (на мобилке — только если включены в настройках) -->
+    <section class="grid-cols-2 md:grid lg:grid-cols-3 gap-4" [class.grid]="showKpiMobile()" [class.hidden]="!showKpiMobile()">
       <!-- Пациенты сегодня — открывает модалку -->
       <button type="button" class="text-left bg-surface border border-line-strong rounded-[18px] p-5 flex flex-col gap-2 cursor-pointer transition-shadow hover:shadow-md focus-visible:outline-2 focus-visible:outline-brand-300" (click)="openPatientsDialog()">
         <div class="w-full flex items-start justify-between gap-2">
@@ -113,7 +115,8 @@
 
     <!-- Ближайшие приёмы -->
     <section class="bg-surface border border-line-strong rounded-[20px] p-5 md:p-6 flex flex-col gap-4">
-      <div class="min-w-0">
+      <!-- Мобилка: заголовок прилипает к верху экрана, приёмы прокручиваются под ним -->
+      <div class="min-w-0 max-md:sticky max-md:top-0 max-md:z-10 max-md:-mx-5 max-md:-mt-5 max-md:px-5 max-md:pt-5 max-md:pb-3 max-md:-mb-3 max-md:rounded-t-[20px] bg-surface">
         <div class="flex items-center gap-2">
           <h2 class="font-display text-lg font-bold text-content">{{ 'dashboard.appointments.title' | transloco }}</h2>
           @if (!appointmentsLoading()) {

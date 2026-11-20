@@ -13,6 +13,7 @@ import { PatientsTodayDialog } from './components/patients-today-dialog/patients
 import { ShiftDoctorsDialog } from './components/shift-doctors-dialog/shift-doctors-dialog';
 import { Appointment } from './models/dashboard.model';
 import { DashboardService } from './services/dashboard.service';
+import { DashboardPrefsService } from './services/dashboard-prefs.service';
 import { APPOINTMENT_FORM_DIALOG_CONFIG, AppointmentFormDialog } from '../schedule/components/appointment-form-dialog/appointment-form-dialog';
 import { filter, switchMap } from 'rxjs';
 import { FeedbackService } from '../../shared/services/feedback.service';
@@ -59,6 +60,9 @@ export class Dashboard {
   private readonly destroyRef = inject(DestroyRef);
   private readonly scheduleService = inject(ScheduleService);
   private readonly feedback = inject(FeedbackService);
+
+  // Мобилка: показывать ли карточки «Пациенты сегодня» и «Свободные слоты» (включается в настройках)
+  protected readonly showKpiMobile = inject(DashboardPrefsService).showKpiMobile;
 
   protected readonly summary = toSignal(this.dashboardService.getSummary());
   private readonly appointments = toSignal(this.dashboardService.getUpcomingAppointments());

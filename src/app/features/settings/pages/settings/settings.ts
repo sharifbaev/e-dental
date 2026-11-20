@@ -16,6 +16,7 @@ import { Theme, ThemeService } from '../../../../core/theme/theme.service';
 import { FeedbackService } from '../../../../shared/services/feedback.service';
 import { ClinicSettings } from '../../models/settings.model';
 import { SettingsService } from '../../services/settings.service';
+import { DashboardPrefsService } from '../../../dashboard/services/dashboard-prefs.service';
 
 type ThemeChoice = Theme | 'system';
 
@@ -49,6 +50,7 @@ export class Settings {
   private readonly auth = inject(AuthService);
   private readonly clinicServices = inject(ClinicServicesService);
   private readonly doctorsService = inject(DoctorsService);
+  protected readonly dashboardPrefs = inject(DashboardPrefsService);
 
   private readonly langValue = toSignal(this.transloco.langChanges$, { initialValue: this.transloco.getActiveLang() });
   private readonly locale = computed(() => LOCALES[this.langValue()] ?? 'ru-RU');
