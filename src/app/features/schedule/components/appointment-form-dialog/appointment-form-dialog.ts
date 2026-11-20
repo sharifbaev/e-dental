@@ -148,8 +148,9 @@ export class AppointmentFormDialog {
   protected readonly mode = signal<PatientMode>('search');
 
   constructor() {
-    // Стартуем с поиска: поля нового пациента не участвуют в проверке
-    this.form.controls.newPatient.disable();
+    // Новая запись — стартуем с «Нового пациента»; изменение приёма — с поиска (пациент уже выбран).
+    // setMode включает поля выбранного режима и отключает поля другого
+    this.setMode(this.isEdit ? 'search' : 'new');
 
     // Выбранные услуги: первая — в serviceId, «Другое» — включает поле повода визита,
     // продолжительность — сумма услуг

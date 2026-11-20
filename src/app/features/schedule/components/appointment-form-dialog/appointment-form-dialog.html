@@ -12,26 +12,25 @@
 
     <!-- Блок: Пациент -->
     <section class="rounded-2xl border border-line-strong bg-surface p-3 sm:p-4 flex flex-col gap-3 sm:gap-4">
-      <div class="flex items-center gap-2">
+      <div class="flex items-center gap-2 sm:flex-wrap sm:gap-y-4">
         <span class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-brand-50 text-brand-700 flex items-center justify-center">
           <mat-icon fontSet="material-symbols-outlined" style="font-size: 20px; width: 20px; height: 20px;">person</mat-icon>
         </span>
         <h3 class="font-semibold text-content">{{ 'appointmentForm.patient.section' | transloco }}</h3>
+        <!-- Переключатель режима: мобилка — иконки в заголовке; ПК — отдельной строкой во всю ширину -->
+        <div class="ml-auto sm:ml-0 sm:basis-full grid grid-cols-2 gap-1 p-1 rounded-xl bg-page">
+          <button type="button" class="flex items-center justify-center gap-1.5 w-10 sm:w-auto h-8 sm:h-10 rounded-lg text-sm font-medium transition-colors" [class.bg-surface]="mode() === 'search'" [class.shadow-sm]="mode() === 'search'" [class.text-brand-700]="mode() === 'search'" [class.text-muted]="mode() !== 'search'" [title]="'appointmentForm.patient.search' | transloco" [attr.aria-label]="'appointmentForm.patient.search' | transloco" (click)="setMode('search')">
+            <mat-icon fontSet="material-symbols-outlined" style="font-size: 18px; width: 18px; height: 18px;">search</mat-icon>
+            <span class="max-sm:hidden">{{ 'appointmentForm.patient.search' | transloco }}</span>
+          </button>
+          <button type="button" class="flex items-center justify-center gap-1.5 w-10 sm:w-auto h-8 sm:h-10 rounded-lg text-sm font-medium transition-colors" [class.bg-surface]="mode() === 'new'" [class.shadow-sm]="mode() === 'new'" [class.text-brand-700]="mode() === 'new'" [class.text-muted]="mode() !== 'new'" [title]="'appointmentForm.patient.new' | transloco" [attr.aria-label]="'appointmentForm.patient.new' | transloco" (click)="setMode('new')">
+            <mat-icon fontSet="material-symbols-outlined" style="font-size: 18px; width: 18px; height: 18px;">person_add</mat-icon>
+            <span class="max-sm:hidden">{{ 'appointmentForm.patient.new' | transloco }}</span>
+          </button>
+        </div>
         <!-- Мобилка: крестик закрытия прямо в заголовке, без отдельной строки -->
-        <button matIconButton mat-dialog-close type="button" class="sm:!hidden !ml-auto !-my-2 !-mr-2" [title]="'common.close' | transloco">
+        <button matIconButton mat-dialog-close type="button" class="sm:!hidden !-my-2 !-mr-2" [title]="'common.close' | transloco">
           <mat-icon fontSet="material-symbols-outlined">close</mat-icon>
-        </button>
-      </div>
-
-      <!-- Переключатель режима -->
-      <div class="grid grid-cols-2 gap-1 p-1 rounded-xl bg-page">
-        <button type="button" class="flex items-center justify-center gap-1.5 h-9 sm:h-10 rounded-lg text-sm font-medium transition-colors" [class.bg-surface]="mode() === 'search'" [class.shadow-sm]="mode() === 'search'" [class.text-brand-700]="mode() === 'search'" [class.text-muted]="mode() !== 'search'" (click)="setMode('search')">
-          <mat-icon fontSet="material-symbols-outlined" style="font-size: 18px; width: 18px; height: 18px;">search</mat-icon>
-          {{ 'appointmentForm.patient.search' | transloco }}
-        </button>
-        <button type="button" class="flex items-center justify-center gap-1.5 h-9 sm:h-10 rounded-lg text-sm font-medium transition-colors" [class.bg-surface]="mode() === 'new'" [class.shadow-sm]="mode() === 'new'" [class.text-brand-700]="mode() === 'new'" [class.text-muted]="mode() !== 'new'" (click)="setMode('new')">
-          <mat-icon fontSet="material-symbols-outlined" style="font-size: 18px; width: 18px; height: 18px;">person_add</mat-icon>
-          {{ 'appointmentForm.patient.new' | transloco }}
         </button>
       </div>
 
