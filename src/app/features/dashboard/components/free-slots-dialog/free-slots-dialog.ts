@@ -6,6 +6,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { TranslocoPipe } from '@jsverse/transloco';
+import { AuthService } from '../../../../core/auth/auth.service';
 import { DoctorSlots } from '../../models/dashboard.model';
 
 // Данные, которые передаёт главная при открытии модалки
@@ -51,6 +52,10 @@ function getInitials(name: string): string {
 export class FreeSlotsDialog {
   private readonly data = inject<FreeSlotsDialogData>(MAT_DIALOG_DATA);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly auth = inject(AuthService);
+
+  // Врач видит только своих — фильтр по врачам скрыт
+  protected readonly isDoctor = computed(() => this.auth.user()?.role === 'doctor');
 
   // Текущее время — обновляется раз в минуту, чтобы прошедшие окна исчезали сами
   private readonly now = signal(new Date());

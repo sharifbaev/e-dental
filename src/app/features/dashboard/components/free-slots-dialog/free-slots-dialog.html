@@ -8,28 +8,30 @@
   </button>
 </div>
 
-<!-- Фильтр по врачу -->
-<div class="px-6 pb-3">
-  <div class="relative">
-    <mat-icon fontSet="material-symbols-outlined" class="absolute left-2 top-1/2 -translate-y-1/2 text-subtle pointer-events-none" style="font-size: 18px; width: 18px; height: 18px;">search</mat-icon>
-    <input type="text" class="w-full h-10 pl-8 pr-9 rounded-lg bg-page border border-transparent text-sm text-soft outline-none focus:border-brand-300 focus:bg-surface" [formControl]="doctorControl" [matAutocomplete]="doctorAuto" [placeholder]="'dashboard.kpi.allDoctors' | transloco" (input)="onDoctorInput()">
-    @if (selectedDoctor()) {
-      <button type="button" class="absolute right-2 top-1/2 -translate-y-1/2 w-6 h-6 flex items-center justify-center rounded-full text-subtle hover:bg-line-strong hover:text-soft" [title]="'dashboard.kpi.allDoctors' | transloco" (click)="clearDoctor()">
-        <mat-icon fontSet="material-symbols-outlined" style="font-size: 16px; width: 16px; height: 16px;">close</mat-icon>
-      </button>
-    }
-  </div>
+<!-- Фильтр по врачу (врачу не нужен — он видит только своих) -->
+@if (!isDoctor()) {
+  <div class="px-6 pb-3">
+    <div class="relative">
+      <mat-icon fontSet="material-symbols-outlined" class="absolute left-2 top-1/2 -translate-y-1/2 text-subtle pointer-events-none" style="font-size: 18px; width: 18px; height: 18px;">search</mat-icon>
+      <input type="text" class="w-full h-10 pl-8 pr-9 rounded-lg bg-page border border-transparent text-sm text-soft outline-none focus:border-brand-300 focus:bg-surface" [formControl]="doctorControl" [matAutocomplete]="doctorAuto" [placeholder]="'dashboard.kpi.allDoctors' | transloco" (input)="onDoctorInput()">
+      @if (selectedDoctor()) {
+        <button type="button" class="absolute right-2 top-1/2 -translate-y-1/2 w-6 h-6 flex items-center justify-center rounded-full text-subtle hover:bg-line-strong hover:text-soft" [title]="'dashboard.kpi.allDoctors' | transloco" (click)="clearDoctor()">
+          <mat-icon fontSet="material-symbols-outlined" style="font-size: 16px; width: 16px; height: 16px;">close</mat-icon>
+        </button>
+      }
+    </div>
 
-  <mat-autocomplete #doctorAuto="matAutocomplete" (optionSelected)="onDoctorSelected($event)">
-    <mat-option value="">{{ 'dashboard.kpi.allDoctors' | transloco }}</mat-option>
-    @for (doctor of filteredDoctors(); track doctor.id) {
-      <mat-option [value]="doctor.name">{{ doctor.name }} <span class="text-subtle">({{ doctor.intervals.length }})</span></mat-option>
-    }
-    @if (filteredDoctors().length === 0) {
-      <mat-option disabled>{{ 'dashboard.kpi.noDoctors' | transloco }}</mat-option>
-    }
-  </mat-autocomplete>
-</div>
+    <mat-autocomplete #doctorAuto="matAutocomplete" (optionSelected)="onDoctorSelected($event)">
+      <mat-option value="">{{ 'dashboard.kpi.allDoctors' | transloco }}</mat-option>
+      @for (doctor of filteredDoctors(); track doctor.id) {
+        <mat-option [value]="doctor.name">{{ doctor.name }} <span class="text-subtle">({{ doctor.intervals.length }})</span></mat-option>
+      }
+      @if (filteredDoctors().length === 0) {
+        <mat-option disabled>{{ 'dashboard.kpi.noDoctors' | transloco }}</mat-option>
+      }
+    </mat-autocomplete>
+  </div>
+}
 
 <!-- Список занимает всю оставшуюся высоту окна и прокручивается внутри -->
 <mat-dialog-content style="flex: 1 1 auto; max-height: none;">

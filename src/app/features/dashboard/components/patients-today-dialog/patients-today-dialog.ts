@@ -6,6 +6,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatDialogModule } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { TranslocoPipe } from '@jsverse/transloco';
+import { AuthService } from '../../../../core/auth/auth.service';
 import { DashboardService } from '../../services/dashboard.service';
 
 // «Ковалёв Максим Дмитриевич» → «КМ», «Савина А. И.» → «СА»
@@ -28,6 +29,10 @@ function getInitials(name: string): string {
 })
 export class PatientsTodayDialog {
   private readonly dashboardService = inject(DashboardService);
+  private readonly auth = inject(AuthService);
+
+  // Врач видит только своих — фильтр по врачам скрыт
+  protected readonly isDoctor = computed(() => this.auth.user()?.role === 'doctor');
 
   private readonly patients = toSignal(this.dashboardService.getTodayPatients());
 
@@ -35,8 +40,8 @@ export class PatientsTodayDialog {
 
   // ---- Фильтр по врачу ----
 
-  // Выбранный врач: '' — все врачи
-  protected readonly selectedDoctor = signal<string>('');
+  // Выбранный врач: '' — все врачи; врачу сразу подставляем его самого
+  protected readonly selectedDoctor = signal<string>(this.auth.user()?.role === 'doctor' ? this.auth.user()?.doctorName ?? '' : '');
 
   // Текст в поле поиска врача
   protected readonly doctorControl = new FormControl<string>('', { nonNullable: true });
