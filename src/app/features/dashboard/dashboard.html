@@ -137,27 +137,27 @@
         <div class="grid lg:grid-cols-2 gap-3 content-start md:max-h-[23rem] md:overflow-y-auto md:overscroll-contain md:pr-1 [scrollbar-gutter:stable]">
           @for (appointment of upcomingAppointments(); track appointment.id) {
             <!-- Карточка приёма: клик — подробности -->
-            <div role="button" tabindex="0" class="rounded-2xl bg-page p-4 flex flex-col gap-3 cursor-pointer transition-shadow hover:shadow-md focus-visible:outline-2 focus-visible:outline-brand-300" (click)="openAppointmentDialog(appointment)" (keydown.enter)="openAppointmentDialog(appointment)">
-              <!-- Верхний ряд: время и кабинет, ФИО и «через N мин», телефон -->
-              <div class="flex items-center gap-4">
-                <div class="w-16 shrink-0 rounded-xl bg-surface flex flex-col items-center justify-center py-2">
-                  <span class="font-display text-lg font-bold text-content">{{ appointment.time }}</span>
-                  <span class="text-xs text-subtle">{{ 'dashboard.appointments.cabinet' | transloco: { number: appointment.cabinet } }}</span>
+            <div role="button" tabindex="0" class="min-w-0 rounded-2xl bg-page p-2.5 sm:p-4 flex flex-col gap-3 cursor-pointer transition-shadow hover:shadow-md focus-visible:outline-2 focus-visible:outline-brand-300" (click)="openAppointmentDialog(appointment)" (keydown.enter)="openAppointmentDialog(appointment)">
+              <!-- Верхний ряд: время и кабинет, ФИО и «через N мин», телефон (мобилка: только время, ФИО в одну строку, телефон) -->
+              <div class="flex items-center gap-3 sm:gap-4">
+                <div class="w-14 sm:w-16 shrink-0 rounded-xl bg-surface flex flex-col items-center justify-center py-1.5 sm:py-2">
+                  <span class="font-display text-base sm:text-lg font-bold text-content">{{ appointment.time }}</span>
+                  <span class="max-sm:hidden text-xs text-subtle">{{ 'dashboard.appointments.cabinet' | transloco: { number: appointment.cabinet } }}</span>
                 </div>
 
                 <div class="min-w-0 flex-1">
-                  <div class="font-semibold text-content">{{ appointment.patientName }}</div>
-                  <div class="text-xs text-subtle">{{ appointment.leftKey | transloco: appointment.leftParams }}</div>
+                  <div class="font-semibold text-content max-sm:text-sm max-sm:truncate" [title]="appointment.patientName">{{ appointment.patientName }}</div>
+                  <div class="max-sm:hidden text-xs text-subtle">{{ appointment.leftKey | transloco: appointment.leftParams }}</div>
                 </div>
 
                 <!-- Телефон: клик — только номер -->
-                <button type="button" class="w-10 h-10 shrink-0 rounded-xl bg-surface shadow-sm flex items-center justify-center text-soft hover:text-accent" [title]="'dashboard.appointments.showPhone' | transloco" (click)="openPhoneDialog(appointment, $event)" (keydown.enter)="$event.stopPropagation()">
+                <button type="button" class="w-9 h-9 sm:w-10 sm:h-10 shrink-0 rounded-xl bg-surface shadow-sm flex items-center justify-center text-soft hover:text-accent" [title]="'dashboard.appointments.showPhone' | transloco" (click)="openPhoneDialog(appointment, $event)" (keydown.enter)="$event.stopPropagation()">
                   <mat-icon fontSet="material-symbols-outlined">call</mat-icon>
                 </button>
               </div>
 
-              <!-- Нижняя строка: врач -->
-              <div class="flex items-center gap-1 text-sm text-subtle">
+              <!-- Нижняя строка: врач (на мобилке скрыта) -->
+              <div class="max-sm:hidden flex items-center gap-1 text-sm text-subtle">
                 <mat-icon fontSet="material-symbols-outlined" style="font-size: 18px; width: 18px; height: 18px;">person</mat-icon>
                 {{ 'dashboard.appointments.doctor' | transloco }} {{ 'dashboard.doctorPrefix' | transloco }} {{ appointment.doctorName }}
               </div>
