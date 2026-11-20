@@ -1,30 +1,35 @@
-<!-- Шапка -->
-<div class="flex items-center justify-end px-4 pt-2 pb-1">
+<!-- Шапка (на мобилке скрыта — крестик в заголовке «Пациент») -->
+<div class="max-sm:hidden flex items-center justify-end px-2 sm:px-4 pt-1 sm:pt-2 sm:pb-1">
   <button matIconButton mat-dialog-close type="button" [title]="'common.close' | transloco">
     <mat-icon fontSet="material-symbols-outlined">close</mat-icon>
   </button>
 </div>
 
 <!-- Форма — прокручивается внутри окна -->
-<mat-dialog-content style="flex: 1 1 auto; max-height: none;">
-  <div class="flex flex-col gap-4 py-2">
+<!-- Мобилка: меньше отступы, чтобы форма помещалась на экран без прокрутки -->
+<mat-dialog-content class="max-sm:!px-3 max-sm:!py-3" style="flex: 1 1 auto; max-height: none;">
+  <div class="flex flex-col gap-3 sm:gap-4 py-1 sm:py-2">
 
     <!-- Блок: Пациент -->
-    <section class="rounded-2xl border border-line-strong bg-surface p-4 flex flex-col gap-4">
+    <section class="rounded-2xl border border-line-strong bg-surface p-3 sm:p-4 flex flex-col gap-3 sm:gap-4">
       <div class="flex items-center gap-2">
-        <span class="w-8 h-8 rounded-lg bg-brand-50 text-brand-700 flex items-center justify-center">
+        <span class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-brand-50 text-brand-700 flex items-center justify-center">
           <mat-icon fontSet="material-symbols-outlined" style="font-size: 20px; width: 20px; height: 20px;">person</mat-icon>
         </span>
         <h3 class="font-semibold text-content">{{ 'appointmentForm.patient.section' | transloco }}</h3>
+        <!-- Мобилка: крестик закрытия прямо в заголовке, без отдельной строки -->
+        <button matIconButton mat-dialog-close type="button" class="sm:!hidden !ml-auto !-my-2 !-mr-2" [title]="'common.close' | transloco">
+          <mat-icon fontSet="material-symbols-outlined">close</mat-icon>
+        </button>
       </div>
 
       <!-- Переключатель режима -->
       <div class="grid grid-cols-2 gap-1 p-1 rounded-xl bg-page">
-        <button type="button" class="flex items-center justify-center gap-1.5 h-10 rounded-lg text-sm font-medium transition-colors" [class.bg-surface]="mode() === 'search'" [class.shadow-sm]="mode() === 'search'" [class.text-brand-700]="mode() === 'search'" [class.text-muted]="mode() !== 'search'" (click)="setMode('search')">
+        <button type="button" class="flex items-center justify-center gap-1.5 h-9 sm:h-10 rounded-lg text-sm font-medium transition-colors" [class.bg-surface]="mode() === 'search'" [class.shadow-sm]="mode() === 'search'" [class.text-brand-700]="mode() === 'search'" [class.text-muted]="mode() !== 'search'" (click)="setMode('search')">
           <mat-icon fontSet="material-symbols-outlined" style="font-size: 18px; width: 18px; height: 18px;">search</mat-icon>
           {{ 'appointmentForm.patient.search' | transloco }}
         </button>
-        <button type="button" class="flex items-center justify-center gap-1.5 h-10 rounded-lg text-sm font-medium transition-colors" [class.bg-surface]="mode() === 'new'" [class.shadow-sm]="mode() === 'new'" [class.text-brand-700]="mode() === 'new'" [class.text-muted]="mode() !== 'new'" (click)="setMode('new')">
+        <button type="button" class="flex items-center justify-center gap-1.5 h-9 sm:h-10 rounded-lg text-sm font-medium transition-colors" [class.bg-surface]="mode() === 'new'" [class.shadow-sm]="mode() === 'new'" [class.text-brand-700]="mode() === 'new'" [class.text-muted]="mode() !== 'new'" (click)="setMode('new')">
           <mat-icon fontSet="material-symbols-outlined" style="font-size: 18px; width: 18px; height: 18px;">person_add</mat-icon>
           {{ 'appointmentForm.patient.new' | transloco }}
         </button>
@@ -53,7 +58,7 @@
           <div class="flex flex-col gap-2">
             <div class="relative">
               <mat-icon fontSet="material-symbols-outlined" class="absolute left-3 top-1/2 -translate-y-1/2 text-subtle pointer-events-none" style="font-size: 20px; width: 20px; height: 20px;">search</mat-icon>
-              <input type="text" class="w-full h-11 pl-10 pr-3 rounded-xl bg-page border border-transparent text-sm text-content outline-none focus:border-brand-300 focus:bg-surface" [formControl]="searchControl" [placeholder]="'appointmentForm.patient.searchPlaceholder' | transloco">
+              <input type="text" class="w-full h-10 sm:h-11 pl-10 pr-3 rounded-xl bg-page border border-transparent text-sm text-content outline-none focus:border-brand-300 focus:bg-surface" [formControl]="searchControl" [placeholder]="'appointmentForm.patient.searchPlaceholder' | transloco">
             </div>
 
             @if (showMinChars()) {
@@ -86,10 +91,10 @@
         }
       } @else {
         <!-- Новый пациент -->
-        <div class="flex flex-col gap-3">
+        <div class="flex flex-col gap-2.5 sm:gap-3">
           <label class="flex flex-col gap-1">
             <span class="text-xs font-medium text-soft">{{ 'appointmentForm.patient.fullName' | transloco }} <span class="text-red-500">*</span></span>
-            <input type="text" class="w-full h-11 px-3 rounded-xl bg-page border text-sm text-content outline-none focus:border-brand-300 focus:bg-surface" [class.border-transparent]="!isInvalid(newPatient.fullName)" [class.border-red-300]="isInvalid(newPatient.fullName)" [formControl]="newPatient.fullName" autocomplete="off">
+            <input type="text" class="w-full h-10 sm:h-11 px-3 rounded-xl bg-page border text-sm text-content outline-none focus:border-brand-300 focus:bg-surface" [class.border-transparent]="!isInvalid(newPatient.fullName)" [class.border-red-300]="isInvalid(newPatient.fullName)" [formControl]="newPatient.fullName" autocomplete="off">
             @if (isInvalid(newPatient.fullName)) {
               <span class="text-xs text-red-600">{{ (newPatient.fullName.hasError('required') ? 'appointmentForm.errors.required' : 'appointmentForm.errors.minLength') | transloco }}</span>
             }
@@ -100,7 +105,7 @@
             <label class="flex flex-col gap-1 min-w-0">
               <span class="text-xs font-medium text-soft">{{ 'appointmentForm.patient.phone' | transloco }} <span class="text-red-500">*</span></span>
               <!-- +998 подставлен заранее — вводятся только 9 цифр номера -->
-              <div class="flex items-center h-11 rounded-xl bg-page border focus-within:border-brand-300 focus-within:bg-surface" [class.border-transparent]="!isInvalid(newPatient.phone)" [class.border-red-300]="isInvalid(newPatient.phone)">
+              <div class="flex items-center h-10 sm:h-11 rounded-xl bg-page border focus-within:border-brand-300 focus-within:bg-surface" [class.border-transparent]="!isInvalid(newPatient.phone)" [class.border-red-300]="isInvalid(newPatient.phone)">
                 <span class="pl-2.5 sm:pl-3 pr-1 sm:pr-1.5 text-sm font-medium text-soft select-none">{{ phonePrefix }}</span>
                 <input type="tel" inputmode="numeric" maxlength="12" class="flex-1 min-w-0 h-full pr-2 sm:pr-3 bg-transparent text-sm text-content placeholder:text-subtle outline-none" [value]="newPatient.phone.value" (input)="onPhoneInput($event)" (blur)="newPatient.phone.markAsTouched()" placeholder="90 123-45-67" autocomplete="off">
               </div>
@@ -111,20 +116,21 @@
 
             <label class="flex flex-col gap-1 min-w-0">
               <span class="text-xs font-medium text-soft">{{ 'appointmentForm.patient.birthDate' | transloco }}</span>
-              <input type="date" class="w-full h-11 px-2 sm:px-3 rounded-xl bg-page border border-transparent text-sm text-content outline-none focus:border-brand-300 focus:bg-surface" [formControl]="newPatient.birthDate">
+              <input type="date" class="w-full h-10 sm:h-11 px-2 sm:px-3 rounded-xl bg-page border border-transparent text-sm text-content outline-none focus:border-brand-300 focus:bg-surface" [formControl]="newPatient.birthDate">
             </label>
           </div>
 
           <!-- Рейтинг пациента -->
           <div class="flex flex-col gap-1">
-            <span class="text-xs font-medium text-soft">{{ 'rating.label' | transloco }}</span>
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2" role="radiogroup" [attr.aria-label]="'rating.label' | transloco">
+            <span class="max-sm:hidden text-xs font-medium text-soft">{{ 'rating.label' | transloco }}</span>
+            <div class="grid grid-cols-3 gap-1.5 sm:gap-2" role="radiogroup" [attr.aria-label]="'rating.label' | transloco">
               @for (rating of ratings; track rating) {
-                <button type="button" role="radio" [attr.aria-checked]="isRating(rating)" class="flex items-center gap-2.5 min-h-12 px-3 py-2 rounded-xl border text-left transition-colors" [class.border-brand-700]="isRating(rating)" [class.bg-brand-50]="isRating(rating)" [class.border-line-strong]="!isRating(rating)" (click)="setRating(rating)">
-                  <span class="w-4 h-4 shrink-0 rounded-[4px]" [class]="ratingDot[rating]"></span>
-                  <span class="min-w-0 flex flex-col">
-                    <span class="text-sm font-semibold text-content">{{ ('rating.' + rating) | transloco }}</span>
-                    <span class="text-[11px] leading-tight text-muted">{{ ('rating.' + rating + 'Hint') | transloco }}</span>
+                <button type="button" role="radio" [attr.aria-checked]="isRating(rating)" [title]="('rating.' + rating) | transloco" [attr.aria-label]="('rating.' + rating) | transloco" class="flex items-center justify-center sm:justify-start gap-1 sm:gap-2.5 min-h-10 sm:min-h-12 px-1.5 sm:px-3 py-1.5 sm:py-2 rounded-xl border text-left transition-colors" [class.border-brand-700]="isRating(rating)" [class.bg-brand-50]="isRating(rating)" [class.border-line-strong]="!isRating(rating)" (click)="setRating(rating)">
+                  <span class="w-5 h-5 sm:w-4 sm:h-4 shrink-0 rounded-[4px]" [class]="ratingDot[rating]"></span>
+                  <!-- Мобилка: только квадратик, название — в title/aria-label -->
+                  <span class="max-sm:hidden min-w-0 flex flex-col">
+                    <span class="text-xs sm:text-sm font-semibold leading-tight text-content">{{ ('rating.' + rating) | transloco }}</span>
+                    <span class="hidden sm:block text-[11px] leading-tight text-muted">{{ ('rating.' + rating + 'Hint') | transloco }}</span>
                   </span>
                 </button>
               }
@@ -135,9 +141,9 @@
     </section>
 
     <!-- Блок: Услуга или повод визита -->
-    <section class="rounded-2xl border border-line-strong bg-surface p-4 flex flex-col gap-3">
+    <section class="rounded-2xl border border-line-strong bg-surface p-3 sm:p-4 flex flex-col gap-2.5 sm:gap-3">
       <div class="flex items-center gap-2">
-        <span class="w-8 h-8 rounded-lg bg-brand-50 text-brand-700 flex items-center justify-center">
+        <span class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-brand-50 text-brand-700 flex items-center justify-center">
           <mat-icon fontSet="material-symbols-outlined" style="font-size: 20px; width: 20px; height: 20px;">medical_services</mat-icon>
         </span>
         <h3 class="font-semibold text-content">{{ 'appointmentForm.service.section' | transloco }}</h3>
@@ -187,7 +193,7 @@
             </div>
           }
 
-          <span class="text-xs text-muted">{{ 'appointmentForm.service.durationHint' | transloco: { count: minutes() } }}</span>
+          <span class="hidden sm:block text-xs text-muted">{{ 'appointmentForm.service.durationHint' | transloco: { count: minutes() } }}</span>
         </div>
 
         <!-- «Другое»: повод визита своими словами -->
@@ -201,7 +207,7 @@
           </label>
         }
       } @else {
-        <div class="h-11 rounded-xl bg-page animate-pulse"></div>
+        <div class="h-10 sm:h-11 rounded-xl bg-page animate-pulse"></div>
       }
 
       @if (form.controls.serviceId.touched && form.controls.serviceId.invalid) {
@@ -210,29 +216,33 @@
     </section>
 
     <!-- Блок: Дата и время -->
-    <section class="rounded-2xl border border-line-strong bg-surface p-4 flex flex-col gap-3">
+    <section class="rounded-2xl border border-line-strong bg-surface p-3 sm:p-4 flex flex-col gap-2.5 sm:gap-3">
       <div class="flex items-center gap-2">
-        <span class="w-8 h-8 rounded-lg bg-brand-50 text-brand-700 flex items-center justify-center">
+        <span class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-brand-50 text-brand-700 flex items-center justify-center">
           <mat-icon fontSet="material-symbols-outlined" style="font-size: 20px; width: 20px; height: 20px;">event</mat-icon>
         </span>
         <h3 class="font-semibold text-content">{{ 'appointmentForm.dateTime.section' | transloco }}</h3>
       </div>
 
-      <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+      <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
         @if (!isDoctor) {
-        <label class="flex flex-col gap-1 min-w-0 col-span-2 sm:col-span-3">
+        <label class="flex flex-col gap-1 min-w-0 sm:col-span-3">
           <span class="text-xs font-medium text-soft">{{ 'appointmentForm.dateTime.doctor' | transloco }}</span>
-          <select class="w-full h-11 px-3 rounded-xl bg-page border border-transparent text-sm text-content outline-none cursor-pointer focus:border-brand-300 focus:bg-surface" [formControl]="form.controls.doctorId">
-            @for (doctor of doctors(); track doctor.id) {
-              <option [ngValue]="doctor.id">{{ 'dashboard.doctorPrefix' | transloco }} {{ doctor.name }}</option>
-            }
-          </select>
+          <div class="relative">
+            <select class="w-full h-10 sm:h-11 px-3 max-sm:pr-9 max-sm:appearance-none rounded-xl bg-page border border-transparent text-sm text-content outline-none cursor-pointer focus:border-brand-300 focus:bg-surface" [formControl]="form.controls.doctorId">
+              @for (doctor of doctors(); track doctor.id) {
+                <option [ngValue]="doctor.id">{{ 'dashboard.doctorPrefix' | transloco }} {{ doctor.name }}</option>
+              }
+            </select>
+            <!-- Мобилка: своя стрелка, чуть левее системной -->
+            <mat-icon fontSet="material-symbols-outlined" class="sm:!hidden absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-subtle" style="font-size: 20px; width: 20px; height: 20px;">expand_more</mat-icon>
+          </div>
         </label>
         }
 
-        <label class="flex flex-col gap-1 min-w-0 col-span-2 sm:col-span-1">
+        <label class="flex flex-col gap-1 min-w-0 sm:col-span-1" [class.col-span-2]="isDoctor">
           <span class="text-xs font-medium text-soft">{{ 'appointmentForm.dateTime.date' | transloco }} <span class="text-red-500">*</span></span>
-          <input type="date" class="w-full h-11 px-3 rounded-xl bg-page border text-sm text-content placeholder:text-subtle outline-none focus:border-brand-300 focus:bg-surface" [class.border-transparent]="!isInvalid(form.controls.date)" [class.border-red-300]="isInvalid(form.controls.date)" [formControl]="form.controls.date">
+          <input type="date" class="w-full h-10 sm:h-11 px-3 rounded-xl bg-page border text-sm text-content placeholder:text-subtle outline-none focus:border-brand-300 focus:bg-surface" [class.border-transparent]="!isInvalid(form.controls.date)" [class.border-red-300]="isInvalid(form.controls.date)" [formControl]="form.controls.date">
           @if (isInvalid(form.controls.date)) {
             <span class="text-xs text-red-600">{{ 'appointmentForm.errors.required' | transloco }}</span>
           }
@@ -240,7 +250,7 @@
 
         <label class="flex flex-col gap-1 min-w-0">
           <span class="text-xs font-medium text-soft">{{ 'appointmentForm.dateTime.time' | transloco }} <span class="text-red-500">*</span></span>
-          <input type="time" step="300" class="w-full h-11 px-3 rounded-xl bg-page border text-sm text-content outline-none focus:border-brand-300 focus:bg-surface" [class.border-transparent]="!isInvalid(form.controls.time)" [class.border-red-300]="isInvalid(form.controls.time)" [formControl]="form.controls.time">
+          <input type="time" step="300" class="w-full h-10 sm:h-11 px-3 rounded-xl bg-page border text-sm text-content outline-none focus:border-brand-300 focus:bg-surface" [class.border-transparent]="!isInvalid(form.controls.time)" [class.border-red-300]="isInvalid(form.controls.time)" [formControl]="form.controls.time">
           @if (isInvalid(form.controls.time)) {
             <span class="text-xs text-red-600">{{ 'appointmentForm.errors.required' | transloco }}</span>
           }
@@ -248,15 +258,19 @@
 
         <label class="flex flex-col gap-1 min-w-0">
           <span class="text-xs font-medium text-soft">{{ 'appointmentForm.dateTime.duration' | transloco }} <span class="text-red-500">*</span></span>
-          <select class="w-full h-11 px-3 rounded-xl bg-page border text-sm text-content outline-none cursor-pointer focus:border-brand-300 focus:bg-surface" [class.border-transparent]="!isInvalid(form.controls.duration)" [class.border-red-300]="isInvalid(form.controls.duration)" [formControl]="form.controls.duration">
-            <!-- Пустой вариант — только когда продолжительность ещё не выбрана (запись из календаря) -->
-            @if (!form.controls.duration.value) {
-              <option value="" disabled>{{ 'appointmentForm.dateTime.chooseDuration' | transloco }}</option>
-            }
-            @for (option of durationOptions; track option.value) {
-              <option [value]="option.value">{{ option.key | transloco }}</option>
-            }
-          </select>
+          <div class="relative">
+            <select class="w-full h-10 sm:h-11 px-3 max-sm:pr-9 max-sm:appearance-none rounded-xl bg-page border text-sm text-content outline-none cursor-pointer focus:border-brand-300 focus:bg-surface" [class.border-transparent]="!isInvalid(form.controls.duration)" [class.border-red-300]="isInvalid(form.controls.duration)" [formControl]="form.controls.duration">
+              <!-- Пустой вариант — только когда продолжительность ещё не выбрана (запись из календаря) -->
+              @if (!form.controls.duration.value) {
+                <option value="" disabled>{{ 'appointmentForm.dateTime.chooseDuration' | transloco }}</option>
+              }
+              @for (option of durationOptions; track option.value) {
+                <option [value]="option.value">{{ option.key | transloco }}</option>
+              }
+            </select>
+            <!-- Мобилка: своя стрелка, чуть левее системной -->
+            <mat-icon fontSet="material-symbols-outlined" class="sm:!hidden absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-subtle" style="font-size: 20px; width: 20px; height: 20px;">expand_more</mat-icon>
+          </div>
           @if (isInvalid(form.controls.duration)) {
             <span class="text-xs text-red-600">{{ 'appointmentForm.errors.required' | transloco }}</span>
           }
@@ -264,12 +278,13 @@
       </div>
 
       <!-- Свободные интервалы выбранного врача -->
-      <div class="flex flex-col gap-2">
+      <div class="flex flex-col gap-1.5 sm:gap-2">
         <span class="text-xs font-medium text-soft">{{ 'appointmentForm.dateTime.freeSlots' | transloco }}</span>
         @if (freeSlots().length > 0) {
-          <div class="grid grid-cols-2 sm:grid-cols-3 gap-2" role="radiogroup" [attr.aria-label]="'appointmentForm.dateTime.freeSlots' | transloco">
+          <!-- Мобилка: одна строка с прокруткой вбок; ПК: сетка -->
+          <div class="flex gap-2 overflow-x-auto -mx-3 px-3 pb-1 sm:mx-0 sm:px-0 sm:pb-0 sm:grid sm:grid-cols-3 sm:overflow-visible" role="radiogroup" [attr.aria-label]="'appointmentForm.dateTime.freeSlots' | transloco">
             @for (slot of freeSlots(); track slot.start) {
-              <button type="button" role="radio" [attr.aria-checked]="timeValue() === slot.start" class="h-11 rounded-xl border text-sm font-semibold transition-colors" [class.bg-brand-700]="timeValue() === slot.start" [class.border-brand-700]="timeValue() === slot.start" [class.text-white]="timeValue() === slot.start" [class.border-line-strong]="timeValue() !== slot.start" [class.text-content]="timeValue() !== slot.start" (click)="selectSlot(slot.start)">{{ slot.start }} – {{ slot.end }}</button>
+              <button type="button" role="radio" [attr.aria-checked]="timeValue() === slot.start" class="shrink-0 px-3 sm:px-0 h-10 sm:h-11 rounded-xl border text-sm font-semibold whitespace-nowrap transition-colors" [class.bg-brand-700]="timeValue() === slot.start" [class.border-brand-700]="timeValue() === slot.start" [class.text-white]="timeValue() === slot.start" [class.border-line-strong]="timeValue() !== slot.start" [class.text-content]="timeValue() !== slot.start" (click)="selectSlot(slot.start)">{{ slot.start }} – {{ slot.end }}</button>
             }
           </div>
         } @else if (minutes() > 0) {
@@ -283,8 +298,8 @@
 </mat-dialog-content>
 
 <!-- Кнопка внизу -->
-<div class="px-6 py-4 border-t border-line-strong">
-  <button type="button" class="w-full flex items-center justify-center gap-1 px-4 py-3 rounded-xl text-sm font-semibold transition-colors" [class.bg-brand-700]="canSubmit()" [class.text-white]="canSubmit()" [class.hover:bg-brand-800]="canSubmit()" [class.bg-page]="!canSubmit()" [class.text-subtle]="!canSubmit()" (click)="submit()">
+<div class="px-3 py-3 sm:px-6 sm:py-4 border-t border-line-strong">
+  <button type="button" class="w-full flex items-center justify-center gap-1 px-4 py-2.5 sm:py-3 rounded-xl text-sm font-semibold transition-colors" [class.bg-brand-700]="canSubmit()" [class.text-white]="canSubmit()" [class.hover:bg-brand-800]="canSubmit()" [class.bg-page]="!canSubmit()" [class.text-subtle]="!canSubmit()" (click)="submit()">
     <mat-icon fontSet="material-symbols-outlined">event_available</mat-icon>
     {{ (isEdit ? 'appointmentForm.save' : 'appointmentForm.submit') | transloco }}
   </button>
