@@ -309,10 +309,10 @@ export class ScheduleCalendar extends Schedule implements AfterViewInit {
     return { start, end, dayOff: false };
   });
 
-  // Границы шкалы в минутах: режим работы, расширенный до приёмов вне его, по целым часам
+  // Границы шкалы в минутах: по умолчанию 09:00–18:00, расширяется до приёмов вне этого времени, по целым часам
   private readonly range = computed(() => {
-    let from = toMinutes(this.workHours().start);
-    let to = toMinutes(this.workHours().end);
+    let from = toMinutes(DEFAULT_START);
+    let to = toMinutes(DEFAULT_END);
     for (const a of this.dayAppointments()) {
       from = Math.min(from, toMinutes(a.start));
       to = Math.max(to, toMinutes(a.end));
