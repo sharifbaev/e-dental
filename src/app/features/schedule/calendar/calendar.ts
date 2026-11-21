@@ -236,14 +236,6 @@ export class ScheduleCalendar extends Schedule implements AfterViewInit {
     });
   });
 
-  // Мобилка: «Четверг — 19 нояб. 2026 г.»
-  protected readonly mobileDayTitle = computed(() => {
-    const date = fromDateKey(this.selectedDate());
-    const weekday = new Intl.DateTimeFormat(this.calendarLocale(), { weekday: 'long' }).format(date);
-    const rest = new Intl.DateTimeFormat(this.calendarLocale(), { day: 'numeric', month: 'short', year: 'numeric' }).format(date);
-    return `${weekday.charAt(0).toUpperCase() + weekday.slice(1)} — ${rest}`;
-  });
-
   // «Вторник, 17 ноября»
   protected readonly dayTitle = computed(() => {
     const text = new Intl.DateTimeFormat(this.calendarLocale(), { weekday: 'long', day: 'numeric', month: 'long' })
