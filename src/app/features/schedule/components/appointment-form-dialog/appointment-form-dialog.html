@@ -220,8 +220,8 @@
         <h3 class="font-semibold text-content">{{ 'appointmentForm.dateTime.section' | transloco }}</h3>
       </div>
 
-      <!-- Вошёл врач: 2 колонки (врач | дата, время | продолжительность); иначе на ПК — 3 -->
-      <div class="grid grid-cols-2 gap-2 sm:gap-3" [class.sm:grid-cols-3]="!isDoctor">
+      <!-- Вошёл врач: ПК — 2 колонки (врач | дата, время | продолжительность); мобилка — сетка из 6, чтобы дата была уже, а имя врача — целиком. Иначе: мобилка — 2, ПК — 3 -->
+      <div class="grid gap-2 sm:gap-3" [class.grid-cols-2]="!isDoctor" [class.sm:grid-cols-3]="!isDoctor" [class.grid-cols-6]="isDoctor" [class.sm:grid-cols-2]="isDoctor">
         @if (!isDoctor) {
         <label class="flex flex-col gap-1 min-w-0 sm:col-span-3">
           <span class="text-xs font-medium text-soft">{{ 'appointmentForm.dateTime.doctor' | transloco }}</span>
@@ -239,13 +239,13 @@
 
         <!-- Вошёл врач: врач (только чтение) — рядом с датой, как селект у админа -->
         @if (isDoctor) {
-          <div class="flex flex-col gap-1 min-w-0">
+          <div class="flex flex-col gap-1 min-w-0 max-sm:col-span-4">
             <span class="text-xs font-medium text-soft">{{ 'appointmentForm.dateTime.doctor' | transloco }}</span>
             <div class="h-10 leading-10 sm:h-11 sm:leading-[2.75rem] px-3 rounded-xl bg-page text-sm text-content truncate" [title]="doctorName()">{{ 'dashboard.doctorPrefix' | transloco }} {{ doctorName() }}</div>
           </div>
         }
 
-        <label class="flex flex-col gap-1 min-w-0 sm:col-span-1">
+        <label class="flex flex-col gap-1 min-w-0 sm:col-span-1" [class.max-sm:col-span-2]="isDoctor">
           <span class="text-xs font-medium text-soft">{{ 'appointmentForm.dateTime.date' | transloco }} <span class="text-red-500">*</span></span>
           <!-- Системный текст даты скрыт, поверх — дд.мм.гг; календарь открывается как обычно -->
           <div class="relative">
@@ -257,7 +257,7 @@
           }
         </label>
 
-        <label class="flex flex-col gap-1 min-w-0">
+        <label class="flex flex-col gap-1 min-w-0" [class.max-sm:col-span-3]="isDoctor">
           <span class="text-xs font-medium text-soft">{{ 'appointmentForm.dateTime.time' | transloco }} <span class="text-red-500">*</span></span>
           <div class="flex gap-1.5">
             <input type="time" step="300" class="w-full min-w-0 h-10 sm:h-11 px-3 rounded-xl bg-page border text-sm text-content outline-none focus:border-brand-300 focus:bg-surface" [class.border-transparent]="!isInvalid(form.controls.time)" [class.border-red-300]="isInvalid(form.controls.time)" [formControl]="form.controls.time">
@@ -271,7 +271,7 @@
           }
         </label>
 
-        <label class="flex flex-col gap-1 min-w-0">
+        <label class="flex flex-col gap-1 min-w-0" [class.max-sm:col-span-3]="isDoctor">
           <span class="text-xs font-medium text-soft">{{ 'appointmentForm.dateTime.duration' | transloco }} <span class="text-red-500">*</span></span>
           <div class="relative">
             <select class="w-full h-10 sm:h-11 px-3 pr-9 appearance-none rounded-xl bg-page border text-sm text-content outline-none cursor-pointer focus:border-brand-300 focus:bg-surface" [class.border-transparent]="!isInvalid(form.controls.duration)" [class.border-red-300]="isInvalid(form.controls.duration)" [formControl]="form.controls.duration">
