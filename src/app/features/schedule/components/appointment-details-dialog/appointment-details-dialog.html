@@ -123,21 +123,21 @@
   </div>
 </mat-dialog-content>
 
-<!-- Действия — только для не отменённого приёма; у «Не пришёл» — только смена статуса -->
+<!-- Действия — только для не отменённого приёма; у «Не пришёл» — только смена статуса. Все кнопки в один ряд -->
 @if (!isCancelled) {
-  <div class="px-6 pb-5 pt-2 flex flex-col sm:flex-row gap-2">
+  <div class="px-3 sm:px-6 pb-4 sm:pb-5 pt-2 flex flex-row gap-1.5 sm:gap-2">
     @if (!isNoShow) {
-    <button type="button" class="flex-1 flex items-center justify-center gap-1 px-4 py-3 rounded-lg border border-brand-200 text-sm font-medium text-brand-700 hover:bg-brand-50" (click)="close('edit')">
+    <button type="button" class="flex-1 min-w-0 flex items-center justify-center gap-1 px-1.5 sm:px-4 py-2.5 sm:py-3 rounded-lg border whitespace-nowrap border-brand-200 text-sm font-medium text-brand-700 hover:bg-brand-50" (click)="close('edit')">
       <mat-icon fontSet="material-symbols-outlined" style="font-size: 20px; width: 20px; height: 20px;">edit</mat-icon>
       {{ 'schedule.details.edit' | transloco }}
     </button>
     }
-    <button type="button" class="flex-1 flex items-center justify-center gap-1 px-4 py-3 rounded-lg border border-brand-200 text-sm font-medium text-brand-700 hover:bg-brand-50" (click)="close('status')">
+    <button type="button" class="flex-1 min-w-0 flex items-center justify-center gap-1 px-1.5 sm:px-4 py-2.5 sm:py-3 rounded-lg border whitespace-nowrap border-brand-200 text-sm font-medium text-brand-700 hover:bg-brand-50" (click)="close('status')">
       <mat-icon fontSet="material-symbols-outlined" style="font-size: 20px; width: 20px; height: 20px;">published_with_changes</mat-icon>
       {{ 'schedule.details.status' | transloco }}
     </button>
     @if (!isNoShow) {
-    <button type="button" class="flex-1 flex items-center justify-center gap-1 px-4 py-3 rounded-lg border border-red-200 text-sm font-medium text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10" (click)="close('cancel')">
+    <button type="button" class="flex-1 min-w-0 flex items-center justify-center gap-1 px-1.5 sm:px-4 py-2.5 sm:py-3 rounded-lg border whitespace-nowrap border-red-200 text-sm font-medium text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10" (click)="close('cancel')">
       <mat-icon fontSet="material-symbols-outlined" style="font-size: 20px; width: 20px; height: 20px;">event_busy</mat-icon>
       {{ 'schedule.details.cancel' | transloco }}
     </button>
