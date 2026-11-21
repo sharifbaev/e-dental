@@ -14,12 +14,13 @@
 
 <!-- Мобилка: раздел ровно на экран (минус шапка 75px, нижнее меню 62px и отступы по 8px) — страница не скроллится,
      прокручивается только шкала; -mb-38 оставляет от общего pb-40 у <main> 8px -->
-<div class="flex flex-col gap-2 md:gap-4 max-md:-mb-38 max-md:h-[calc(100dvh_-_153px_-_env(safe-area-inset-bottom))] md:h-[calc(100dvh-105px)]">
+<div class="flex flex-col md:gap-4 max-md:-mb-38 max-md:h-[calc(100dvh_-_153px_-_env(safe-area-inset-bottom))] md:h-[calc(100dvh-105px)]">
   <!-- Шапка и дни недели: на месте, прокручивается только шкала -->
-  <div class="shrink-0 flex flex-col gap-2 md:gap-0">
+  <div class="shrink-0 flex flex-col gap-1 md:gap-0">
     <!-- Шапка: месяц, переключение недель, интервал, врач, новая запись.
          На ПК шапка и лента дней выглядят одной карточкой, на мобилке лента — отдельная и прилипает к верху при прокрутке -->
-    <section class="bg-surface border border-line-strong rounded-[20px] p-1.5 md:p-4 md:pb-0 md:rounded-b-none md:border-b-0">
+    <!-- Мобилка (как в календаре iPhone): без карточек — месяц, лента дней, дата и шкала; «Сегодня» и кнопки — внизу -->
+    <section class="md:bg-surface md:border md:border-line-strong md:rounded-[20px] px-1 md:p-4 md:pb-0 md:rounded-b-none md:border-b-0">
       <div class="flex flex-wrap items-center gap-1 md:gap-3">
         <!-- Месяц, стрелки, «Сегодня» и интервал — на мобилке в одну строку -->
         <h1 class="flex-1 min-w-0 truncate pl-1 md:pl-0 font-display text-base md:text-xl font-extrabold tracking-tight text-content">{{ monthTitle() }}</h1>
@@ -41,13 +42,13 @@
             <button type="button" class="max-md:hidden w-8 h-9 md:w-10 md:h-10 flex items-center justify-center rounded-xl text-soft hover:bg-page" [title]="'calendar.prevWeek' | transloco" [attr.aria-label]="'calendar.prevWeek' | transloco" (click)="prevWeek()">
               <mat-icon fontSet="material-symbols-outlined">chevron_left</mat-icon>
             </button>
-            <button type="button" class="h-9 md:h-10 px-2 md:px-3 rounded-xl text-sm font-semibold text-accent whitespace-nowrap hover:bg-brand-50" (click)="goToday()">{{ 'calendar.today' | transloco }}</button>
+            <button type="button" class="max-md:hidden h-9 md:h-10 px-2 md:px-3 rounded-xl text-sm font-semibold text-accent whitespace-nowrap hover:bg-brand-50" (click)="goToday()">{{ 'calendar.today' | transloco }}</button>
             <button type="button" class="max-md:hidden w-8 h-9 md:w-10 md:h-10 flex items-center justify-center rounded-xl text-soft hover:bg-page" [title]="'calendar.nextWeek' | transloco" [attr.aria-label]="'calendar.nextWeek' | transloco" (click)="nextWeek()">
               <mat-icon fontSet="material-symbols-outlined">chevron_right</mat-icon>
             </button>
 
             <!-- Интервал — только иконка -->
-            <button type="button" class="ml-0.5 md:ml-1 w-9 h-9 md:w-11 md:h-11 flex items-center justify-center rounded-xl border border-line-strong text-soft hover:text-accent hover:border-brand-300" [title]="'calendar.interval' | transloco" [attr.aria-label]="'calendar.interval' | transloco" (click)="openInterval()">
+            <button type="button" class="max-md:hidden ml-0.5 md:ml-1 w-9 h-9 md:w-11 md:h-11 flex items-center justify-center rounded-xl border border-line-strong text-soft hover:text-accent hover:border-brand-300" [title]="'calendar.interval' | transloco" [attr.aria-label]="'calendar.interval' | transloco" (click)="openInterval()">
               <mat-icon fontSet="material-symbols-outlined" style="font-size: 20px; width: 20px; height: 20px;">date_range</mat-icon>
             </button>
           }
@@ -58,19 +59,6 @@
           <div class="max-md:hidden contents"><ng-container [ngTemplateOutlet]="doctorFilter" /></div>
         }
 
-        <!-- Мобилка: фильтры (врач — в модалке; точка — если выбран врач) и новая запись -->
-        @if (showDoctorFilter()) {
-          <button type="button" class="md:hidden relative w-9 h-9 shrink-0 rounded-xl border border-line-strong flex items-center justify-center" [class.text-accent]="filtersActive()" [class.text-soft]="!filtersActive()" [title]="'schedule.filters' | transloco" [attr.aria-label]="'schedule.filters' | transloco" (click)="filtersOpen.set(true)">
-            <mat-icon fontSet="material-symbols-outlined" style="font-size: 20px; width: 20px; height: 20px;">filter_list</mat-icon>
-            @if (filtersActive()) {
-              <span class="absolute top-1 right-1 w-2 h-2 rounded-full bg-brand-700"></span>
-            }
-          </button>
-        }
-        <button type="button" class="md:hidden w-9 h-9 shrink-0 rounded-xl bg-brand-700 text-white flex items-center justify-center hover:bg-brand-800" [title]="'schedule.add' | transloco" [attr.aria-label]="'schedule.add' | transloco" (click)="openNewAppointment()">
-          <mat-icon fontSet="material-symbols-outlined">add</mat-icon>
-        </button>
-
         <!-- Новая запись — ПК -->
         <button type="button" class="hidden md:flex shrink-0 items-center justify-center gap-1 h-11 px-4 rounded-xl bg-brand-700 text-white text-sm font-medium hover:bg-brand-800" (click)="openNewAppointment()">
           <mat-icon fontSet="material-symbols-outlined">add</mat-icon>
@@ -80,8 +68,8 @@
     </section>
 
     <!-- Дни недели -->
-    <section class="bg-surface border border-line-strong rounded-[20px] md:shadow-none p-1 md:p-4 md:pt-4 md:rounded-t-none md:border-t-0">
-      <!-- Мобилка: стрелки недель по краям ленты -->
+    <section class="max-md:pb-1.5 max-md:border-b max-md:border-line md:bg-surface md:border md:border-line-strong md:rounded-[20px] md:p-4 md:pt-4 md:rounded-t-none md:border-t-0" (touchstart)="onStripTouchStart($event)" (touchend)="onStripTouchEnd($event)">
+      <!-- Мобилка: стрелки недель по краям ленты; неделю можно листать и свайпом -->
       <div class="flex items-center">
       @if (!isRange()) {
         <button type="button" class="md:hidden w-6 h-10 shrink-0 flex items-center justify-center rounded-lg text-soft hover:bg-page" [title]="'calendar.prevWeek' | transloco" [attr.aria-label]="'calendar.prevWeek' | transloco" (click)="prevWeek()">
@@ -90,9 +78,9 @@
       }
       <div class="flex-1 min-w-0" [class]="isRange() ? 'flex gap-1 overflow-x-auto' : 'grid grid-cols-7 gap-0.5 md:gap-1'">
         @for (day of stripDays(); track day.key) {
-          <button type="button" class="min-w-0 flex flex-col items-center gap-0.5 md:gap-1 py-0.5 md:py-1.5 rounded-xl transition-colors hover:bg-page" [class.flex-1]="isRange()" [class.min-w-12]="isRange()" [class.shrink-0]="isRange()" [attr.aria-pressed]="selectedDate() === day.key" (click)="pickDay(day.key)">
-            <span class="text-[10px] md:text-[11px] leading-none md:leading-normal font-medium" [class.text-subtle]="!day.isWeekend" [class.text-muted]="day.isWeekend">{{ day.weekday }}</span>
-            <span class="w-8 h-8 md:w-10 md:h-10 flex items-center justify-center rounded-full text-sm md:text-lg font-semibold transition-colors"
+          <button type="button" class="min-w-0 flex flex-col items-center gap-1 py-0.5 md:py-1.5 rounded-xl transition-colors hover:bg-page" [class.flex-1]="isRange()" [class.min-w-12]="isRange()" [class.shrink-0]="isRange()" [attr.aria-pressed]="selectedDate() === day.key" (click)="pickDay(day.key)">
+            <span class="text-[11px] leading-none md:leading-normal font-semibold md:font-medium" [class.text-subtle]="!day.isWeekend" [class.text-muted]="day.isWeekend"><span class="md:hidden">{{ day.weekday.charAt(0) }}</span><span class="max-md:hidden">{{ day.weekday }}</span></span>
+            <span class="w-9 h-9 md:w-10 md:h-10 flex items-center justify-center rounded-full text-lg font-semibold md:font-semibold transition-colors"
                   [class.bg-brand-700]="selectedDate() === day.key"
                   [class.text-white]="selectedDate() === day.key"
                   [class.text-accent]="selectedDate() !== day.key && day.isToday"
@@ -101,7 +89,7 @@
               <span class="text-[10px] leading-none -mt-0.5 text-subtle">{{ day.month }}</span>
             }
             <!-- Точка — в этот день есть приёмы -->
-            <span class="w-1.5 h-1.5 rounded-full" [class.bg-brand-500]="day.count > 0" [class.bg-transparent]="day.count === 0"></span>
+            <span class="w-1 h-1 md:w-1.5 md:h-1.5 rounded-full" [class.bg-brand-500]="day.count > 0" [class.bg-transparent]="day.count === 0"></span>
           </button>
         }
       </div>
@@ -115,20 +103,23 @@
   </div>
 
   <!-- Шкала дня (мобилка: занимает остаток экрана, прокручивается внутри) -->
-  <section class="bg-surface border border-line-strong rounded-[20px] flex flex-col flex-1 min-h-0 md:min-h-60 overflow-hidden">
-    <div class="flex flex-wrap items-center gap-x-3 gap-y-0.5 px-2.5 py-1.5 md:px-4 md:py-3 border-b border-line">
-      <span class="text-sm md:text-base font-semibold text-content">{{ dayTitle() }}</span>
+  <section class="md:bg-surface md:border md:border-line-strong md:rounded-[20px] flex flex-col flex-1 min-h-0 md:min-h-60 overflow-hidden">
+    <!-- Мобилка: дата по центру («Четверг — 19 нояб. 2026 г.») -->
+    <div class="flex flex-wrap items-center max-md:justify-center gap-x-3 gap-y-0.5 px-2.5 py-2 md:px-4 md:py-3 border-b border-line">
+      <span class="md:hidden text-[15px] font-semibold text-content">{{ mobileDayTitle() }}</span>
+      <span class="max-md:hidden text-base font-semibold text-content">{{ dayTitle() }}</span>
       @if (workHours().dayOff) {
         <span class="px-2 py-0.5 rounded-full text-xs font-medium bg-page text-muted">{{ 'calendar.dayOff' | transloco }}</span>
       } @else {
-        <span class="text-xs text-muted">{{ 'calendar.workHours' | transloco: { start: workHours().start, end: workHours().end } }}</span>
+        <span class="max-md:hidden text-xs text-muted">{{ 'calendar.workHours' | transloco: { start: workHours().start, end: workHours().end } }}</span>
       }
       @if (events().length === 0) {
-        <span class="md:ml-auto text-xs text-subtle">{{ 'calendar.empty' | transloco }}</span>
+        <span class="max-md:hidden md:ml-auto text-xs text-subtle">{{ 'calendar.empty' | transloco }}</span>
       }
     </div>
 
-    <div #timeline class="flex-1 min-h-0 overflow-y-auto overscroll-contain px-2 md:px-4 py-2 md:py-3">
+    <!-- Мобилка: снизу место под кнопки «Сегодня» и действия -->
+    <div #timeline class="flex-1 min-h-0 overflow-y-auto overscroll-contain px-1 md:px-4 pt-3 pb-20 md:py-3">
       <div class="relative" [style.height.px]="timelineHeight()">
         <!-- Подписи часов и линии -->
         @for (hour of hours(); track hour.label) {
@@ -200,6 +191,34 @@
       </div>
     </div>
   </section>
+</div>
+
+<!-- Мобилка: плавающие кнопки над нижним меню (как в календаре iPhone): слева «Сегодня», справа — интервал, фильтры и новая запись -->
+<div class="md:hidden fixed inset-x-3 bottom-[calc(70px+env(safe-area-inset-bottom))] z-40 flex items-center justify-between gap-2 pointer-events-none">
+  @if (!rangeLabel()) {
+    <button type="button" class="pointer-events-auto h-11 px-5 rounded-full bg-surface/90 backdrop-blur border border-line-strong shadow-lg text-[15px] font-semibold text-content" (click)="goToday()">{{ 'calendar.today' | transloco }}</button>
+  } @else {
+    <span></span>
+  }
+  <div class="pointer-events-auto h-11 px-1.5 flex items-center gap-1 rounded-full bg-surface/90 backdrop-blur border border-line-strong shadow-lg">
+    @if (!rangeLabel()) {
+      <button type="button" class="w-10 h-10 rounded-full flex items-center justify-center text-content" [title]="'calendar.interval' | transloco" [attr.aria-label]="'calendar.interval' | transloco" (click)="openInterval()">
+        <mat-icon fontSet="material-symbols-outlined" style="font-size: 22px; width: 22px; height: 22px;">date_range</mat-icon>
+      </button>
+    }
+    @if (showDoctorFilter()) {
+      <!-- Фильтры: врач — в модалке; точка — если врач выбран -->
+      <button type="button" class="relative w-10 h-10 rounded-full flex items-center justify-center" [class.text-accent]="filtersActive()" [class.text-content]="!filtersActive()" [title]="'schedule.filters' | transloco" [attr.aria-label]="'schedule.filters' | transloco" (click)="filtersOpen.set(true)">
+        <mat-icon fontSet="material-symbols-outlined" style="font-size: 22px; width: 22px; height: 22px;">filter_list</mat-icon>
+        @if (filtersActive()) {
+          <span class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-brand-700"></span>
+        }
+      </button>
+    }
+    <button type="button" class="w-10 h-10 rounded-full flex items-center justify-center text-accent" [title]="'schedule.add' | transloco" [attr.aria-label]="'schedule.add' | transloco" (click)="openNewAppointment()">
+      <mat-icon fontSet="material-symbols-outlined" style="font-size: 24px; width: 24px; height: 24px;">add</mat-icon>
+    </button>
+  </div>
 </div>
 
 <!-- Мобилка: модалка фильтров (врач); закрытие — крестик или затемнение -->

@@ -16,8 +16,14 @@ import { ScheduleAppointment } from '../models/schedule.model';
 
 const LOCALES: Record<string, string> = { ru: 'ru-RU', uz: 'uz-Latn-UZ' };
 
-// Высота одного часа на шкале, px
+// Высота одного часа на шкале, px (мобилка — ниже, чтобы на экран помещалось больше часов)
 const HOUR_PX = 100;
+const MOBILE_HOUR_PX = 60;
+
+// Минимальный горизонтальный сдвиг пальцем по ленте дней для смены недели, px
+const SWIPE_PX = 50;
+
+const MOBILE_QUERY = '(max-width: 767px)';
 
 // Шаг времени при клике по пустому месту шкалы, мин
 const CLICK_STEP_MINUTES = 15;
@@ -68,7 +74,9 @@ export class ScheduleCalendar extends Schedule implements AfterViewInit {
   });
   private readonly calendarLocale = computed(() => LOCALES[this.calendarLang()] ?? 'ru-RU');
 
-  protected readonly hourPx = HOUR_PX;
+  // Мобилка (ширина < 768px) — следим за изменением ширины окна
+  private readonly calMobile = signal(typeof matchMedia === 'function' && matchMedia(MOBILE_QUERY).matches);
+  protected readonly hourPx = computed(() => this.calMobile() ? MOBILE_HOUR_PX : HOUR_PX);
   protected readonly todayDateKey = toDateKey(new Date());
 
   // Прокручиваемая шкала — чтобы при открытии показать текущее время / первый приём
@@ -81,6 +89,13 @@ export class ScheduleCalendar extends Schedule implements AfterViewInit {
     super();
     const timer = setInterval(() => this.clock.set(new Date()), 60_000);
     inject(DestroyRef).onDestroy(() => clearInterval(timer));
+
+    if (typeof matchMedia === 'function') {
+      const media = matchMedia(MOBILE_QUERY);
+      const onMediaChange = (event: MediaQueryListEvent) => this.calMobile.set(event.matches);
+      media.addEventListener('change', onMediaChange);
+      inject(DestroyRef).onDestroy(() => media.removeEventListener('change', onMediaChange));
+    }
 
     // Выбран интервал — выбранный день должен быть внутри него (иначе берём первый день интервала).
     // rangeDay держим равным выбранному дню — «Добавить запись» создаёт запись на этот день
@@ -95,6 +110,23 @@ export class ScheduleCalendar extends Schedule implements AfterViewInit {
         this.rangeDay.set(this.selectedDate());
       });
     });
+  }
+
+  // Мобилка: свайп по ленте дней — соседняя неделя (влево — следующая, вправо — предыдущая)
+  private swipeStartX: number | null = null;
+
+  protected onStripTouchStart(event: TouchEvent): void {
+    this.swipeStartX = event.touches[0]?.clientX ?? null;
+  }
+
+  protected onStripTouchEnd(event: TouchEvent): void {
+    const start = this.swipeStartX;
+    this.swipeStartX = null;
+    const end = event.changedTouches[0]?.clientX;
+    if (start === null || end === undefined || this.isRange()) return;
+    const dx = end - start;
+    if (dx <= -SWIPE_PX) this.nextWeek();
+    else if (dx >= SWIPE_PX) this.prevWeek();
   }
 
   // Интервал: то же окно выбора, что в «Расписании»
@@ -204,6 +236,14 @@ export class ScheduleCalendar extends Schedule implements AfterViewInit {
     });
   });
 
+  // Мобилка: «Четверг — 19 нояб. 2026 г.»
+  protected readonly mobileDayTitle = computed(() => {
+    const date = fromDateKey(this.selectedDate());
+    const weekday = new Intl.DateTimeFormat(this.calendarLocale(), { weekday: 'long' }).format(date);
+    const rest = new Intl.DateTimeFormat(this.calendarLocale(), { day: 'numeric', month: 'short', year: 'numeric' }).format(date);
+    return `${weekday.charAt(0).toUpperCase() + weekday.slice(1)} — ${rest}`;
+  });
+
   // «Вторник, 17 ноября»
   protected readonly dayTitle = computed(() => {
     const text = new Intl.DateTimeFormat(this.calendarLocale(), { weekday: 'long', day: 'numeric', month: 'long' })
@@ -256,7 +296,7 @@ export class ScheduleCalendar extends Schedule implements AfterViewInit {
     return { from, to };
   });
 
-  protected readonly timelineHeight = computed(() => ((this.range().to - this.range().from) / 60) * HOUR_PX);
+  protected readonly timelineHeight = computed(() => ((this.range().to - this.range().from) / 60) * this.hourPx());
 
   // Подписи часов: 09:00, 10:00 …
   protected readonly hours = computed(() => {
@@ -265,7 +305,7 @@ export class ScheduleCalendar extends Schedule implements AfterViewInit {
     const now = this.nowLine();
     const list: { label: string; top: number; hidden: boolean }[] = [];
     for (let m = from; m <= to; m += 60) {
-      const top = ((m - from) / 60) * HOUR_PX;
+      const top = ((m - from) / 60) * this.hourPx();
       list.push({ label: `${String(m / 60).padStart(2, '0')}:00`, top, hidden: !!now && Math.abs(now.top - top) < 18 });
     }
     return list;
@@ -279,8 +319,8 @@ export class ScheduleCalendar extends Schedule implements AfterViewInit {
     const start = toMinutes(work.start);
     const end = toMinutes(work.end);
     const blocks: { top: number; height: number }[] = [];
-    if (start > from) blocks.push({ top: 0, height: ((start - from) / 60) * HOUR_PX });
-    if (end < to) blocks.push({ top: ((end - from) / 60) * HOUR_PX, height: ((to - end) / 60) * HOUR_PX });
+    if (start > from) blocks.push({ top: 0, height: ((start - from) / 60) * this.hourPx() });
+    if (end < to) blocks.push({ top: ((end - from) / 60) * this.hourPx(), height: ((to - end) / 60) * this.hourPx() });
     return blocks;
   });
 
@@ -292,7 +332,7 @@ export class ScheduleCalendar extends Schedule implements AfterViewInit {
     const { from, to } = this.range();
     if (minutes < from || minutes > to) return null;
     return {
-      top: ((minutes - from) / 60) * HOUR_PX,
+      top: ((minutes - from) / 60) * this.hourPx(),
       label: `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
     };
   });
@@ -337,10 +377,10 @@ export class ScheduleCalendar extends Schedule implements AfterViewInit {
       const start = toMinutes(appointment.start);
       const end = toMinutes(appointment.end);
       const columns = groupColumns[g];
-      const height = Math.max(((end - start) / 60) * HOUR_PX - 2, 22);
+      const height = Math.max(((end - start) / 60) * this.hourPx() - 2, 22);
       return {
         ...appointment,
-        top: ((start - from) / 60) * HOUR_PX + 1,
+        top: ((start - from) / 60) * this.hourPx() + 1,
         height,
         left: (column / columns) * 100,
         width: 100 / columns,
@@ -365,7 +405,7 @@ export class ScheduleCalendar extends Schedule implements AfterViewInit {
     const area = event.currentTarget as HTMLElement;
     const y = event.clientY - area.getBoundingClientRect().top;
     const { from, to } = this.range();
-    const raw = from + (y / HOUR_PX) * 60;
+    const raw = from + (y / this.hourPx()) * 60;
     const minutes = Math.min(Math.max(Math.floor(raw / CLICK_STEP_MINUTES) * CLICK_STEP_MINUTES, from), to - CLICK_STEP_MINUTES);
     const time = `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`;
 
@@ -400,6 +440,6 @@ export class ScheduleCalendar extends Schedule implements AfterViewInit {
     const element = this.timeline()?.nativeElement;
     if (!element) return;
     const target = this.nowLine()?.top ?? this.events()[0]?.top ?? 0;
-    element.scrollTo({ top: Math.max(target - HOUR_PX, 0), behavior: 'smooth' });
+    element.scrollTo({ top: Math.max(target - this.hourPx(), 0), behavior: 'smooth' });
   }
 }
