@@ -43,8 +43,8 @@
 </ng-template>
 
 <!-- Мобилка: раздел ровно на экран (минус шапка 75px, нижнее меню 62px и отступы по 8px) — страница не скроллится,
-     прокручиваются только карточки; -mx-2/-mt-2/-mb-38 уменьшают общие отступы <main> до 8px -->
-<div class="flex flex-col gap-2 md:gap-4 max-md:-mx-2 max-md:-mt-2 max-md:-mb-38 max-md:h-[calc(100dvh_-_153px_-_env(safe-area-inset-bottom))] md:h-[calc(100dvh-105px)]">
+     прокручиваются только карточки; -mb-38 оставляет от общего pb-40 у <main> 8px -->
+<div class="flex flex-col gap-2 md:gap-4 max-md:-mb-38 max-md:h-[calc(100dvh_-_153px_-_env(safe-area-inset-bottom))] md:h-[calc(100dvh-105px)]">
   <!-- Фильтры: на месте, прокручивается только список карточек -->
   <section class="shrink-0 bg-surface border border-line-strong rounded-[20px] p-2 md:p-4 flex flex-col gap-2 md:gap-4">
     <div class="flex flex-wrap gap-2 md:gap-3">

@@ -1,9 +1,9 @@
-<div class="flex flex-col gap-4 md:h-[calc(100dvh-105px)]">
+<div class="flex flex-col gap-2 md:gap-4 md:h-[calc(100dvh-105px)]">
   <!-- Шапка и дни недели: на мобилке закреплены сверху, прокручивается только шкала -->
-  <div class="sticky top-0 z-20 -mx-4 px-4 pt-2 pb-2 -mt-2 -mb-2 bg-page flex flex-col gap-2 md:static md:m-0 md:p-0 md:bg-transparent md:gap-0">
+  <div class="sticky top-0 z-20 -mx-2 px-2 pt-2 pb-2 -mt-2 -mb-2 bg-page flex flex-col gap-2 md:static md:m-0 md:p-0 md:bg-transparent md:gap-0">
     <!-- Шапка: месяц, переключение недель, интервал, врач, новая запись.
          На ПК шапка и лента дней выглядят одной карточкой, на мобилке лента — отдельная и прилипает к верху при прокрутке -->
-    <section class="bg-surface border border-line-strong rounded-[20px] p-3 md:p-4 md:pb-0 md:rounded-b-none md:border-b-0">
+    <section class="bg-surface border border-line-strong rounded-[20px] p-2 md:p-4 md:pb-0 md:rounded-b-none md:border-b-0">
       <div class="flex flex-wrap items-center gap-2 md:gap-3">
         <!-- Месяц, стрелки, «Сегодня» и интервал — на мобилке в одну строку -->
         <h1 class="flex-1 min-w-0 truncate font-display text-base md:text-xl font-extrabold tracking-tight text-content">{{ monthTitle() }}</h1>
@@ -81,7 +81,7 @@
 
   <!-- Шкала дня -->
   <section class="bg-surface border border-line-strong rounded-[20px] flex flex-col md:flex-1 md:min-h-60 overflow-hidden">
-    <div class="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-3 border-b border-line">
+    <div class="flex flex-wrap items-center gap-x-3 gap-y-1 px-2.5 py-2 md:px-4 md:py-3 border-b border-line">
       <span class="font-semibold text-content">{{ dayTitle() }}</span>
       @if (workHours().dayOff) {
         <span class="px-2 py-0.5 rounded-full text-xs font-medium bg-page text-muted">{{ 'calendar.dayOff' | transloco }}</span>
@@ -93,7 +93,7 @@
       }
     </div>
 
-    <div #timeline class="md:flex-1 md:min-h-0 md:overflow-y-auto md:overscroll-contain px-2 md:px-4 py-3">
+    <div #timeline class="md:flex-1 md:min-h-0 md:overflow-y-auto md:overscroll-contain px-2 md:px-4 py-2 md:py-3">
       <div class="relative" [style.height.px]="timelineHeight()">
         <!-- Подписи часов и линии -->
         @for (hour of hours(); track hour.label) {

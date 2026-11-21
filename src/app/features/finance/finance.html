@@ -1,7 +1,7 @@
-<div class="flex flex-col gap-4">
+<div class="flex flex-col gap-2 md:gap-4">
   <!-- Заголовок -->
-  <section class="px-1 pt-1 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-    <h1 class="font-display text-2xl md:text-[30px] font-extrabold tracking-tight text-content">{{ 'finance.title' | transloco }}</h1>
+  <section class="md:px-1 md:pt-1 flex flex-col md:flex-row md:items-center md:justify-between gap-2 md:gap-3">
+    <h1 class="font-display text-xl leading-tight md:text-[30px] md:leading-normal font-extrabold tracking-tight text-content">{{ 'finance.title' | transloco }}</h1>
 
     <!-- Добавить — ПК -->
     <button type="button" class="hidden md:flex items-center justify-center gap-1 h-11 px-5 rounded-xl bg-brand-700 text-white text-sm font-semibold hover:bg-brand-800" (click)="add()">
@@ -11,7 +11,7 @@
   </section>
 
   <!-- Вкладки и фильтры: на мобилке закреплены сверху, прокручивается только список -->
-  <div class="sticky top-0 z-20 -mx-4 px-4 pt-2 pb-2 -mt-2 -mb-2 bg-page flex flex-col gap-3 md:static md:m-0 md:p-0 md:bg-transparent md:gap-4">
+  <div class="sticky top-0 z-20 -mx-2 px-2 pt-2 pb-2 -mt-2 -mb-2 bg-page flex flex-col gap-2 md:static md:m-0 md:p-0 md:bg-transparent md:gap-4">
     <!-- Вкладки -->
     <div class="grid grid-cols-2 gap-1 p-1 rounded-xl bg-surface border border-line-strong md:w-96" role="tablist">
       @for (t of tabs; track t.id) {
@@ -24,7 +24,7 @@
 
     @if (tab() === 'expenses') {
       <!-- ===== Расходы ===== -->
-      <section class="bg-surface border border-line-strong rounded-[20px] p-3 md:p-4 flex flex-col gap-3">
+      <section class="bg-surface border border-line-strong rounded-[20px] p-2 md:p-4 flex flex-col gap-2 md:gap-3">
         <div class="flex gap-2">
           <div class="relative flex-1 md:max-w-sm">
             <mat-icon fontSet="material-symbols-outlined" class="absolute left-3 top-1/2 -translate-y-1/2 text-subtle pointer-events-none" style="font-size: 20px; width: 20px; height: 20px;">search</mat-icon>
@@ -76,7 +76,7 @@
       </section>
     } @else {
       <!-- ===== Долги ===== -->
-      <section class="bg-surface border border-line-strong rounded-[20px] p-3 md:p-4 flex flex-col gap-3">
+      <section class="bg-surface border border-line-strong rounded-[20px] p-2 md:p-4 flex flex-col gap-2 md:gap-3">
         <div class="flex gap-2">
           <div class="relative flex-1 md:max-w-sm">
             <mat-icon fontSet="material-symbols-outlined" class="absolute left-3 top-1/2 -translate-y-1/2 text-subtle pointer-events-none" style="font-size: 20px; width: 20px; height: 20px;">search</mat-icon>
@@ -186,9 +186,9 @@
       </section>
 
       <!-- Мобилка: карточки -->
-      <section class="md:hidden flex flex-col gap-2">
+      <section class="md:hidden flex flex-col gap-1.5">
         @for (e of expenses().slice(0, mobileLimit()); track e.id) {
-          <div class="bg-surface border border-line-strong rounded-2xl p-3.5 flex flex-col gap-2">
+          <div class="bg-surface border border-line-strong rounded-2xl p-2.5 flex flex-col gap-1.5">
             <div class="flex items-start gap-3">
               <span class="w-10 h-10 shrink-0 rounded-xl bg-brand-50 text-accent flex items-center justify-center">
                 <mat-icon fontSet="material-symbols-outlined" style="font-size: 20px; width: 20px; height: 20px;">{{ e.icon }}</mat-icon>
@@ -290,9 +290,9 @@
       </section>
 
       <!-- Мобилка: карточки -->
-      <section class="md:hidden flex flex-col gap-2">
+      <section class="md:hidden flex flex-col gap-1.5">
         @for (d of debts().slice(0, mobileLimit()); track d.id) {
-          <div class="bg-surface border border-line-strong rounded-2xl p-3.5 flex flex-col gap-2">
+          <div class="bg-surface border border-line-strong rounded-2xl p-2.5 flex flex-col gap-1.5">
             <div class="flex items-start gap-3">
               <span class="w-10 h-10 shrink-0 rounded-xl flex items-center justify-center" [class]="d.direction === 'incoming' ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300' : 'bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-300'">
                 <mat-icon fontSet="material-symbols-outlined" style="font-size: 20px; width: 20px; height: 20px;">{{ d.direction === 'incoming' ? 'south_west' : 'north_east' }}</mat-icon>

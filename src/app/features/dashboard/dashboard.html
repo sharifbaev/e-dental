@@ -18,8 +18,8 @@
 
 @if (summary(); as s) {
   <!-- Мобилка: главная ровно на экран (минус шапка 75px, нижнее меню 62px и отступы по 8px) — страница не скроллится,
-       прокручиваются только ближайшие приёмы; -mx-2/-mt-2/-mb-38 уменьшают общие отступы <main> до 8px -->
-  <div class="flex flex-col gap-2 md:gap-4 max-md:-mx-2 max-md:-mt-2 max-md:-mb-38 max-md:h-[calc(100dvh_-_153px_-_env(safe-area-inset-bottom))]">
+       прокручиваются только ближайшие приёмы; -mb-38 оставляет от общего pb-40 у <main> 8px -->
+  <div class="flex flex-col gap-2 md:gap-4 max-md:-mb-38 max-md:h-[calc(100dvh_-_153px_-_env(safe-area-inset-bottom))]">
     <!-- Приветствие -->
     <section class="md:px-1 md:pt-1 flex flex-col md:flex-row md:items-end md:justify-between gap-2 md:gap-4">
       <div class="min-w-0">
