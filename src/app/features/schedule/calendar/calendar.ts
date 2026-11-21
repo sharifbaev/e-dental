@@ -10,7 +10,7 @@ import { FeedbackService } from '../../../shared/services/feedback.service';
 import { Schedule } from '../schedule';
 import { ScheduleService, isStatusOverdue, toDateKey } from '../services/schedule.service';
 import { DoctorsService } from '../../doctors/services/doctors.service';
-import { PATIENT_STATUS_CLASSES } from '../../../shared/models/patient-status';
+import { PatientStatus } from '../../../shared/models/patient-status';
 import { PATIENT_RATING_DOT } from '../../../shared/models/patient-rating';
 import { ScheduleAppointment } from '../models/schedule.model';
 
@@ -33,6 +33,18 @@ const CLICK_STEP_MINUTES = 15;
 // Режим работы по умолчанию — если врач не найден в справочнике
 const DEFAULT_START = '09:00';
 const DEFAULT_END = '18:00';
+
+// Цвета приёмов на шкале: в светлой теме насыщеннее общих цветов статусов (на белом фоне блоки плохо видны),
+// тёмная тема — как везде
+const EVENT_STATUS_CLASSES: Record<PatientStatus, string> = {
+  primary: 'bg-sky-200 text-sky-900 dark:bg-sky-500/15 dark:text-sky-300',
+  awaitingDecision: 'bg-amber-200 text-amber-900 dark:bg-amber-500/15 dark:text-amber-300',
+  inTreatment: 'bg-brand-200 text-brand-900 dark:bg-brand-50 dark:text-brand-300',
+  completed: 'bg-emerald-200 text-emerald-900 dark:bg-emerald-500/15 dark:text-emerald-300',
+  archived: 'bg-slate-200 text-slate-800 dark:bg-slate-500/15 dark:text-slate-300',
+  noShow: 'bg-orange-200 text-orange-900 dark:bg-orange-500/15 dark:text-orange-300',
+  cancelled: 'bg-red-100 text-red-700 dark:bg-red-500/10 dark:text-red-400'
+};
 
 // 'YYYY-MM-DD' → Date по местному времени
 function fromDateKey(key: string): Date {
@@ -504,7 +516,7 @@ export class ScheduleCalendar extends Schedule implements AfterViewInit {
         // 30 мин после приёма, а статус всё ещё «Первичный» — подсвечиваем
         overdue: isStatusOverdue(appointment, now),
         statusKey: `schedule.status.${appointment.status}`,
-        statusClass: PATIENT_STATUS_CLASSES[appointment.status],
+        statusClass: EVENT_STATUS_CLASSES[appointment.status],
         ratingDot: PATIENT_RATING_DOT[appointment.patientRating ?? 'good']
       };
     });
