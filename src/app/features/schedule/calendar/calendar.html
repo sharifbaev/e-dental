@@ -118,13 +118,14 @@
       }
     </div>
 
-    <!-- Мобилка: снизу место под кнопки «Сегодня» и действия -->
-    <div #timeline class="flex-1 min-h-0 overflow-y-auto overscroll-contain px-1 md:px-4 pt-3 pb-20 md:py-3">
+    <!-- Мобилка: снизу место под кнопки «Сегодня» и действия; свайп влево/вправо — следующий/предыдущий день -->
+    <div #timeline (touchstart)="onTimelineTouchStart($event)" (touchend)="onTimelineTouchEnd($event)" class="flex-1 min-h-0 overflow-y-auto overscroll-contain px-1 md:px-4 pt-3 pb-20 md:py-3">
       <div class="relative" [style.height.px]="timelineHeight()">
         <!-- Подписи часов и линии -->
         @for (hour of hours(); track hour.label) {
-          <div class="absolute inset-x-0 flex items-center" [style.top.px]="hour.top">
-            <span class="w-12 md:w-14 shrink-0 -translate-y-1/2 pr-2 text-right text-[11px] text-subtle tabular-nums" [class.invisible]="hour.hidden">{{ hour.label }}</span>
+          <!-- Высота строки 0 — линия ровно на отметке часа, подпись по центру линии -->
+          <div class="absolute inset-x-0 h-0 flex items-center" [style.top.px]="hour.top">
+            <span class="w-12 md:w-14 shrink-0 pr-2 text-right text-[11px] text-subtle tabular-nums" [class.invisible]="hour.hidden">{{ hour.label }}</span>
             <span class="flex-1 border-t border-line"></span>
           </div>
         }
@@ -139,23 +140,24 @@
           @for (event of events(); track event.id) {
             <div class="absolute p-px" [style.top.px]="event.top" [style.height.px]="event.height" [style.left.%]="event.left" [style.width.%]="event.width">
               <div role="button" tabindex="0"
-                   class="h-full rounded-lg border-l-4 border-current px-2 overflow-hidden cursor-pointer transition-shadow hover:shadow-md focus-visible:outline-2 focus-visible:outline-brand-300"
+                   class="h-full rounded-md md:rounded-lg border-l-2 md:border-l-4 border-current px-1.5 md:px-2 overflow-hidden cursor-pointer transition-shadow hover:shadow-md focus-visible:outline-2 focus-visible:outline-brand-300"
                    [class]="event.statusClass"
                    [class.opacity-50]="event.isCancelled"
                    [class.ring-2]="event.overdue"
                    [class.ring-amber-400]="event.overdue"
                    [class.ring-inset]="event.overdue"
                    [class.py-1]="!event.compact"
-                   [class.py-0.5]="event.compact"
+                   [class.md:py-0.5]="event.compact"
                    [title]="event.start + '–' + event.end + ' · ' + event.patientName + ' · ' + event.service"
                    (click)="$event.stopPropagation(); openDetails(event)" (keydown.enter)="$event.stopPropagation(); openDetails(event)">
                 @if (event.compact) {
-                  <div class="flex items-center gap-1.5 text-xs leading-tight min-w-0">
-                    <span class="w-2 h-2 shrink-0 rounded-[2px]" [class]="event.ratingDot"></span>
+                  <!-- Мобилка: только имя пациента -->
+                  <div class="h-full md:h-auto flex items-center gap-1.5 text-[11px] md:text-xs leading-none md:leading-tight min-w-0">
+                    <span class="max-md:hidden w-2 h-2 shrink-0 rounded-[2px]" [class]="event.ratingDot"></span>
                     <span class="font-semibold truncate" [class.line-through]="event.isCancelled">{{ event.patientName }}</span>
-                    <span class="shrink-0 opacity-80 tabular-nums">{{ event.start }}</span>
+                    <span class="max-md:hidden shrink-0 opacity-80 tabular-nums">{{ event.start }}</span>
                     @if (event.overdue) {
-                      <mat-icon fontSet="material-symbols-outlined" class="shrink-0 ml-auto text-amber-600 dark:text-amber-300" [title]="'schedule.actions.statusOverdue' | transloco" style="font-size: 14px; width: 14px; height: 14px;">warning</mat-icon>
+                      <mat-icon fontSet="material-symbols-outlined" class="max-md:hidden! shrink-0 ml-auto text-amber-600 dark:text-amber-300" [title]="'schedule.actions.statusOverdue' | transloco" style="font-size: 14px; width: 14px; height: 14px;">warning</mat-icon>
                     }
                   </div>
                 } @else {
@@ -177,7 +179,7 @@
 
           <!-- Текущее время -->
           @if (nowLine(); as now) {
-            <div class="absolute inset-x-0 z-10 flex items-center pointer-events-none" [style.top.px]="now.top">
+            <div class="absolute inset-x-0 z-10 h-0 flex items-center pointer-events-none" [style.top.px]="now.top">
               <span class="w-2.5 h-2.5 -ml-1.5 rounded-full bg-red-500"></span>
               <span class="flex-1 border-t-2 border-red-500"></span>
             </div>
@@ -186,7 +188,7 @@
 
         <!-- Время «сейчас» поверх подписей часов -->
         @if (nowLine(); as now) {
-          <span class="absolute left-0 z-10 w-12 md:w-14 -translate-y-1/2 pr-2 text-right text-[11px] font-semibold text-red-500 bg-surface tabular-nums pointer-events-none" [style.top.px]="now.top">{{ now.label }}</span>
+          <span class="absolute left-0 z-10 w-12 md:w-14 -translate-y-1/2 pr-2 text-right text-[11px] font-semibold text-red-500 bg-page md:bg-surface tabular-nums pointer-events-none" [style.top.px]="now.top">{{ now.label }}</span>
         }
       </div>
     </div>

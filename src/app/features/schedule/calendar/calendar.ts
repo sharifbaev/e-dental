@@ -18,7 +18,7 @@ const LOCALES: Record<string, string> = { ru: 'ru-RU', uz: 'uz-Latn-UZ' };
 
 // Высота одного часа на шкале, px (мобилка — ниже, чтобы на экран помещалось больше часов)
 const HOUR_PX = 100;
-const MOBILE_HOUR_PX = 60;
+const MOBILE_HOUR_PX = 40;
 
 // Минимальный горизонтальный сдвиг пальцем по ленте дней для смены недели, px
 const SWIPE_PX = 50;
@@ -127,6 +127,40 @@ export class ScheduleCalendar extends Schedule implements AfterViewInit {
     const dx = end - start;
     if (dx <= -SWIPE_PX) this.nextWeek();
     else if (dx >= SWIPE_PX) this.prevWeek();
+  }
+
+  // Мобилка: свайп по шкале — соседний день (влево — следующий, вправо — предыдущий).
+  // Считаем только горизонтальный жест, чтобы не мешать вертикальной прокрутке шкалы
+  private dayTouch: { x: number; y: number } | null = null;
+
+  protected onTimelineTouchStart(event: TouchEvent): void {
+    const touch = event.touches[0];
+    this.dayTouch = touch ? { x: touch.clientX, y: touch.clientY } : null;
+  }
+
+  protected onTimelineTouchEnd(event: TouchEvent): void {
+    const start = this.dayTouch;
+    this.dayTouch = null;
+    const touch = event.changedTouches[0];
+    if (!start || !touch) return;
+    const dx = touch.clientX - start.x;
+    const dy = touch.clientY - start.y;
+    if (Math.abs(dx) < SWIPE_PX || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+    this.shiftDay(dx < 0 ? 1 : -1);
+  }
+
+  // Соседний день; при выбранном интервале — только в его пределах, иначе неделя в ленте подстраивается
+  private shiftDay(delta: number): void {
+    if (this.isRange()) {
+      const days = this.stripDays();
+      const next = days[days.findIndex(day => day.key === this.selectedDate()) + delta];
+      if (next) this.pickDay(next.key);
+      return;
+    }
+    const current = fromDateKey(this.selectedDate());
+    const date = new Date(current.getFullYear(), current.getMonth(), current.getDate() + delta);
+    this.weekStart.set(startOfWeek(date));
+    this.pickDay(toDateKey(date));
   }
 
   // Интервал: то же окно выбора, что в «Расписании»
@@ -369,7 +403,8 @@ export class ScheduleCalendar extends Schedule implements AfterViewInit {
       const start = toMinutes(appointment.start);
       const end = toMinutes(appointment.end);
       const columns = groupColumns[g];
-      const height = Math.max(((end - start) / 60) * this.hourPx() - 2, 22);
+      // Мобилка: высота точно по времени (только имя пациента), ПК — не меньше 22px
+      const height = Math.max(((end - start) / 60) * this.hourPx() - 2, this.calMobile() ? 4 : 22);
       return {
         ...appointment,
         top: ((start - from) / 60) * this.hourPx() + 1,
@@ -377,7 +412,7 @@ export class ScheduleCalendar extends Schedule implements AfterViewInit {
         left: (column / columns) * 100,
         width: 100 / columns,
         // < 44px — одна строка, < 64px — имя и время, иначе — полностью
-        compact: height < 44,
+        compact: this.calMobile() || height < 44,
         medium: height >= 44 && height < 64,
         isCancelled: appointment.status === 'cancelled',
         // 30 мин после приёма, а статус всё ещё «Первичный» — подсвечиваем
