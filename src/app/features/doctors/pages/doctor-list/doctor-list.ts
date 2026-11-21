@@ -1,3 +1,4 @@
+import { NgTemplateOutlet } from '@angular/common';
 import { Component, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
@@ -46,7 +47,7 @@ function formatWorkDays(days: number[], locale: string): string {
 
 @Component({
   selector: 'app-doctor-list',
-  imports: [ReactiveFormsModule, MatIconModule, TranslocoPipe],
+  imports: [ReactiveFormsModule, MatIconModule, TranslocoPipe, NgTemplateOutlet],
   templateUrl: './doctor-list.html'
 })
 export class DoctorList {
@@ -109,6 +110,10 @@ export class DoctorList {
   });
 
   protected readonly allStatusesActive = computed(() => this.selectedStatuses().length === 0);
+
+  // Мобилка: модалка фильтров (статусы); точка на кнопке — если фильтр включён
+  protected readonly filtersOpen = signal(false);
+  protected readonly filtersActive = computed(() => !this.allStatusesActive());
 
   protected toggleStatus(status: DoctorStatus): void {
     this.selectedStatuses.update(list =>

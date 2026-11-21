@@ -1,3 +1,4 @@
+import { NgTemplateOutlet } from '@angular/common';
 import { Component, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
@@ -44,7 +45,7 @@ function getInitials(name: string): string {
 
 @Component({
   selector: 'app-patient-list',
-  imports: [ReactiveFormsModule, MatIconModule, TranslocoPipe],
+  imports: [ReactiveFormsModule, MatIconModule, TranslocoPipe, NgTemplateOutlet],
   templateUrl: './patient-list.html'
 })
 export class PatientList {
@@ -113,6 +114,10 @@ export class PatientList {
   });
 
   protected readonly allStatusesActive = computed(() => this.selectedStatuses().length === 0);
+
+  // Мобилка: модалка фильтров (статусы); точка на кнопке — если фильтр включён
+  protected readonly filtersOpen = signal(false);
+  protected readonly filtersActive = computed(() => !this.allStatusesActive());
 
   protected toggleStatus(status: PatientStatus): void {
     this.selectedStatuses.update(list =>
