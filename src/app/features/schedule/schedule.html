@@ -1,10 +1,55 @@
-<div class="flex flex-col gap-4 md:h-[calc(100dvh-105px)]">
-  <!-- Фильтры -->
-  <!-- Фильтры: на мобилке закреплены сверху, прокручивается только список -->
-  <section class="sticky top-0 z-20 shadow-sm md:static md:shadow-none bg-surface border border-line-strong rounded-[20px] p-3 md:p-4 flex flex-col gap-3 md:gap-4">
-    <div class="flex flex-col md:flex-row md:flex-wrap gap-3">
-      <!-- Период -->
-      <div class="grid grid-cols-3 gap-1 p-1 rounded-xl bg-page md:w-96 md:shrink-0">
+<!-- Фильтр по врачу — общий для ПК (в строке фильтров) и мобилки (в модалке фильтров) -->
+<ng-template #doctorFilter>
+  <label class="md:w-72 flex items-center gap-2 h-11 pl-3 pr-1 rounded-xl bg-surface border border-line-strong text-muted focus-within:border-brand-300">
+    <mat-icon fontSet="material-symbols-outlined" class="shrink-0" style="font-size: 18px; width: 18px; height: 18px;">stethoscope</mat-icon>
+    <span class="sr-only">{{ 'schedule.doctor' | transloco }}</span>
+    <select class="flex-1 min-w-0 h-full bg-transparent text-sm font-semibold text-content outline-none cursor-pointer" (change)="onDoctorChange($any($event.target).value)">
+      <option value="all" [selected]="selectedDoctor() === 'all'">{{ 'dashboard.kpi.allDoctors' | transloco }}</option>
+      @for (doctor of doctorOptions(); track doctor.id) {
+        <option [value]="doctor.id" [selected]="doctor.id === selectedDoctor()">{{ 'dashboard.doctorPrefix' | transloco }} {{ doctor.name }}</option>
+      }
+    </select>
+  </label>
+</ng-template>
+
+<!-- Чипы статусов — общие для ПК и модалки фильтров на мобилке -->
+<ng-template #statusChipsTpl>
+  <button type="button" class="shrink-0 px-3 py-1.5 rounded-full text-sm font-medium border transition-colors" [class.bg-brand-700]="allStatusesActive()" [class.text-white]="allStatusesActive()" [class.border-brand-700]="allStatusesActive()" [class.border-line-strong]="!allStatusesActive()" [class.text-soft]="!allStatusesActive()" (click)="clearStatuses()">{{ 'schedule.statusAll' | transloco }}</button>
+
+  @for (chip of statusChips(); track chip.status) {
+    <button type="button" class="shrink-0 px-3 py-1.5 rounded-full text-sm font-medium border transition-colors" [class]="chip.active ? chip.activeClass + ' border-current' : 'bg-surface text-soft border-line-strong'" (click)="toggleStatus(chip.status)">{{ chip.key | transloco }} ({{ chip.count }})</button>
+  }
+</ng-template>
+
+<!-- Кнопки действий карточки: ПК — в нижней строке рядом с врачом, мобилка — в строке со временем -->
+<ng-template #cardActions let-item>
+  @if (!item.isCancelled) {
+    <!-- Смена статуса. Если приём прошёл, а статус «Первичный» — кнопка подсвечена -->
+    <button type="button" class="relative w-8 h-8 md:w-9 md:h-9 shrink-0 rounded-lg flex items-center justify-center" [class]="item.statusOverdue ? 'bg-amber-50 text-amber-700 hover:bg-amber-100 dark:bg-amber-500/15 dark:text-amber-300' : 'bg-page text-soft hover:text-accent hover:bg-brand-50'" [title]="(item.statusOverdue ? 'schedule.actions.statusOverdue' : 'schedule.actions.status') | transloco" (click)="$event.stopPropagation(); changeStatus(item)" (keydown.enter)="$event.stopPropagation()">
+      <mat-icon fontSet="material-symbols-outlined" style="font-size: 20px; width: 20px; height: 20px;">published_with_changes</mat-icon>
+      @if (item.statusOverdue) {
+        <span class="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-amber-500 ring-2 ring-surface"></span>
+      }
+    </button>
+    @if (!item.isNoShow) {
+    <button type="button" class="w-8 h-8 md:w-9 md:h-9 shrink-0 rounded-lg bg-page flex items-center justify-center text-soft hover:text-accent hover:bg-brand-50" [title]="'schedule.actions.edit' | transloco" (click)="$event.stopPropagation(); edit(item)" (keydown.enter)="$event.stopPropagation()">
+      <mat-icon fontSet="material-symbols-outlined" style="font-size: 20px; width: 20px; height: 20px;">edit</mat-icon>
+    </button>
+    <button type="button" class="w-8 h-8 md:w-9 md:h-9 shrink-0 rounded-lg bg-page flex items-center justify-center text-soft hover:text-red-600 hover:bg-red-50 dark:hover:text-red-400 dark:hover:bg-red-500/10" [title]="'schedule.actions.cancel' | transloco" (click)="$event.stopPropagation(); cancel(item)" (keydown.enter)="$event.stopPropagation()">
+      <mat-icon fontSet="material-symbols-outlined" style="font-size: 20px; width: 20px; height: 20px;">event_busy</mat-icon>
+    </button>
+    }
+  }
+</ng-template>
+
+<!-- Мобилка: раздел ровно на экран (минус шапка 75px, нижнее меню 62px и отступы по 8px) — страница не скроллится,
+     прокручиваются только карточки; -mx-2/-mt-2/-mb-38 уменьшают общие отступы <main> до 8px -->
+<div class="flex flex-col gap-2 md:gap-4 max-md:-mx-2 max-md:-mt-2 max-md:-mb-38 max-md:h-[calc(100dvh_-_153px_-_env(safe-area-inset-bottom))] md:h-[calc(100dvh-105px)]">
+  <!-- Фильтры: на месте, прокручивается только список карточек -->
+  <section class="shrink-0 bg-surface border border-line-strong rounded-[20px] p-2 md:p-4 flex flex-col gap-2 md:gap-4">
+    <div class="flex flex-wrap gap-2 md:gap-3">
+      <!-- Период (мобилка: в один ряд с кнопкой фильтров) -->
+      <div class="grid grid-cols-3 gap-1 p-1 rounded-xl bg-page max-md:basis-[calc(100%-3rem)] max-md:min-w-0 md:w-96 md:shrink-0">
         <button type="button" class="flex items-center justify-center gap-1 h-9 rounded-lg text-sm font-medium transition-colors" [class.bg-surface]="period() === 'today'" [class.shadow-sm]="period() === 'today'" [class.text-accent]="period() === 'today'" [class.text-muted]="period() !== 'today'" (click)="setPeriod('today')">{{ 'schedule.periods.today' | transloco }}</button>
         <button type="button" class="flex items-center justify-center gap-1 h-9 rounded-lg text-sm font-medium transition-colors" [class.bg-surface]="period() === 'week'" [class.shadow-sm]="period() === 'week'" [class.text-accent]="period() === 'week'" [class.text-muted]="period() !== 'week'" (click)="setPeriod('week')">{{ 'schedule.periods.week' | transloco }}</button>
         <button type="button" class="flex items-center justify-center gap-1 h-9 rounded-lg text-sm font-medium transition-colors" [class.bg-surface]="period() === 'calendar'" [class.shadow-sm]="period() === 'calendar'" [class.text-accent]="period() === 'calendar'" [class.text-muted]="period() !== 'calendar'" (click)="setPeriod('calendar')">
@@ -12,6 +57,14 @@
           {{ 'schedule.periods.calendar' | transloco }}
         </button>
       </div>
+
+      <!-- Мобилка: кнопка фильтров (врач и статусы — в модалке); точка — если фильтр включён -->
+      <button type="button" class="md:hidden relative w-10 shrink-0 rounded-xl bg-page flex items-center justify-center" [class.text-accent]="filtersActive()" [class.text-soft]="!filtersActive()" [title]="'schedule.filters' | transloco" [attr.aria-label]="'schedule.filters' | transloco" (click)="filtersOpen.set(true)">
+        <mat-icon fontSet="material-symbols-outlined" style="font-size: 22px; width: 22px; height: 22px;">filter_list</mat-icon>
+        @if (filtersActive()) {
+          <span class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-brand-700"></span>
+        }
+      </button>
 
       <!-- Выбранный период (после выбора в календаре) -->
       @if (rangeLabel()) {
@@ -26,18 +79,9 @@
         </div>
       }
 
-      <!-- Врач: выпадающий список (у роли «Врач» скрыт — видно только своё расписание) -->
+      <!-- Врач: выпадающий список (у роли «Врач» скрыт — видно только своё расписание). Мобилка — в модалке фильтров -->
       @if (showDoctorFilter()) {
-      <label class="md:w-72 flex items-center gap-2 h-11 pl-3 pr-1 rounded-xl bg-surface border border-line-strong text-muted focus-within:border-brand-300">
-        <mat-icon fontSet="material-symbols-outlined" class="shrink-0" style="font-size: 18px; width: 18px; height: 18px;">stethoscope</mat-icon>
-        <span class="sr-only">{{ 'schedule.doctor' | transloco }}</span>
-        <select class="flex-1 min-w-0 h-full bg-transparent text-sm font-semibold text-content outline-none cursor-pointer" (change)="onDoctorChange($any($event.target).value)">
-          <option value="all" [selected]="selectedDoctor() === 'all'">{{ 'dashboard.kpi.allDoctors' | transloco }}</option>
-          @for (doctor of doctorOptions(); track doctor.id) {
-            <option [value]="doctor.id" [selected]="doctor.id === selectedDoctor()">{{ 'dashboard.doctorPrefix' | transloco }} {{ doctor.name }}</option>
-          }
-        </select>
-      </label>
+        <div class="max-md:hidden contents"><ng-container [ngTemplateOutlet]="doctorFilter" /></div>
       }
 
       <!-- Новая запись — ПК -->
@@ -49,9 +93,9 @@
 
     <!-- Неделя: 7 дней вперёд -->
     @if (period() === 'week') {
-      <div class="flex gap-2 overflow-x-auto pb-1">
+      <div class="flex gap-1 md:gap-2 overflow-x-auto pb-1">
         @for (day of weekDays(); track day.key) {
-          <button type="button" class="flex-1 min-w-16 flex flex-col items-center gap-0.5 rounded-xl py-2 px-1 transition-colors" [class.bg-brand-700]="selectedDate() === day.key" [class.text-white]="selectedDate() === day.key" [class.hover:bg-page]="selectedDate() !== day.key" (click)="selectDay(day.key)">
+          <button type="button" class="flex-1 min-w-16 flex flex-col items-center gap-0.5 rounded-xl py-1.5 md:py-2 px-1 transition-colors" [class.bg-brand-700]="selectedDate() === day.key" [class.text-white]="selectedDate() === day.key" [class.hover:bg-page]="selectedDate() !== day.key" (click)="selectDay(day.key)">
             <span class="text-xs" [class.text-white/70]="selectedDate() === day.key" [class.text-subtle]="selectedDate() !== day.key">{{ day.weekday }}</span>
             <span class="text-lg font-bold" [class.text-content]="selectedDate() !== day.key">{{ day.day }}</span>
             <span class="text-[11px] whitespace-nowrap" [class.text-white/70]="selectedDate() === day.key" [class.text-subtle]="selectedDate() !== day.key">
@@ -64,9 +108,9 @@
 
     <!-- Интервал из календаря: все дни. Клик — только этот день, повторный клик — весь интервал -->
     @if (isRange() && rangeDays().length > 1) {
-      <div class="flex gap-2 overflow-x-auto pb-1">
+      <div class="flex gap-1 md:gap-2 overflow-x-auto pb-1">
         @for (day of rangeDays(); track day.key) {
-          <button type="button" class="flex-1 min-w-16 flex flex-col items-center gap-0.5 rounded-xl py-2 px-1 transition-colors" [class.bg-brand-700]="rangeDay() === day.key" [class.text-white]="rangeDay() === day.key" [class.hover:bg-page]="rangeDay() !== day.key" [attr.aria-pressed]="rangeDay() === day.key" [title]="day.title" (click)="toggleRangeDay(day.key)">
+          <button type="button" class="flex-1 min-w-16 flex flex-col items-center gap-0.5 rounded-xl py-1.5 md:py-2 px-1 transition-colors" [class.bg-brand-700]="rangeDay() === day.key" [class.text-white]="rangeDay() === day.key" [class.hover:bg-page]="rangeDay() !== day.key" [attr.aria-pressed]="rangeDay() === day.key" [title]="day.title" (click)="toggleRangeDay(day.key)">
             <span class="text-xs" [class.text-white/70]="rangeDay() === day.key" [class.text-subtle]="rangeDay() !== day.key">{{ day.weekday }}</span>
             <span class="text-lg font-bold leading-tight" [class.text-content]="rangeDay() !== day.key">{{ day.day }}</span>
             @if (day.month) {
@@ -80,13 +124,9 @@
       </div>
     }
 
-    <!-- Статусы -->
-    <div class="flex gap-2 overflow-x-auto pb-1">
-      <button type="button" class="shrink-0 px-3 py-1.5 rounded-full text-sm font-medium border transition-colors" [class.bg-brand-700]="allStatusesActive()" [class.text-white]="allStatusesActive()" [class.border-brand-700]="allStatusesActive()" [class.border-line-strong]="!allStatusesActive()" [class.text-soft]="!allStatusesActive()" (click)="clearStatuses()">{{ 'schedule.statusAll' | transloco }}</button>
-
-      @for (chip of statusChips(); track chip.status) {
-        <button type="button" class="shrink-0 px-3 py-1.5 rounded-full text-sm font-medium border transition-colors" [class]="chip.active ? chip.activeClass + ' border-current' : 'bg-surface text-soft border-line-strong'" (click)="toggleStatus(chip.status)">{{ chip.key | transloco }} ({{ chip.count }})</button>
-      }
+    <!-- Статусы (мобилка — в модалке фильтров) -->
+    <div class="max-md:hidden flex gap-2 overflow-x-auto pb-1">
+      <ng-container [ngTemplateOutlet]="statusChipsTpl" />
     </div>
   </section>
 
@@ -94,10 +134,11 @@
   @if (items().length === 0) {
     <div class="bg-surface border border-line-strong rounded-[20px] py-12 text-center text-sm text-subtle">{{ 'schedule.empty' | transloco }}</div>
   } @else {
-    <section class="grid md:grid-cols-2 xl:grid-cols-3 gap-3 content-start md:flex-1 md:min-h-60 md:overflow-y-auto md:overscroll-contain md:pr-1 [scrollbar-gutter:stable]">
+    <!-- Прокручиваются только карточки; мобилка: снизу место под плавающую кнопку -->
+    <section class="grid md:grid-cols-2 xl:grid-cols-3 gap-1.5 md:gap-3 content-start flex-1 min-h-0 md:min-h-60 overflow-y-auto overscroll-contain max-md:pb-16 md:pr-1 [scrollbar-gutter:stable]">
       @for (item of items(); track item.id) {
-        <div role="button" tabindex="0" class="bg-surface border border-line-strong rounded-[18px] p-4 flex flex-col gap-3 cursor-pointer transition-shadow hover:shadow-md focus-visible:outline-2 focus-visible:outline-brand-300" [class.opacity-60]="item.isCancelled" (click)="openDetails(item)" (keydown.enter)="openDetails(item)">
-          <!-- Дата (в режиме интервала), время, кабинет, статус -->
+        <div role="button" tabindex="0" class="bg-surface border border-line-strong rounded-[18px] p-2.5 md:p-4 flex flex-col gap-1 md:gap-3 cursor-pointer transition-shadow hover:shadow-md focus-visible:outline-2 focus-visible:outline-brand-300" [class.opacity-60]="item.isCancelled" (click)="openDetails(item)" (keydown.enter)="openDetails(item)">
+          <!-- Дата (в режиме интервала), время, кабинет, статус. Мобилка: без кабинета и статуса, справа — кнопки -->
           <div class="flex flex-wrap items-center gap-2">
             @if (item.dateLabel) {
               <span class="px-1.5 py-0.5 rounded bg-brand-700 text-xs font-medium text-white">{{ item.dateLabel }}</span>
@@ -106,51 +147,60 @@
               <mat-icon fontSet="material-symbols-outlined" style="font-size: 18px; width: 18px; height: 18px;">schedule</mat-icon>
               {{ item.start }} – {{ item.end }}
             </span>
-            <span class="px-1.5 py-0.5 rounded bg-page text-xs text-muted">{{ 'schedule.cabinet' | transloco: { number: item.cabinet } }}</span>
+            <span class="max-md:hidden px-1.5 py-0.5 rounded bg-page text-xs text-muted">{{ 'schedule.cabinet' | transloco: { number: item.cabinet } }}</span>
             @if (item.visitTotal) {
               <span class="px-1.5 py-0.5 rounded bg-brand-50 text-xs font-medium text-accent">{{ 'schedule.visitOf' | transloco: { index: item.visitIndex, total: item.visitTotal } }}</span>
             }
-            <span class="ml-auto px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap" [class]="item.statusClass">{{ item.statusKey | transloco }}</span>
+            <span class="max-md:hidden ml-auto px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap" [class]="item.statusClass">{{ item.statusKey | transloco }}</span>
+            <div class="md:hidden ml-auto flex items-center gap-1">
+              <ng-container [ngTemplateOutlet]="cardActions" [ngTemplateOutletContext]="{ $implicit: item }" />
+            </div>
           </div>
 
           <!-- Пациент и его рейтинг (цветной квадратик) -->
           <div class="min-w-0 flex items-center gap-2">
             <span role="img" class="w-3 h-3 shrink-0 rounded-[3px]" [class]="item.ratingDot" [attr.aria-label]="('rating.label' | transloco) + ': ' + (item.ratingKey | transloco)" [title]="item.ratingKey | transloco"></span>
             <span class="min-w-0 truncate font-semibold text-content" [class.line-through]="item.isCancelled">{{ item.patientName }}</span>
-            <!-- Оплата -->
+            <!-- Оплата (на мобилке скрыта) -->
             @if (item.paymentState) {
-              <span class="ml-auto shrink-0 px-1.5 py-0.5 rounded text-[11px] font-semibold" [class]="item.paymentState === 'debt' ? 'bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400' : 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300'">{{ ('payments.badge.' + item.paymentState) | transloco }}</span>
+              <span class="max-md:hidden ml-auto shrink-0 px-1.5 py-0.5 rounded text-[11px] font-semibold" [class]="item.paymentState === 'debt' ? 'bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400' : 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300'">{{ ('payments.badge.' + item.paymentState) | transloco }}</span>
             }
           </div>
 
-          <!-- Врач и действия -->
-          <div class="flex items-center gap-2 pt-3 border-t border-line">
+          <!-- Мобилка: врач мелким шрифтом под ФИО пациента -->
+          <div class="md:hidden pl-5 text-xs text-muted truncate">{{ 'dashboard.doctorPrefix' | transloco }} {{ item.doctorName }}</div>
+
+          <!-- Врач и действия (ПК) -->
+          <div class="max-md:hidden flex items-center gap-2 pt-3 border-t border-line">
             <span class="w-8 h-8 shrink-0 rounded-full bg-brand-50 text-accent flex items-center justify-center text-xs font-semibold">{{ item.doctorInitials }}</span>
             <span class="min-w-0 flex-1 text-sm text-soft truncate">{{ 'dashboard.doctorPrefix' | transloco }} {{ item.doctorName }}</span>
 
-            @if (!item.isCancelled) {
-              <!-- Смена статуса. Если приём прошёл, а статус «Первичный» — кнопка подсвечена -->
-              <button type="button" class="relative w-9 h-9 shrink-0 rounded-lg flex items-center justify-center" [class]="item.statusOverdue ? 'bg-amber-50 text-amber-700 hover:bg-amber-100 dark:bg-amber-500/15 dark:text-amber-300' : 'bg-page text-soft hover:text-accent hover:bg-brand-50'" [title]="(item.statusOverdue ? 'schedule.actions.statusOverdue' : 'schedule.actions.status') | transloco" (click)="$event.stopPropagation(); changeStatus(item)" (keydown.enter)="$event.stopPropagation()">
-                <mat-icon fontSet="material-symbols-outlined" style="font-size: 20px; width: 20px; height: 20px;">published_with_changes</mat-icon>
-                @if (item.statusOverdue) {
-                  <span class="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-amber-500 ring-2 ring-surface"></span>
-                }
-              </button>
-              @if (!item.isNoShow) {
-              <button type="button" class="w-9 h-9 shrink-0 rounded-lg bg-page flex items-center justify-center text-soft hover:text-accent hover:bg-brand-50" [title]="'schedule.actions.edit' | transloco" (click)="$event.stopPropagation(); edit(item)" (keydown.enter)="$event.stopPropagation()">
-                <mat-icon fontSet="material-symbols-outlined" style="font-size: 20px; width: 20px; height: 20px;">edit</mat-icon>
-              </button>
-              <button type="button" class="w-9 h-9 shrink-0 rounded-lg bg-page flex items-center justify-center text-soft hover:text-red-600 hover:bg-red-50 dark:hover:text-red-400 dark:hover:bg-red-500/10" [title]="'schedule.actions.cancel' | transloco" (click)="$event.stopPropagation(); cancel(item)" (keydown.enter)="$event.stopPropagation()">
-                <mat-icon fontSet="material-symbols-outlined" style="font-size: 20px; width: 20px; height: 20px;">event_busy</mat-icon>
-              </button>
-              }
-            }
+            <ng-container [ngTemplateOutlet]="cardActions" [ngTemplateOutletContext]="{ $implicit: item }" />
           </div>
         </div>
       }
     </section>
   }
 </div>
+
+<!-- Мобилка: модалка фильтров (врач и статусы); закрытие — крестик или затемнение -->
+@if (filtersOpen()) {
+  <div class="md:hidden fixed inset-0 z-[60] bg-black/50" (click)="filtersOpen.set(false)"></div>
+  <div class="md:hidden fixed inset-x-3 top-1/2 -translate-y-1/2 z-[61] max-h-[80dvh] overflow-y-auto p-4 rounded-2xl bg-surface shadow-xl flex flex-col gap-4" role="dialog" [attr.aria-label]="'schedule.filters' | transloco">
+    <div class="flex items-center justify-between gap-2">
+      <span class="text-base font-semibold text-content">{{ 'schedule.filters' | transloco }}</span>
+      <button type="button" class="w-9 h-9 -my-2 -mr-2 rounded-full flex items-center justify-center text-soft hover:bg-page" [title]="'common.close' | transloco" [attr.aria-label]="'common.close' | transloco" (click)="filtersOpen.set(false)">
+        <mat-icon fontSet="material-symbols-outlined">close</mat-icon>
+      </button>
+    </div>
+    @if (showDoctorFilter()) {
+      <ng-container [ngTemplateOutlet]="doctorFilter" />
+    }
+    <div class="flex flex-wrap gap-2">
+      <ng-container [ngTemplateOutlet]="statusChipsTpl" />
+    </div>
+  </div>
+}
 
 <!-- Новая запись — мобилка: плавающая кнопка над нижним меню -->
 <button type="button" class="md:hidden fixed right-4 bottom-24 z-40 flex items-center gap-1 h-12 px-5 rounded-full bg-brand-700 text-white text-sm font-semibold shadow-lg hover:bg-brand-800" (click)="openNewAppointment()">

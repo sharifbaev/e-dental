@@ -1,3 +1,4 @@
+import { NgTemplateOutlet } from '@angular/common';
 import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MatDialog } from '@angular/material/dialog';
@@ -49,7 +50,7 @@ function getInitials(name: string): string {
 
 @Component({
   selector: 'app-schedule',
-  imports: [MatIconModule, TranslocoPipe],
+  imports: [MatIconModule, TranslocoPipe, NgTemplateOutlet],
   templateUrl: './schedule.html'
 })
 export class Schedule {
@@ -298,6 +299,11 @@ export class Schedule {
   });
 
   protected readonly allStatusesActive = computed(() => this.selectedStatuses().length === 0);
+
+  // Мобилка: модалка фильтров (врач и статусы)
+  protected readonly filtersOpen = signal(false);
+  // Включён ли какой-то фильтр — точка на кнопке фильтров
+  protected readonly filtersActive = computed(() => !this.allStatusesActive() || (this.showDoctorFilter() && this.selectedDoctor() !== 'all'));
 
   protected toggleStatus(status: PatientStatus): void {
     this.selectedStatuses.update(list =>

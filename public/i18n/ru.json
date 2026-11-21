@@ -224,6 +224,7 @@
       "week": "Неделя",
       "calendar": "Календарь"
     },
+    "filters": "Фильтры",
     "statusAll": "Все",
     "dayCount": "{{count}} зап.",
     "dayEmpty": "нет записей",

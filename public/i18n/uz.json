@@ -224,6 +224,7 @@
       "week": "Hafta",
       "calendar": "Kalendar"
     },
+    "filters": "Filtrlar",
     "statusAll": "Barchasi",
     "dayCount": "{{count}} ta",
     "dayEmpty": "yozuv yo'q",
