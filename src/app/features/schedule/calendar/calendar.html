@@ -80,7 +80,7 @@
       <div #stripContent class="flex-1 min-w-0" [class]="isRange() ? 'flex gap-1 overflow-x-auto' : 'grid grid-cols-7 gap-0.5 md:gap-1'">
         @for (day of stripDays(); track day.key) {
           <button type="button" class="min-w-0 flex flex-col items-center gap-1 py-0.5 md:py-1.5 rounded-xl transition-colors hover:bg-page" [class.flex-1]="isRange()" [class.min-w-12]="isRange()" [class.shrink-0]="isRange()" [attr.aria-pressed]="selectedDate() === day.key" (click)="pickDay(day.key)">
-            <span class="text-[11px] leading-none md:leading-normal font-semibold md:font-medium" [class.text-subtle]="!day.isWeekend" [class.text-muted]="day.isWeekend"><span class="md:hidden">{{ day.weekday.charAt(0) }}</span><span class="max-md:hidden">{{ day.weekday }}</span></span>
+            <span class="text-[11px] leading-none md:leading-normal font-semibold md:font-medium" [class.text-subtle]="!day.isWeekend" [class.text-muted]="day.isWeekend"><span class="md:hidden">{{ day.weekday.slice(0, 2).toLowerCase() }}</span><span class="max-md:hidden">{{ day.weekday }}</span></span>
             <span class="w-9 h-9 md:w-10 md:h-10 flex items-center justify-center rounded-full text-lg font-semibold md:font-semibold transition-colors"
                   [class.bg-brand-700]="selectedDate() === day.key"
                   [class.text-white]="selectedDate() === day.key"
