@@ -69,15 +69,15 @@
     </section>
 
     <!-- Дни недели -->
-    <section class="max-md:pb-1.5 max-md:border-b max-md:border-line md:bg-surface md:border md:border-line-strong md:rounded-[20px] md:p-4 md:pt-4 md:rounded-t-none md:border-t-0" (touchstart)="onStripTouchStart($event)" (touchend)="onStripTouchEnd($event)">
-      <!-- Мобилка: стрелки недель по краям ленты; неделю можно листать и свайпом -->
+    <section class="max-md:pb-1.5 max-md:overflow-hidden max-md:border-b max-md:border-line md:bg-surface md:border md:border-line-strong md:rounded-[20px] md:p-4 md:pt-4 md:rounded-t-none md:border-t-0" (touchstart)="onSwipeStart($event, 'strip')" (touchmove)="onSwipeMove($event)" (touchend)="onSwipeEnd()" (touchcancel)="onSwipeEnd()">
+      <!-- Мобилка: стрелки недель по краям ленты; неделю можно листать и свайпом (с анимацией) -->
       <div class="flex items-center">
       @if (!isRange()) {
         <button type="button" class="md:hidden w-6 h-10 shrink-0 flex items-center justify-center rounded-lg text-soft hover:bg-page" [title]="'calendar.prevWeek' | transloco" [attr.aria-label]="'calendar.prevWeek' | transloco" (click)="prevWeek()">
           <mat-icon fontSet="material-symbols-outlined" style="font-size: 22px; width: 22px; height: 22px;">chevron_left</mat-icon>
         </button>
       }
-      <div class="flex-1 min-w-0" [class]="isRange() ? 'flex gap-1 overflow-x-auto' : 'grid grid-cols-7 gap-0.5 md:gap-1'">
+      <div #stripContent class="flex-1 min-w-0" [class]="isRange() ? 'flex gap-1 overflow-x-auto' : 'grid grid-cols-7 gap-0.5 md:gap-1'">
         @for (day of stripDays(); track day.key) {
           <button type="button" class="min-w-0 flex flex-col items-center gap-1 py-0.5 md:py-1.5 rounded-xl transition-colors hover:bg-page" [class.flex-1]="isRange()" [class.min-w-12]="isRange()" [class.shrink-0]="isRange()" [attr.aria-pressed]="selectedDate() === day.key" (click)="pickDay(day.key)">
             <span class="text-[11px] leading-none md:leading-normal font-semibold md:font-medium" [class.text-subtle]="!day.isWeekend" [class.text-muted]="day.isWeekend"><span class="md:hidden">{{ day.weekday.charAt(0) }}</span><span class="max-md:hidden">{{ day.weekday }}</span></span>
@@ -119,8 +119,8 @@
     </div>
 
     <!-- Мобилка: шкала растягивается на всю высоту секции (час = высота / число часов); снизу место под кнопки «Сегодня» и действия; свайп влево/вправо — следующий/предыдущий день -->
-    <div #timeline (touchstart)="onTimelineTouchStart($event)" (touchend)="onTimelineTouchEnd($event)" class="flex-1 min-h-0 overflow-y-auto overscroll-contain px-1 md:px-4 pt-2 pb-14 md:py-3">
-      <div class="relative" [style.height.px]="timelineHeight()">
+    <div #timeline (touchstart)="onSwipeStart($event, 'timeline')" (touchmove)="onSwipeMove($event)" (touchend)="onSwipeEnd()" (touchcancel)="onSwipeEnd()" class="flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-contain px-1 md:px-4 pt-2 pb-14 md:py-3">
+      <div #timelineContent class="relative" [style.height.px]="timelineHeight()">
         <!-- Подписи часов и линии -->
         @for (hour of hours(); track hour.label) {
           <!-- Высота строки 0 — линия ровно на отметке часа, подпись по центру линии -->

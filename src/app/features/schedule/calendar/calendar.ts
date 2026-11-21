@@ -124,41 +124,103 @@ export class ScheduleCalendar extends Schedule implements AfterViewInit {
     });
   }
 
-  // Мобилка: свайп по ленте дней — соседняя неделя (влево — следующая, вправо — предыдущая)
-  private swipeStartX: number | null = null;
+  // ---- Мобилка: свайпы с анимацией ----
+  // Лента дней — соседняя неделя, шкала — соседний день (влево — следующие, вправо — предыдущие).
+  // Содержимое едет за пальцем; если жест короткий — возвращается на место, иначе уезжает
+  // за край, меняется неделя/день и новое содержимое въезжает с другой стороны.
+  // Вертикальный жест не трогаем — он прокручивает шкалу
 
-  protected onStripTouchStart(event: TouchEvent): void {
-    this.swipeStartX = event.touches[0]?.clientX ?? null;
+  private readonly stripContent = viewChild<ElementRef<HTMLElement>>('stripContent');
+  private readonly timelineContent = viewChild<ElementRef<HTMLElement>>('timelineContent');
+
+  private swipe: { target: 'strip' | 'timeline'; x: number; y: number; dx: number; axis: 'x' | 'y' | null } | null = null;
+  private swipeBusy = false;
+
+  private swipeElement(target: 'strip' | 'timeline'): HTMLElement | undefined {
+    return (target === 'strip' ? this.stripContent() : this.timelineContent())?.nativeElement;
   }
 
-  protected onStripTouchEnd(event: TouchEvent): void {
-    const start = this.swipeStartX;
-    this.swipeStartX = null;
-    const end = event.changedTouches[0]?.clientX;
-    if (start === null || end === undefined || this.isRange()) return;
-    const dx = end - start;
-    if (dx <= -SWIPE_PX) this.nextWeek();
-    else if (dx >= SWIPE_PX) this.prevWeek();
-  }
-
-  // Мобилка: свайп по шкале — соседний день (влево — следующий, вправо — предыдущий).
-  // Считаем только горизонтальный жест, чтобы не мешать вертикальной прокрутке шкалы
-  private dayTouch: { x: number; y: number } | null = null;
-
-  protected onTimelineTouchStart(event: TouchEvent): void {
+  protected onSwipeStart(event: TouchEvent, target: 'strip' | 'timeline'): void {
     const touch = event.touches[0];
-    this.dayTouch = touch ? { x: touch.clientX, y: touch.clientY } : null;
+    if (!touch || this.swipeBusy || (target === 'strip' && this.isRange())) return;
+    this.swipe = { target, x: touch.clientX, y: touch.clientY, dx: 0, axis: null };
   }
 
-  protected onTimelineTouchEnd(event: TouchEvent): void {
-    const start = this.dayTouch;
-    this.dayTouch = null;
-    const touch = event.changedTouches[0];
-    if (!start || !touch) return;
-    const dx = touch.clientX - start.x;
-    const dy = touch.clientY - start.y;
-    if (Math.abs(dx) < SWIPE_PX || Math.abs(dx) < Math.abs(dy) * 1.5) return;
-    this.shiftDay(dx < 0 ? 1 : -1);
+  protected onSwipeMove(event: TouchEvent): void {
+    const swipe = this.swipe;
+    const touch = event.touches[0];
+    if (!swipe || !touch) return;
+    const dx = touch.clientX - swipe.x;
+    const dy = touch.clientY - swipe.y;
+    if (!swipe.axis && (Math.abs(dx) > 10 || Math.abs(dy) > 10)) {
+      swipe.axis = Math.abs(dx) > Math.abs(dy) * 1.5 ? 'x' : 'y';
+    }
+    if (swipe.axis !== 'x') return;
+    swipe.dx = dx;
+    const element = this.swipeElement(swipe.target);
+    if (!element) return;
+    // Нет соседнего дня (край интервала) — тянется с сопротивлением
+    const direction = dx < 0 ? 1 : -1;
+    const shift = swipe.target === 'timeline' && !this.canShiftDay(direction) ? dx / 4 : dx;
+    element.style.transform = `translateX(${shift}px)`;
+    element.style.opacity = String(1 - Math.min(Math.abs(shift) / element.offsetWidth, 1) * 0.6);
+  }
+
+  protected onSwipeEnd(): void {
+    const swipe = this.swipe;
+    this.swipe = null;
+    if (!swipe || swipe.axis !== 'x') return;
+    const element = this.swipeElement(swipe.target);
+    if (!element) return;
+    const direction = swipe.dx < 0 ? 1 : -1;
+    const allowed = swipe.target === 'strip' || this.canShiftDay(direction);
+    if (Math.abs(swipe.dx) < SWIPE_PX || !allowed) {
+      this.animateBack(element);
+      return;
+    }
+    const change = swipe.target === 'strip'
+      ? () => (direction > 0 ? this.nextWeek() : this.prevWeek())
+      : () => this.shiftDay(direction);
+    void this.slide(element, direction, change);
+  }
+
+  private animateBack(element: HTMLElement): void {
+    const from = { transform: element.style.transform || 'translateX(0)', opacity: element.style.opacity || '1' };
+    element.style.transform = '';
+    element.style.opacity = '';
+    element.animate([from, { transform: 'translateX(0)', opacity: '1' }], { duration: 180, easing: 'ease-out' });
+  }
+
+  private async slide(element: HTMLElement, direction: number, change: () => void): Promise<void> {
+    this.swipeBusy = true;
+    const width = element.offsetWidth;
+    const from = { transform: element.style.transform || 'translateX(0)', opacity: element.style.opacity || '1' };
+    element.style.transform = '';
+    element.style.opacity = '';
+    try {
+      // Уезжает за край по ходу жеста
+      const leave = element.animate([from, { transform: `translateX(${-direction * width}px)`, opacity: '0' }], { duration: 160, easing: 'ease-in', fill: 'forwards' });
+      await leave.finished;
+      change();
+      // Ждём перерисовку с новой неделей/днём
+      await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      leave.cancel();
+      // Новое содержимое въезжает с другой стороны
+      await element.animate(
+        [{ transform: `translateX(${direction * width * 0.4}px)`, opacity: '0' }, { transform: 'translateX(0)', opacity: '1' }],
+        { duration: 220, easing: 'cubic-bezier(0.2, 0.8, 0.2, 1)' }
+      ).finished;
+    } finally {
+      this.swipeBusy = false;
+    }
+  }
+
+  // Есть ли соседний день: при интервале — только в его пределах
+  private canShiftDay(delta: number): boolean {
+    if (!this.isRange()) return true;
+    const days = this.stripDays();
+    const index = days.findIndex(day => day.key === this.selectedDate());
+    return index + delta >= 0 && index + delta < days.length;
   }
 
   // Соседний день; при выбранном интервале — только в его пределах, иначе неделя в ленте подстраивается
