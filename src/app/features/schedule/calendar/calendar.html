@@ -140,7 +140,7 @@
           @for (event of events(); track event.id) {
             <div class="absolute p-px" [style.top.px]="event.top" [style.height.px]="event.height" [style.left.%]="event.left" [style.width.%]="event.width">
               <div role="button" tabindex="0"
-                   class="h-full rounded-md md:rounded-lg border-l-2 md:border-l-4 border-current px-1.5 md:px-2 overflow-hidden cursor-pointer transition-shadow hover:shadow-md focus-visible:outline-2 focus-visible:outline-brand-300"
+                   class="h-full rounded-md md:rounded-lg px-1.5 md:px-2 overflow-hidden cursor-pointer transition-shadow hover:shadow-md focus-visible:outline-2 focus-visible:outline-brand-300"
                    [class]="event.statusClass"
                    [class.opacity-50]="event.isCancelled"
                    [class.ring-2]="event.overdue"
