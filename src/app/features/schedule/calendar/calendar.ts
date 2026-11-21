@@ -19,6 +19,8 @@ const LOCALES: Record<string, string> = { ru: 'ru-RU', uz: 'uz-Latn-UZ' };
 // Высота одного часа на шкале, px (мобилка — ниже, чтобы на экран помещалось больше часов)
 const HOUR_PX = 100;
 const MOBILE_HOUR_PX = 40;
+// Мобилка: меньше этого час не делаем, даже если часов много (шкала тогда прокручивается)
+const MOBILE_MIN_HOUR_PX = 24;
 
 // Минимальный горизонтальный сдвиг пальцем по ленте дней для смены недели, px
 const SWIPE_PX = 50;
@@ -76,7 +78,17 @@ export class ScheduleCalendar extends Schedule implements AfterViewInit {
 
   // Мобилка (ширина < 768px) — следим за изменением ширины окна
   private readonly calMobile = signal(typeof matchMedia === 'function' && matchMedia(MOBILE_QUERY).matches);
-  protected readonly hourPx = computed(() => this.calMobile() ? MOBILE_HOUR_PX : HOUR_PX);
+  // Мобилка: высота области шкалы (без отступов) — по ней час растягивается так, чтобы шкала заполняла всю секцию
+  private readonly timelineBox = signal(0);
+  private readonly calDestroyRef = inject(DestroyRef);
+
+  protected readonly hourPx = computed(() => {
+    if (!this.calMobile()) return HOUR_PX;
+    const box = this.timelineBox();
+    if (!box) return MOBILE_HOUR_PX;
+    const hours = (this.range().to - this.range().from) / 60;
+    return Math.max(box / hours, MOBILE_MIN_HOUR_PX);
+  });
   protected readonly todayDateKey = toDateKey(new Date());
 
   // Прокручиваемая шкала — чтобы при открытии показать текущее время / первый приём
@@ -176,6 +188,18 @@ export class ScheduleCalendar extends Schedule implements AfterViewInit {
 
   ngAfterViewInit(): void {
     this.scrollToFocus();
+
+    // Следим за высотой области шкалы (поворот экрана, изменение окна)
+    const element = this.timeline()?.nativeElement;
+    if (!element || typeof ResizeObserver !== 'function') return;
+    const measure = () => {
+      const style = getComputedStyle(element);
+      this.timelineBox.set(Math.max(element.clientHeight - parseFloat(style.paddingTop) - parseFloat(style.paddingBottom) - 1, 0));
+    };
+    // ResizeObserver сам вызывает measure сразу после observe (асинхронно — без ошибок проверки изменений)
+    const observer = new ResizeObserver(measure);
+    observer.observe(element);
+    this.calDestroyRef.onDestroy(() => observer.disconnect());
   }
 
   // ---- Неделя ----
