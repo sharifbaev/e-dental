@@ -1,12 +1,28 @@
-<div class="flex flex-col gap-2 md:gap-4 md:h-[calc(100dvh-105px)]">
-  <!-- Шапка и дни недели: на мобилке закреплены сверху, прокручивается только шкала -->
-  <div class="sticky top-0 z-20 -mx-2 px-2 pt-2 pb-2 -mt-2 -mb-2 bg-page flex flex-col gap-2 md:static md:m-0 md:p-0 md:bg-transparent md:gap-0">
+<!-- Фильтр по врачу — общий для ПК (в шапке) и мобилки (в модалке фильтров) -->
+<ng-template #doctorFilter>
+  <label class="w-full md:w-72 flex items-center gap-2 h-11 pl-3 pr-1 rounded-xl bg-surface border border-line-strong text-muted focus-within:border-brand-300">
+    <mat-icon fontSet="material-symbols-outlined" class="shrink-0" style="font-size: 18px; width: 18px; height: 18px;">stethoscope</mat-icon>
+    <span class="sr-only">{{ 'schedule.doctor' | transloco }}</span>
+    <select class="flex-1 min-w-0 h-full bg-transparent text-sm font-semibold text-content outline-none cursor-pointer" (change)="onDoctorChange($any($event.target).value)">
+      <option value="all" [selected]="selectedDoctor() === 'all'">{{ 'dashboard.kpi.allDoctors' | transloco }}</option>
+      @for (doctor of doctorOptions(); track doctor.id) {
+        <option [value]="doctor.id" [selected]="doctor.id === selectedDoctor()">{{ 'dashboard.doctorPrefix' | transloco }} {{ doctor.name }}</option>
+      }
+    </select>
+  </label>
+</ng-template>
+
+<!-- Мобилка: раздел ровно на экран (минус шапка 75px, нижнее меню 62px и отступы по 8px) — страница не скроллится,
+     прокручивается только шкала; -mb-38 оставляет от общего pb-40 у <main> 8px -->
+<div class="flex flex-col gap-2 md:gap-4 max-md:-mb-38 max-md:h-[calc(100dvh_-_153px_-_env(safe-area-inset-bottom))] md:h-[calc(100dvh-105px)]">
+  <!-- Шапка и дни недели: на месте, прокручивается только шкала -->
+  <div class="shrink-0 flex flex-col gap-2 md:gap-0">
     <!-- Шапка: месяц, переключение недель, интервал, врач, новая запись.
          На ПК шапка и лента дней выглядят одной карточкой, на мобилке лента — отдельная и прилипает к верху при прокрутке -->
-    <section class="bg-surface border border-line-strong rounded-[20px] p-2 md:p-4 md:pb-0 md:rounded-b-none md:border-b-0">
-      <div class="flex flex-wrap items-center gap-2 md:gap-3">
+    <section class="bg-surface border border-line-strong rounded-[20px] p-1.5 md:p-4 md:pb-0 md:rounded-b-none md:border-b-0">
+      <div class="flex flex-wrap items-center gap-1 md:gap-3">
         <!-- Месяц, стрелки, «Сегодня» и интервал — на мобилке в одну строку -->
-        <h1 class="flex-1 min-w-0 truncate font-display text-base md:text-xl font-extrabold tracking-tight text-content">{{ monthTitle() }}</h1>
+        <h1 class="flex-1 min-w-0 truncate pl-1 md:pl-0 font-display text-base md:text-xl font-extrabold tracking-tight text-content">{{ monthTitle() }}</h1>
 
         <div class="flex items-center gap-0.5 md:gap-1 shrink-0">
           @if (rangeLabel()) {
@@ -21,11 +37,12 @@
               </button>
             </div>
           } @else {
-            <button type="button" class="w-8 h-9 md:w-10 md:h-10 flex items-center justify-center rounded-xl text-soft hover:bg-page" [title]="'calendar.prevWeek' | transloco" [attr.aria-label]="'calendar.prevWeek' | transloco" (click)="prevWeek()">
+            <!-- Стрелки недель: ПК — здесь; мобилка — по краям ленты дней -->
+            <button type="button" class="max-md:hidden w-8 h-9 md:w-10 md:h-10 flex items-center justify-center rounded-xl text-soft hover:bg-page" [title]="'calendar.prevWeek' | transloco" [attr.aria-label]="'calendar.prevWeek' | transloco" (click)="prevWeek()">
               <mat-icon fontSet="material-symbols-outlined">chevron_left</mat-icon>
             </button>
             <button type="button" class="h-9 md:h-10 px-2 md:px-3 rounded-xl text-sm font-semibold text-accent whitespace-nowrap hover:bg-brand-50" (click)="goToday()">{{ 'calendar.today' | transloco }}</button>
-            <button type="button" class="w-8 h-9 md:w-10 md:h-10 flex items-center justify-center rounded-xl text-soft hover:bg-page" [title]="'calendar.nextWeek' | transloco" [attr.aria-label]="'calendar.nextWeek' | transloco" (click)="nextWeek()">
+            <button type="button" class="max-md:hidden w-8 h-9 md:w-10 md:h-10 flex items-center justify-center rounded-xl text-soft hover:bg-page" [title]="'calendar.nextWeek' | transloco" [attr.aria-label]="'calendar.nextWeek' | transloco" (click)="nextWeek()">
               <mat-icon fontSet="material-symbols-outlined">chevron_right</mat-icon>
             </button>
 
@@ -36,18 +53,23 @@
           }
         </div>
 
+        <!-- Врач — ПК; на мобилке — в модалке фильтров -->
         @if (showDoctorFilter()) {
-          <label class="w-full md:w-72 flex items-center gap-2 h-11 pl-3 pr-1 rounded-xl bg-surface border border-line-strong text-muted focus-within:border-brand-300">
-            <mat-icon fontSet="material-symbols-outlined" class="shrink-0" style="font-size: 18px; width: 18px; height: 18px;">stethoscope</mat-icon>
-            <span class="sr-only">{{ 'schedule.doctor' | transloco }}</span>
-            <select class="flex-1 min-w-0 h-full bg-transparent text-sm font-semibold text-content outline-none cursor-pointer" (change)="onDoctorChange($any($event.target).value)">
-              <option value="all" [selected]="selectedDoctor() === 'all'">{{ 'dashboard.kpi.allDoctors' | transloco }}</option>
-              @for (doctor of doctorOptions(); track doctor.id) {
-                <option [value]="doctor.id" [selected]="doctor.id === selectedDoctor()">{{ 'dashboard.doctorPrefix' | transloco }} {{ doctor.name }}</option>
-              }
-            </select>
-          </label>
+          <div class="max-md:hidden contents"><ng-container [ngTemplateOutlet]="doctorFilter" /></div>
         }
+
+        <!-- Мобилка: фильтры (врач — в модалке; точка — если выбран врач) и новая запись -->
+        @if (showDoctorFilter()) {
+          <button type="button" class="md:hidden relative w-9 h-9 shrink-0 rounded-xl border border-line-strong flex items-center justify-center" [class.text-accent]="filtersActive()" [class.text-soft]="!filtersActive()" [title]="'schedule.filters' | transloco" [attr.aria-label]="'schedule.filters' | transloco" (click)="filtersOpen.set(true)">
+            <mat-icon fontSet="material-symbols-outlined" style="font-size: 20px; width: 20px; height: 20px;">filter_list</mat-icon>
+            @if (filtersActive()) {
+              <span class="absolute top-1 right-1 w-2 h-2 rounded-full bg-brand-700"></span>
+            }
+          </button>
+        }
+        <button type="button" class="md:hidden w-9 h-9 shrink-0 rounded-xl bg-brand-700 text-white flex items-center justify-center hover:bg-brand-800" [title]="'schedule.add' | transloco" [attr.aria-label]="'schedule.add' | transloco" (click)="openNewAppointment()">
+          <mat-icon fontSet="material-symbols-outlined">add</mat-icon>
+        </button>
 
         <!-- Новая запись — ПК -->
         <button type="button" class="hidden md:flex shrink-0 items-center justify-center gap-1 h-11 px-4 rounded-xl bg-brand-700 text-white text-sm font-medium hover:bg-brand-800" (click)="openNewAppointment()">
@@ -58,12 +80,19 @@
     </section>
 
     <!-- Дни недели -->
-    <section class="bg-surface border border-line-strong rounded-[20px] shadow-sm md:shadow-none p-2 md:p-4 md:pt-4 md:rounded-t-none md:border-t-0">
-      <div [class]="isRange() ? 'flex gap-1 overflow-x-auto' : 'grid grid-cols-7 gap-0.5 md:gap-1'">
+    <section class="bg-surface border border-line-strong rounded-[20px] md:shadow-none p-1 md:p-4 md:pt-4 md:rounded-t-none md:border-t-0">
+      <!-- Мобилка: стрелки недель по краям ленты -->
+      <div class="flex items-center">
+      @if (!isRange()) {
+        <button type="button" class="md:hidden w-6 h-10 shrink-0 flex items-center justify-center rounded-lg text-soft hover:bg-page" [title]="'calendar.prevWeek' | transloco" [attr.aria-label]="'calendar.prevWeek' | transloco" (click)="prevWeek()">
+          <mat-icon fontSet="material-symbols-outlined" style="font-size: 22px; width: 22px; height: 22px;">chevron_left</mat-icon>
+        </button>
+      }
+      <div class="flex-1 min-w-0" [class]="isRange() ? 'flex gap-1 overflow-x-auto' : 'grid grid-cols-7 gap-0.5 md:gap-1'">
         @for (day of stripDays(); track day.key) {
-          <button type="button" class="min-w-0 flex flex-col items-center gap-1 py-1 md:py-1.5 rounded-xl transition-colors hover:bg-page" [class.flex-1]="isRange()" [class.min-w-12]="isRange()" [class.shrink-0]="isRange()" [attr.aria-pressed]="selectedDate() === day.key" (click)="pickDay(day.key)">
-            <span class="text-[11px] font-medium" [class.text-subtle]="!day.isWeekend" [class.text-muted]="day.isWeekend">{{ day.weekday }}</span>
-            <span class="w-9 h-9 md:w-10 md:h-10 flex items-center justify-center rounded-full text-base md:text-lg font-semibold transition-colors"
+          <button type="button" class="min-w-0 flex flex-col items-center gap-0.5 md:gap-1 py-0.5 md:py-1.5 rounded-xl transition-colors hover:bg-page" [class.flex-1]="isRange()" [class.min-w-12]="isRange()" [class.shrink-0]="isRange()" [attr.aria-pressed]="selectedDate() === day.key" (click)="pickDay(day.key)">
+            <span class="text-[10px] md:text-[11px] leading-none md:leading-normal font-medium" [class.text-subtle]="!day.isWeekend" [class.text-muted]="day.isWeekend">{{ day.weekday }}</span>
+            <span class="w-8 h-8 md:w-10 md:h-10 flex items-center justify-center rounded-full text-sm md:text-lg font-semibold transition-colors"
                   [class.bg-brand-700]="selectedDate() === day.key"
                   [class.text-white]="selectedDate() === day.key"
                   [class.text-accent]="selectedDate() !== day.key && day.isToday"
@@ -76,13 +105,19 @@
           </button>
         }
       </div>
+      @if (!isRange()) {
+        <button type="button" class="md:hidden w-6 h-10 shrink-0 flex items-center justify-center rounded-lg text-soft hover:bg-page" [title]="'calendar.nextWeek' | transloco" [attr.aria-label]="'calendar.nextWeek' | transloco" (click)="nextWeek()">
+          <mat-icon fontSet="material-symbols-outlined" style="font-size: 22px; width: 22px; height: 22px;">chevron_right</mat-icon>
+        </button>
+      }
+      </div>
     </section>
   </div>
 
-  <!-- Шкала дня -->
-  <section class="bg-surface border border-line-strong rounded-[20px] flex flex-col md:flex-1 md:min-h-60 overflow-hidden">
-    <div class="flex flex-wrap items-center gap-x-3 gap-y-1 px-2.5 py-2 md:px-4 md:py-3 border-b border-line">
-      <span class="font-semibold text-content">{{ dayTitle() }}</span>
+  <!-- Шкала дня (мобилка: занимает остаток экрана, прокручивается внутри) -->
+  <section class="bg-surface border border-line-strong rounded-[20px] flex flex-col flex-1 min-h-0 md:min-h-60 overflow-hidden">
+    <div class="flex flex-wrap items-center gap-x-3 gap-y-0.5 px-2.5 py-1.5 md:px-4 md:py-3 border-b border-line">
+      <span class="text-sm md:text-base font-semibold text-content">{{ dayTitle() }}</span>
       @if (workHours().dayOff) {
         <span class="px-2 py-0.5 rounded-full text-xs font-medium bg-page text-muted">{{ 'calendar.dayOff' | transloco }}</span>
       } @else {
@@ -93,7 +128,7 @@
       }
     </div>
 
-    <div #timeline class="md:flex-1 md:min-h-0 md:overflow-y-auto md:overscroll-contain px-2 md:px-4 py-2 md:py-3">
+    <div #timeline class="flex-1 min-h-0 overflow-y-auto overscroll-contain px-2 md:px-4 py-2 md:py-3">
       <div class="relative" [style.height.px]="timelineHeight()">
         <!-- Подписи часов и линии -->
         @for (hour of hours(); track hour.label) {
@@ -167,8 +202,18 @@
   </section>
 </div>
 
-<!-- Новая запись — мобилка: плавающая кнопка над нижним меню -->
-<button type="button" class="md:hidden fixed right-4 bottom-24 z-40 flex items-center gap-1 h-12 px-5 rounded-full bg-brand-700 text-white text-sm font-semibold shadow-lg hover:bg-brand-800" (click)="openNewAppointment()">
-  <mat-icon fontSet="material-symbols-outlined">add</mat-icon>
-  {{ 'schedule.add' | transloco }}
-</button>
+<!-- Мобилка: модалка фильтров (врач); закрытие — крестик или затемнение -->
+@if (filtersOpen()) {
+  <div class="md:hidden fixed inset-0 z-[60] bg-black/50" (click)="filtersOpen.set(false)"></div>
+  <div class="md:hidden fixed inset-x-3 top-1/2 -translate-y-1/2 z-[61] max-h-[80dvh] overflow-y-auto p-4 rounded-2xl bg-surface shadow-xl flex flex-col gap-4" role="dialog" [attr.aria-label]="'schedule.filters' | transloco">
+    <div class="flex items-center justify-between gap-2">
+      <span class="text-base font-semibold text-content">{{ 'schedule.filters' | transloco }}</span>
+      <button type="button" class="w-9 h-9 -my-2 -mr-2 rounded-full flex items-center justify-center text-soft hover:bg-page" [title]="'common.close' | transloco" [attr.aria-label]="'common.close' | transloco" (click)="filtersOpen.set(false)">
+        <mat-icon fontSet="material-symbols-outlined">close</mat-icon>
+      </button>
+    </div>
+    @if (showDoctorFilter()) {
+      <ng-container [ngTemplateOutlet]="doctorFilter" />
+    }
+  </div>
+}

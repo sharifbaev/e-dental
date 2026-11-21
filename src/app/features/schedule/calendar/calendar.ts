@@ -1,3 +1,4 @@
+import { NgTemplateOutlet } from '@angular/common';
 import { AfterViewInit, Component, DestroyRef, ElementRef, computed, effect, inject, signal, untracked, viewChild } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MatIconModule } from '@angular/material/icon';
@@ -52,7 +53,7 @@ function isoWeekday(date: Date): number {
 // Окна просмотра, изменения, оплаты и отмены — те же, что в «Расписании» (наследуем Schedule)
 @Component({
   selector: 'app-schedule-calendar',
-  imports: [MatIconModule, TranslocoPipe],
+  imports: [MatIconModule, TranslocoPipe, NgTemplateOutlet],
   templateUrl: './calendar.html'
 })
 export class ScheduleCalendar extends Schedule implements AfterViewInit {
@@ -70,7 +71,7 @@ export class ScheduleCalendar extends Schedule implements AfterViewInit {
   protected readonly hourPx = HOUR_PX;
   protected readonly todayDateKey = toDateKey(new Date());
 
-  // Прокручиваемая шкала (на ПК) — чтобы при открытии показать текущее время / первый приём
+  // Прокручиваемая шкала — чтобы при открытии показать текущее время / первый приём
   private readonly timeline = viewChild<ElementRef<HTMLElement>>('timeline');
 
   // Текущее время для красной линии — раз в минуту
