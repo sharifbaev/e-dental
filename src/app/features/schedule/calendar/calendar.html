@@ -105,8 +105,8 @@
 
   <!-- Шкала дня (мобилка: занимает остаток экрана, прокручивается внутри) -->
   <section class="md:bg-surface md:border md:border-line-strong md:rounded-[20px] flex flex-col flex-1 min-h-0 md:min-h-60 overflow-hidden">
-    <!-- Мобилка: строка с датой скрыта, остаётся только пометка «Выходной» -->
-    <div [class.max-md:hidden]="!workHours().dayOff" class="flex flex-wrap items-center max-md:justify-center gap-x-3 gap-y-0.5 px-2.5 py-2 md:px-4 md:py-3 border-b border-line">
+    <!-- Мобилка: строка с датой и пометкой «Выходной» скрыта -->
+    <div class="max-md:hidden flex flex-wrap items-center max-md:justify-center gap-x-3 gap-y-0.5 px-2.5 py-2 md:px-4 md:py-3 border-b border-line">
       <span class="max-md:hidden text-base font-semibold text-content">{{ dayTitle() }}</span>
       @if (workHours().dayOff) {
         <span class="px-2 py-0.5 rounded-full text-xs font-medium bg-page text-muted">{{ 'calendar.dayOff' | transloco }}</span>
