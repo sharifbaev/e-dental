@@ -48,8 +48,8 @@
   <!-- Фильтры: на месте, прокручивается только список карточек -->
   <section class="shrink-0 bg-surface border border-line-strong rounded-[20px] p-2 md:p-4 flex flex-col gap-2 md:gap-4">
     <div class="flex flex-wrap gap-2 md:gap-3">
-      <!-- Период (мобилка: в один ряд с кнопкой фильтров) -->
-      <div class="grid grid-cols-3 gap-1 p-1 rounded-xl bg-page max-md:basis-[calc(100%-3rem)] max-md:min-w-0 md:w-96 md:shrink-0">
+      <!-- Период (мобилка: в один ряд с кнопками фильтров и «+») -->
+      <div class="grid grid-cols-3 gap-1 p-1 rounded-xl bg-page max-md:basis-[calc(100%-6rem)] max-md:min-w-0 md:w-96 md:shrink-0">
         <button type="button" class="flex items-center justify-center gap-1 h-9 rounded-lg text-sm font-medium transition-colors" [class.bg-surface]="period() === 'today'" [class.shadow-sm]="period() === 'today'" [class.text-accent]="period() === 'today'" [class.text-muted]="period() !== 'today'" (click)="setPeriod('today')">{{ 'schedule.periods.today' | transloco }}</button>
         <button type="button" class="flex items-center justify-center gap-1 h-9 rounded-lg text-sm font-medium transition-colors" [class.bg-surface]="period() === 'week'" [class.shadow-sm]="period() === 'week'" [class.text-accent]="period() === 'week'" [class.text-muted]="period() !== 'week'" (click)="setPeriod('week')">{{ 'schedule.periods.week' | transloco }}</button>
         <button type="button" class="flex items-center justify-center gap-1 h-9 rounded-lg text-sm font-medium transition-colors" [class.bg-surface]="period() === 'calendar'" [class.shadow-sm]="period() === 'calendar'" [class.text-accent]="period() === 'calendar'" [class.text-muted]="period() !== 'calendar'" (click)="setPeriod('calendar')">
@@ -64,6 +64,11 @@
         @if (filtersActive()) {
           <span class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-brand-700"></span>
         }
+      </button>
+
+      <!-- Мобилка: новая запись — кнопка «+» рядом с фильтрами -->
+      <button type="button" class="md:hidden w-10 shrink-0 rounded-xl bg-brand-700 text-white flex items-center justify-center hover:bg-brand-800" [title]="'schedule.add' | transloco" [attr.aria-label]="'schedule.add' | transloco" (click)="openNewAppointment()">
+        <mat-icon fontSet="material-symbols-outlined">add</mat-icon>
       </button>
 
       <!-- Выбранный период (после выбора в календаре) -->
@@ -134,8 +139,8 @@
   @if (items().length === 0) {
     <div class="bg-surface border border-line-strong rounded-[20px] py-12 text-center text-sm text-subtle">{{ 'schedule.empty' | transloco }}</div>
   } @else {
-    <!-- Прокручиваются только карточки; мобилка: снизу место под плавающую кнопку -->
-    <section class="grid md:grid-cols-2 xl:grid-cols-3 gap-1.5 md:gap-3 content-start flex-1 min-h-0 md:min-h-60 overflow-y-auto overscroll-contain max-md:pb-16 md:pr-1 [scrollbar-gutter:stable]">
+    <!-- Прокручиваются только карточки -->
+    <section class="grid md:grid-cols-2 xl:grid-cols-3 gap-1.5 md:gap-3 content-start flex-1 min-h-0 md:min-h-60 overflow-y-auto overscroll-contain md:pr-1 [scrollbar-gutter:stable]">
       @for (item of items(); track item.id) {
         <div role="button" tabindex="0" class="bg-surface border border-line-strong rounded-[18px] p-2.5 md:p-4 flex flex-col gap-1 md:gap-3 cursor-pointer transition-shadow hover:shadow-md focus-visible:outline-2 focus-visible:outline-brand-300" [class.opacity-60]="item.isCancelled" (click)="openDetails(item)" (keydown.enter)="openDetails(item)">
           <!-- Дата (в режиме интервала), время, кабинет, статус. Мобилка: без кабинета и статуса, справа — кнопки -->
@@ -168,7 +173,7 @@
           </div>
 
           <!-- Мобилка: врач мелким шрифтом под ФИО пациента -->
-          <div class="md:hidden pl-5 text-xs text-muted truncate">{{ 'dashboard.doctorPrefix' | transloco }} {{ item.doctorName }}</div>
+          <div class="md:hidden -mt-1 pl-5 text-xs leading-tight text-muted truncate">{{ 'dashboard.doctorPrefix' | transloco }} {{ item.doctorName }}</div>
 
           <!-- Врач и действия (ПК) -->
           <div class="max-md:hidden flex items-center gap-2 pt-3 border-t border-line">
@@ -201,9 +206,3 @@
     </div>
   </div>
 }
-
-<!-- Новая запись — мобилка: плавающая кнопка над нижним меню -->
-<button type="button" class="md:hidden fixed right-4 bottom-24 z-40 flex items-center gap-1 h-12 px-5 rounded-full bg-brand-700 text-white text-sm font-semibold shadow-lg hover:bg-brand-800" (click)="openNewAppointment()">
-  <mat-icon fontSet="material-symbols-outlined">add</mat-icon>
-  {{ 'schedule.add' | transloco }}
-</button>
