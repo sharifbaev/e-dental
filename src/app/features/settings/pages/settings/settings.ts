@@ -24,6 +24,7 @@ import { USER_FORM_DIALOG_CONFIG, UserFormData, UserFormDialog, UserFormResult }
 import { UserCreate } from '../../services/users.service';
 import { User } from '../../../../core/models/auth.model';
 import { Validators } from '@angular/forms';
+import { UzPhoneInputDirective } from '../../../../shared/directives/uz-phone-input.directive';
 
 type ThemeChoice = Theme | 'system';
 
@@ -43,7 +44,7 @@ function workModeValidator(group: AbstractControl): ValidationErrors | null {
 }
 
 @Component({
-  imports: [ReactiveFormsModule, MatIconModule, TranslocoPipe],
+  imports: [ReactiveFormsModule, MatIconModule, TranslocoPipe, UzPhoneInputDirective],
   selector: 'app-settings',
   templateUrl: './settings.html',
 })

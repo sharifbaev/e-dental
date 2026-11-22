@@ -9,6 +9,7 @@ import { uzPhoneValidator } from '../../../../shared/validators/uz-phone.validat
 import { DOCTOR_STATUSES, Doctor, DoctorFormResult, DoctorStatus } from '../../models/doctor.model';
 import { AppointmentFormService } from '../../../schedule/services/appointment-form.service';
 import { DoctorsService } from '../../services/doctors.service';
+import { UzPhoneInputDirective } from '../../../../shared/directives/uz-phone-input.directive';
 
 // «Другое» в списке услуг — та же договорённость, что и в форме записи
 const OTHER_SERVICE_ID = 0;
@@ -55,7 +56,7 @@ function accountValidator(group: AbstractControl): ValidationErrors | null {
 
 @Component({
   selector: 'app-doctor-form-dialog',
-  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatIconModule, TranslocoPipe],
+  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatIconModule, TranslocoPipe, UzPhoneInputDirective],
   templateUrl: './doctor-form-dialog.html',
   // Компонент на всю высоту окна: шапка сверху, форма прокручивается, кнопка внизу
   host: { class: 'flex flex-col h-full' }

@@ -10,7 +10,7 @@
   <form [formGroup]="form" class="flex flex-col gap-4 pb-2" (ngSubmit)="save()">
     <label class="flex flex-col gap-1">
       <span class="text-xs font-medium text-soft">{{ 'settings.services.name' | transloco }} <span class="text-red-500">*</span></span>
-      <input type="text" formControlName="name" autocomplete="off" class="w-full h-11 px-3 rounded-xl bg-page border text-sm text-content outline-none focus:border-brand-300 focus:bg-surface" [class.border-transparent]="!isInvalid('name')" [class.border-red-300]="isInvalid('name')">
+      <input type="text" formControlName="name" autocomplete="off" class="w-full h-11 px-3 rounded-xl bg-field border text-sm text-content outline-none focus:border-brand-300 focus:bg-surface" [class.border-transparent]="!isInvalid('name')" [class.border-red-300]="isInvalid('name')">
       @if (isInvalid('name')) {
         <span class="text-xs text-red-600">{{ 'appointmentForm.errors.minLength' | transloco }}</span>
       }
@@ -19,14 +19,14 @@
     <div class="grid grid-cols-2 gap-3">
       <label class="flex flex-col gap-1 min-w-0">
         <span class="text-xs font-medium text-soft">{{ 'settings.services.duration' | transloco }} <span class="text-red-500">*</span></span>
-        <input type="number" min="5" max="480" step="5" formControlName="durationMinutes" class="w-full h-11 px-3 rounded-xl bg-page border text-sm text-content outline-none focus:border-brand-300 focus:bg-surface" [class.border-transparent]="!isInvalid('durationMinutes')" [class.border-red-300]="isInvalid('durationMinutes')">
+        <input type="number" min="5" max="480" step="5" formControlName="durationMinutes" class="w-full h-11 px-3 rounded-xl bg-field border text-sm text-content outline-none focus:border-brand-300 focus:bg-surface" [class.border-transparent]="!isInvalid('durationMinutes')" [class.border-red-300]="isInvalid('durationMinutes')">
         @if (isInvalid('durationMinutes')) {
           <span class="text-xs text-red-600">{{ 'settings.services.durationError' | transloco }}</span>
         }
       </label>
       <label class="flex flex-col gap-1 min-w-0">
         <span class="text-xs font-medium text-soft">{{ 'settings.services.price' | transloco }}</span>
-        <input type="number" min="0" step="1000" formControlName="price" class="w-full h-11 px-3 rounded-xl bg-page border text-sm text-content outline-none focus:border-brand-300 focus:bg-surface" [class.border-transparent]="!isInvalid('price')" [class.border-red-300]="isInvalid('price')">
+        <input type="number" min="0" step="1000" formControlName="price" class="w-full h-11 px-3 rounded-xl bg-field border text-sm text-content outline-none focus:border-brand-300 focus:bg-surface" [class.border-transparent]="!isInvalid('price')" [class.border-red-300]="isInvalid('price')">
       </label>
     </div>
 

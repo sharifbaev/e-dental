@@ -6,6 +6,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { toDateKey } from '../../../schedule/services/schedule.service';
 import { DEBT_DIRECTIONS, Debt, DebtDirection, DebtDraft } from '../../models/finance.model';
+import { UzPhoneInputDirective } from '../../../../shared/directives/uz-phone-input.directive';
 
 export const DEBT_FORM_DIALOG_CONFIG: MatDialogConfig = {
   width: '520px',
@@ -26,7 +27,7 @@ function paidNotMoreThanAmount(group: AbstractControl): ValidationErrors | null 
 
 @Component({
   selector: 'app-debt-form-dialog',
-  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatIconModule, TranslocoPipe],
+  imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatIconModule, TranslocoPipe, UzPhoneInputDirective],
   templateUrl: './debt-form-dialog.html'
 })
 export class DebtFormDialog {

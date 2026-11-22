@@ -12,7 +12,7 @@
     <!-- ФИО -->
     <label class="flex flex-col gap-1 sm:col-span-2">
       <span class="text-xs font-medium text-soft">{{ 'doctors.form.fullName' | transloco }} <span class="text-red-500">*</span></span>
-      <input type="text" formControlName="fullName" autocomplete="off" class="w-full h-11 px-3 rounded-xl bg-page border text-sm text-content outline-none focus:border-brand-300 focus:bg-surface" [class.border-transparent]="!isInvalid('fullName')" [class.border-red-300]="isInvalid('fullName')">
+      <input type="text" formControlName="fullName" autocomplete="off" class="w-full h-11 px-3 rounded-xl bg-field border text-sm text-content outline-none focus:border-brand-300 focus:bg-surface" [class.border-transparent]="!isInvalid('fullName')" [class.border-red-300]="isInvalid('fullName')">
       @if (isInvalid('fullName')) {
         <span class="text-xs text-red-600">{{ 'doctors.form.errors.required' | transloco }}</span>
       }
@@ -21,7 +21,11 @@
     <!-- Телефон -->
     <label class="flex flex-col gap-1">
       <span class="text-xs font-medium text-soft">{{ 'doctors.form.phone' | transloco }} <span class="text-red-500">*</span></span>
-      <input type="tel" formControlName="phone" placeholder="+998 90 123-45-67" autocomplete="off" class="w-full h-11 px-3 rounded-xl bg-page border text-sm text-content outline-none focus:border-brand-300 focus:bg-surface" [class.border-transparent]="!isInvalid('phone')" [class.border-red-300]="isInvalid('phone')">
+      <!-- +998 подставлен заранее — вводятся только 9 цифр номера -->
+      <div class="flex items-center h-11 rounded-xl bg-field border focus-within:border-brand-300 focus-within:bg-surface" [class.border-transparent]="!isInvalid('phone')" [class.border-red-300]="isInvalid('phone')">
+        <span class="pl-3 pr-1.5 text-sm font-medium text-soft select-none">+998</span>
+        <input appUzPhone formControlName="phone" placeholder="90 123-45-67" autocomplete="off" class="flex-1 min-w-0 h-full pr-3 bg-transparent text-sm text-content placeholder:text-subtle outline-none">
+      </div>
       @if (isInvalid('phone')) {
         <span class="text-xs text-red-600">{{ (form.controls.phone.hasError('required') ? 'doctors.form.errors.required' : 'doctors.form.errors.phone') | transloco }}</span>
       }
@@ -30,7 +34,7 @@
     <!-- Специальность -->
     <label class="flex flex-col gap-1">
       <span class="text-xs font-medium text-soft">{{ 'doctors.form.specialty' | transloco }} <span class="text-red-500">*</span></span>
-      <select formControlName="specialty" class="w-full h-11 px-3 rounded-xl bg-page border text-sm text-content outline-none focus:border-brand-300 focus:bg-surface" [class.border-transparent]="!isInvalid('specialty')" [class.border-red-300]="isInvalid('specialty')">
+      <select formControlName="specialty" class="w-full h-11 px-3 rounded-xl bg-field border text-sm text-content outline-none focus:border-brand-300 focus:bg-surface" [class.border-transparent]="!isInvalid('specialty')" [class.border-red-300]="isInvalid('specialty')">
         <option value="" disabled>{{ 'doctors.form.selectSpecialty' | transloco }}</option>
         @for (specialty of specialties(); track specialty) {
           <option [value]="specialty">{{ specialty }}</option>
@@ -80,7 +84,7 @@
     @if (isOtherSelected()) {
       <label class="flex flex-col gap-1 sm:col-span-2">
         <span class="text-xs font-medium text-soft">{{ 'doctors.form.otherService' | transloco }} <span class="text-red-500">*</span></span>
-        <input type="text" formControlName="otherService" class="w-full h-11 px-3 rounded-xl bg-page border text-sm text-content outline-none focus:border-brand-300 focus:bg-surface" [class.border-transparent]="!isInvalid('otherService')" [class.border-red-300]="isInvalid('otherService')" [placeholder]="'doctors.form.otherServicePlaceholder' | transloco">
+        <input type="text" formControlName="otherService" class="w-full h-11 px-3 rounded-xl bg-field border text-sm text-content outline-none focus:border-brand-300 focus:bg-surface" [class.border-transparent]="!isInvalid('otherService')" [class.border-red-300]="isInvalid('otherService')" [placeholder]="'doctors.form.otherServicePlaceholder' | transloco">
         @if (isInvalid('otherService')) {
           <span class="text-xs text-red-600">{{ 'doctors.form.errors.required' | transloco }}</span>
         }
@@ -90,7 +94,7 @@
     <!-- Кабинет -->
     <label class="flex flex-col gap-1">
       <span class="text-xs font-medium text-soft">{{ 'doctors.form.cabinet' | transloco }} <span class="text-red-500">*</span></span>
-      <input type="number" min="1" max="50" formControlName="cabinet" class="w-full h-11 px-3 rounded-xl bg-page border text-sm text-content outline-none focus:border-brand-300 focus:bg-surface" [class.border-transparent]="!isInvalid('cabinet')" [class.border-red-300]="isInvalid('cabinet')">
+      <input type="number" min="1" max="50" formControlName="cabinet" class="w-full h-11 px-3 rounded-xl bg-field border text-sm text-content outline-none focus:border-brand-300 focus:bg-surface" [class.border-transparent]="!isInvalid('cabinet')" [class.border-red-300]="isInvalid('cabinet')">
       @if (isInvalid('cabinet')) {
         <span class="text-xs text-red-600">{{ 'doctors.form.errors.cabinet' | transloco }}</span>
       }
@@ -99,7 +103,7 @@
     <!-- Стаж -->
     <label class="flex flex-col gap-1">
       <span class="text-xs font-medium text-soft">{{ 'doctors.form.experience' | transloco }}</span>
-      <input type="number" min="0" max="60" formControlName="experienceYears" class="w-full h-11 px-3 rounded-xl bg-page border border-transparent text-sm text-content outline-none focus:border-brand-300 focus:bg-surface">
+      <input type="number" min="0" max="60" formControlName="experienceYears" class="w-full h-11 px-3 rounded-xl bg-field border border-transparent text-sm text-content outline-none focus:border-brand-300 focus:bg-surface">
     </label>
 
     <!-- Рабочие дни -->
@@ -119,8 +123,8 @@
     <div class="flex flex-col gap-1 sm:col-span-2">
       <span class="text-xs font-medium text-soft">{{ 'doctors.form.workHours' | transloco }} <span class="text-red-500">*</span></span>
       <div class="grid grid-cols-2 gap-3">
-        <input type="time" formControlName="workStart" class="w-full h-11 px-3 rounded-xl bg-page border text-sm text-content outline-none focus:border-brand-300 focus:bg-surface" [class.border-transparent]="!timeRangeInvalid()" [class.border-red-300]="timeRangeInvalid()">
-        <input type="time" formControlName="workEnd" class="w-full h-11 px-3 rounded-xl bg-page border text-sm text-content outline-none focus:border-brand-300 focus:bg-surface" [class.border-transparent]="!timeRangeInvalid()" [class.border-red-300]="timeRangeInvalid()">
+        <input type="time" formControlName="workStart" class="w-full h-11 px-3 rounded-xl bg-field border text-sm text-content outline-none focus:border-brand-300 focus:bg-surface" [class.border-transparent]="!timeRangeInvalid()" [class.border-red-300]="timeRangeInvalid()">
+        <input type="time" formControlName="workEnd" class="w-full h-11 px-3 rounded-xl bg-field border text-sm text-content outline-none focus:border-brand-300 focus:bg-surface" [class.border-transparent]="!timeRangeInvalid()" [class.border-red-300]="timeRangeInvalid()">
       </div>
       @if (timeRangeInvalid()) {
         <span class="text-xs text-red-600">{{ 'doctors.form.errors.timeRange' | transloco }}</span>
@@ -130,7 +134,7 @@
     <!-- Статус -->
     <label class="flex flex-col gap-1 sm:col-span-2">
       <span class="text-xs font-medium text-soft">{{ 'doctors.form.status' | transloco }}</span>
-      <select formControlName="status" class="w-full h-11 px-3 rounded-xl bg-page border border-transparent text-sm text-content outline-none focus:border-brand-300 focus:bg-surface">
+      <select formControlName="status" class="w-full h-11 px-3 rounded-xl bg-field border border-transparent text-sm text-content outline-none focus:border-brand-300 focus:bg-surface">
         @for (status of statuses; track status) {
           <option [value]="status">{{ ('doctors.status.' + status) | transloco }}</option>
         }
@@ -143,14 +147,14 @@
         <span class="sm:col-span-2 text-xs text-muted">{{ 'doctors.form.accountHint' | transloco }}</span>
         <label class="flex flex-col gap-1">
           <span class="text-xs font-medium text-soft">{{ 'doctors.form.username' | transloco }}</span>
-          <input type="text" formControlName="username" autocomplete="off" class="w-full h-11 px-3 rounded-xl bg-page border text-sm text-content outline-none focus:border-brand-300 focus:bg-surface" [class.border-transparent]="!accountError('username')" [class.border-red-300]="accountError('username')">
+          <input type="text" formControlName="username" autocomplete="off" class="w-full h-11 px-3 rounded-xl bg-field border text-sm text-content outline-none focus:border-brand-300 focus:bg-surface" [class.border-transparent]="!accountError('username')" [class.border-red-300]="accountError('username')">
           @if (accountError('username')) {
             <span class="text-xs text-red-600">{{ 'doctors.form.errors.username' | transloco }}</span>
           }
         </label>
         <label class="flex flex-col gap-1">
           <span class="text-xs font-medium text-soft">{{ 'doctors.form.password' | transloco }}</span>
-          <input type="password" formControlName="password" autocomplete="new-password" class="w-full h-11 px-3 rounded-xl bg-page border text-sm text-content outline-none focus:border-brand-300 focus:bg-surface" [class.border-transparent]="!accountError('password')" [class.border-red-300]="accountError('password')">
+          <input type="password" formControlName="password" autocomplete="new-password" class="w-full h-11 px-3 rounded-xl bg-field border text-sm text-content outline-none focus:border-brand-300 focus:bg-surface" [class.border-transparent]="!accountError('password')" [class.border-red-300]="accountError('password')">
           @if (accountError('password')) {
             <span class="text-xs text-red-600">{{ 'doctors.form.errors.password' | transloco }}</span>
           }

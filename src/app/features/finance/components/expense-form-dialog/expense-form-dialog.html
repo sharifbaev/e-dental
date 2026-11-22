@@ -11,11 +11,11 @@
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
       <label class="flex flex-col gap-1 min-w-0">
         <span class="text-xs font-medium text-soft">{{ 'finance.fields.date' | transloco }} <span class="text-red-500">*</span></span>
-        <input type="date" formControlName="date" class="w-full h-11 px-3 rounded-xl bg-page border text-sm text-content outline-none focus:border-brand-300 focus:bg-surface" [class.border-transparent]="!isInvalid('date')" [class.border-red-300]="isInvalid('date')">
+        <input type="date" formControlName="date" class="w-full h-11 px-3 rounded-xl bg-field border text-sm text-content outline-none focus:border-brand-300 focus:bg-surface" [class.border-transparent]="!isInvalid('date')" [class.border-red-300]="isInvalid('date')">
       </label>
       <label class="flex flex-col gap-1 min-w-0">
         <span class="text-xs font-medium text-soft">{{ 'finance.fields.category' | transloco }}</span>
-        <select formControlName="category" class="w-full h-11 px-3 rounded-xl bg-page border border-transparent text-sm text-content outline-none cursor-pointer focus:border-brand-300 focus:bg-surface">
+        <select formControlName="category" class="w-full h-11 px-3 rounded-xl bg-field border border-transparent text-sm text-content outline-none cursor-pointer focus:border-brand-300 focus:bg-surface">
           @for (category of categories; track category) {
             <option [value]="category">{{ ('finance.categories.' + category) | transloco }}</option>
           }
@@ -25,7 +25,7 @@
 
     <label class="flex flex-col gap-1">
       <span class="text-xs font-medium text-soft">{{ 'finance.fields.description' | transloco }} <span class="text-red-500">*</span></span>
-      <input type="text" formControlName="description" autocomplete="off" class="w-full h-11 px-3 rounded-xl bg-page border text-sm text-content outline-none focus:border-brand-300 focus:bg-surface" [class.border-transparent]="!isInvalid('description')" [class.border-red-300]="isInvalid('description')" [placeholder]="'finance.expenses.descriptionPlaceholder' | transloco">
+      <input type="text" formControlName="description" autocomplete="off" class="w-full h-11 px-3 rounded-xl bg-field border text-sm text-content outline-none focus:border-brand-300 focus:bg-surface" [class.border-transparent]="!isInvalid('description')" [class.border-red-300]="isInvalid('description')" [placeholder]="'finance.expenses.descriptionPlaceholder' | transloco">
       @if (isInvalid('description')) {
         <span class="text-xs text-red-600">{{ 'appointmentForm.errors.minLength' | transloco }}</span>
       }
@@ -33,7 +33,7 @@
 
     <label class="flex flex-col gap-1">
       <span class="text-xs font-medium text-soft">{{ 'finance.fields.amount' | transloco }} <span class="text-red-500">*</span></span>
-      <input type="number" min="0" step="1000" formControlName="amount" class="w-full h-11 px-3 rounded-xl bg-page border text-sm text-content outline-none focus:border-brand-300 focus:bg-surface" [class.border-transparent]="!isInvalid('amount')" [class.border-red-300]="isInvalid('amount')">
+      <input type="number" min="0" step="1000" formControlName="amount" class="w-full h-11 px-3 rounded-xl bg-field border text-sm text-content outline-none focus:border-brand-300 focus:bg-surface" [class.border-transparent]="!isInvalid('amount')" [class.border-red-300]="isInvalid('amount')">
       @if (isInvalid('amount')) {
         <span class="text-xs text-red-600">{{ 'finance.errors.amount' | transloco }}</span>
       }

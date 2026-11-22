@@ -10,7 +10,7 @@
   <form [formGroup]="form" class="flex flex-col gap-4 pb-2" (ngSubmit)="save()">
     <label class="flex flex-col gap-1">
       <span class="text-xs font-medium text-soft">{{ 'settings.dictionaries.name' | transloco }} <span class="text-red-500">*</span></span>
-      <input type="text" formControlName="name" autocomplete="off" class="w-full h-11 px-3 rounded-xl bg-page border text-sm text-content outline-none focus:border-brand-300 focus:bg-surface" [class.border-transparent]="!isInvalid()" [class.border-red-300]="isInvalid()">
+      <input type="text" formControlName="name" autocomplete="off" class="w-full h-11 px-3 rounded-xl bg-field border text-sm text-content outline-none focus:border-brand-300 focus:bg-surface" [class.border-transparent]="!isInvalid()" [class.border-red-300]="isInvalid()">
       @if (isInvalid()) {
         <span class="text-xs text-red-600">{{ 'settings.dictionaries.nameError' | transloco }}</span>
       }

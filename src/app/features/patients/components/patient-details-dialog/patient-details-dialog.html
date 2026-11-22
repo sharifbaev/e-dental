@@ -88,7 +88,7 @@
           <div [formGroup]="form" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <label class="flex flex-col gap-1 sm:col-span-2">
               <span class="text-xs font-medium text-soft">{{ 'appointmentForm.patient.fullName' | transloco }} <span class="text-red-500">*</span></span>
-              <input type="text" formControlName="fullName" class="w-full h-11 px-3 rounded-xl bg-page border text-sm text-content outline-none focus:border-brand-300 focus:bg-surface" [class.border-transparent]="!isInvalid('fullName')" [class.border-red-300]="isInvalid('fullName')">
+              <input type="text" formControlName="fullName" class="w-full h-11 px-3 rounded-xl bg-field border text-sm text-content outline-none focus:border-brand-300 focus:bg-surface" [class.border-transparent]="!isInvalid('fullName')" [class.border-red-300]="isInvalid('fullName')">
               @if (isInvalid('fullName')) {
                 <span class="text-xs text-red-600">{{ 'appointmentForm.errors.required' | transloco }}</span>
               }
@@ -96,7 +96,7 @@
 
             <label class="flex flex-col gap-1">
               <span class="text-xs font-medium text-soft">{{ 'appointmentForm.patient.phone' | transloco }} <span class="text-red-500">*</span></span>
-              <input type="tel" formControlName="phone" class="w-full h-11 px-3 rounded-xl bg-page border text-sm text-content outline-none focus:border-brand-300 focus:bg-surface" [class.border-transparent]="!isInvalid('phone')" [class.border-red-300]="isInvalid('phone')">
+              <input type="tel" formControlName="phone" class="w-full h-11 px-3 rounded-xl bg-field border text-sm text-content outline-none focus:border-brand-300 focus:bg-surface" [class.border-transparent]="!isInvalid('phone')" [class.border-red-300]="isInvalid('phone')">
               @if (isInvalid('phone')) {
                 <span class="text-xs text-red-600">{{ 'appointmentForm.errors.phone' | transloco }}</span>
               }
@@ -104,12 +104,12 @@
 
             <label class="flex flex-col gap-1 min-w-0">
               <span class="text-xs font-medium text-soft">{{ 'patients.details.birthDate' | transloco }}</span>
-              <input type="date" formControlName="birthDate" class="w-full h-11 px-3 rounded-xl bg-page border border-transparent text-sm text-content outline-none focus:border-brand-300 focus:bg-surface">
+              <input type="date" formControlName="birthDate" class="w-full h-11 px-3 rounded-xl bg-field border border-transparent text-sm text-content outline-none focus:border-brand-300 focus:bg-surface">
             </label>
 
             <label class="flex flex-col gap-1">
               <span class="text-xs font-medium text-soft">{{ 'patients.details.gender' | transloco }}</span>
-              <select formControlName="gender" class="w-full h-11 px-3 rounded-xl bg-page border border-transparent text-sm text-content outline-none focus:border-brand-300 focus:bg-surface">
+              <select formControlName="gender" class="w-full h-11 px-3 rounded-xl bg-field border border-transparent text-sm text-content outline-none focus:border-brand-300 focus:bg-surface">
                 <option value="female">{{ 'patients.details.female' | transloco }}</option>
                 <option value="male">{{ 'patients.details.male' | transloco }}</option>
               </select>
@@ -117,7 +117,7 @@
 
             <label class="flex flex-col gap-1">
               <span class="text-xs font-medium text-soft">{{ 'patients.columns.status' | transloco }}</span>
-              <select formControlName="status" class="w-full h-11 px-3 rounded-xl bg-page border border-transparent text-sm text-content outline-none focus:border-brand-300 focus:bg-surface">
+              <select formControlName="status" class="w-full h-11 px-3 rounded-xl bg-field border border-transparent text-sm text-content outline-none focus:border-brand-300 focus:bg-surface">
                 @for (status of statuses; track status) {
                   <option [value]="status">{{ ('schedule.status.' + status) | transloco }}</option>
                 }
@@ -126,7 +126,7 @@
 
             <label class="flex flex-col gap-1 sm:col-span-2">
               <span class="text-xs font-medium text-soft">{{ 'patients.columns.doctor' | transloco }}</span>
-              <select formControlName="doctorId" class="w-full h-11 px-3 rounded-xl bg-page border border-transparent text-sm text-content outline-none focus:border-brand-300 focus:bg-surface">
+              <select formControlName="doctorId" class="w-full h-11 px-3 rounded-xl bg-field border border-transparent text-sm text-content outline-none focus:border-brand-300 focus:bg-surface">
                 @for (doctor of doctors(); track doctor.id) {
                   <option [ngValue]="doctor.id">{{ 'dashboard.doctorPrefix' | transloco }} {{ doctor.name }}</option>
                 }
@@ -182,15 +182,15 @@
                 <div [formGroup]="diagnosesArray.at(activeTab())" class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <label class="flex flex-col gap-1 sm:col-span-2">
                     <span class="text-xs font-medium text-soft">{{ 'patients.details.diagnosisTitle' | transloco }} <span class="text-red-500">*</span></span>
-                    <input type="text" formControlName="title" class="w-full h-11 px-3 rounded-xl bg-page border border-transparent text-sm text-content outline-none focus:border-brand-300 focus:bg-surface">
+                    <input type="text" formControlName="title" class="w-full h-11 px-3 rounded-xl bg-field border border-transparent text-sm text-content outline-none focus:border-brand-300 focus:bg-surface">
                   </label>
                   <label class="flex flex-col gap-1">
                     <span class="text-xs font-medium text-soft">{{ 'patients.details.toothNumber' | transloco }}</span>
-                    <input type="number" min="11" max="48" formControlName="tooth" class="w-full h-11 px-3 rounded-xl bg-page border border-transparent text-sm text-content outline-none focus:border-brand-300 focus:bg-surface">
+                    <input type="number" min="11" max="48" formControlName="tooth" class="w-full h-11 px-3 rounded-xl bg-field border border-transparent text-sm text-content outline-none focus:border-brand-300 focus:bg-surface">
                   </label>
                   <label class="flex flex-col gap-1 sm:col-span-3">
                     <span class="text-xs font-medium text-soft">{{ 'patients.details.description' | transloco }}</span>
-                    <textarea rows="4" formControlName="description" class="w-full px-3 py-2 rounded-xl bg-page border border-transparent text-sm text-content outline-none resize-y focus:border-brand-300 focus:bg-surface"></textarea>
+                    <textarea rows="4" formControlName="description" class="w-full px-3 py-2 rounded-xl bg-field border border-transparent text-sm text-content outline-none resize-y focus:border-brand-300 focus:bg-surface"></textarea>
                   </label>
                 </div>
               }
@@ -306,7 +306,7 @@
           <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
             <label class="flex flex-col gap-1 min-w-0">
               <span class="text-xs font-medium text-soft">{{ 'patients.visits.filters.status' | transloco }}</span>
-              <select class="w-full h-10 px-2 rounded-xl bg-page border border-transparent text-sm text-content outline-none cursor-pointer focus:border-brand-300" [value]="visitStatus()" (change)="visitStatus.set($any($event.target).value)">
+              <select class="w-full h-10 px-2 rounded-xl bg-field border border-transparent text-sm text-content outline-none cursor-pointer focus:border-brand-300 focus:bg-surface" [value]="visitStatus()" (change)="visitStatus.set($any($event.target).value)">
                 <option value="">{{ 'patients.visits.filters.all' | transloco }}</option>
                 @for (status of visitStatuses; track status) {
                   <option [value]="status" [selected]="visitStatus() === status">{{ ('schedule.status.' + status) | transloco }}</option>
@@ -315,7 +315,7 @@
             </label>
             <label class="flex flex-col gap-1 min-w-0">
               <span class="text-xs font-medium text-soft">{{ 'patients.visits.filters.doctor' | transloco }}</span>
-              <select class="w-full h-10 px-2 rounded-xl bg-page border border-transparent text-sm text-content outline-none cursor-pointer focus:border-brand-300" (change)="visitDoctor.set($any($event.target).value)">
+              <select class="w-full h-10 px-2 rounded-xl bg-field border border-transparent text-sm text-content outline-none cursor-pointer focus:border-brand-300 focus:bg-surface" (change)="visitDoctor.set($any($event.target).value)">
                 <option value="" [selected]="!visitDoctor()">{{ 'patients.visits.filters.allDoctors' | transloco }}</option>
                 @for (doctor of visitDoctors(); track doctor.id) {
                   <option [value]="doctor.id" [selected]="visitDoctor() === doctor.id">{{ doctor.name }}</option>
@@ -324,7 +324,7 @@
             </label>
             <label class="flex flex-col gap-1 min-w-0">
               <span class="text-xs font-medium text-soft">{{ 'patients.visits.filters.payment' | transloco }}</span>
-              <select class="w-full h-10 px-2 rounded-xl bg-page border border-transparent text-sm text-content outline-none cursor-pointer focus:border-brand-300" (change)="visitPayment.set($any($event.target).value)">
+              <select class="w-full h-10 px-2 rounded-xl bg-field border border-transparent text-sm text-content outline-none cursor-pointer focus:border-brand-300 focus:bg-surface" (change)="visitPayment.set($any($event.target).value)">
                 <option value="" [selected]="!visitPayment()">{{ 'patients.visits.filters.all' | transloco }}</option>
                 <option value="paid" [selected]="visitPayment() === 'paid'">{{ 'payments.badge.paid' | transloco }}</option>
                 <option value="debt" [selected]="visitPayment() === 'debt'">{{ 'payments.badge.debt' | transloco }}</option>
@@ -333,11 +333,11 @@
             </label>
             <label class="flex flex-col gap-1 min-w-0">
               <span class="text-xs font-medium text-soft">{{ 'patients.visits.filters.from' | transloco }}</span>
-              <input type="date" class="w-full h-10 px-2 rounded-xl bg-page border border-transparent text-sm text-content outline-none focus:border-brand-300" [value]="visitFrom()" (change)="visitFrom.set($any($event.target).value)">
+              <input type="date" class="w-full h-10 px-2 rounded-xl bg-field border border-transparent text-sm text-content outline-none focus:border-brand-300 focus:bg-surface" [value]="visitFrom()" (change)="visitFrom.set($any($event.target).value)">
             </label>
             <label class="flex flex-col gap-1 min-w-0">
               <span class="text-xs font-medium text-soft">{{ 'patients.visits.filters.to' | transloco }}</span>
-              <input type="date" class="w-full h-10 px-2 rounded-xl bg-page border border-transparent text-sm text-content outline-none focus:border-brand-300" [value]="visitTo()" (change)="visitTo.set($any($event.target).value)">
+              <input type="date" class="w-full h-10 px-2 rounded-xl bg-field border border-transparent text-sm text-content outline-none focus:border-brand-300 focus:bg-surface" [value]="visitTo()" (change)="visitTo.set($any($event.target).value)">
             </label>
             <div class="flex items-end">
               <button type="button" class="w-full h-10 flex items-center justify-center gap-1 rounded-xl border border-line-strong text-sm font-medium text-soft hover:bg-page disabled:opacity-40" [disabled]="!hasVisitFilters()" (click)="resetVisitFilters()">

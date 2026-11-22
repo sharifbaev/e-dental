@@ -36,34 +36,38 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <label class="flex flex-col gap-1.5">
             <span class="text-[13px] font-semibold text-soft">{{ 'settings.clinic.name' | transloco }}</span>
-            <input type="text" formControlName="name" class="w-full h-11 px-3 rounded-xl bg-surface border border-line-strong text-sm text-content outline-none focus:border-brand-300">
+            <input type="text" formControlName="name" class="w-full h-11 px-3 rounded-xl bg-field border border-line-strong text-sm text-content outline-none focus:border-brand-300 focus:bg-surface">
           </label>
           <label class="flex flex-col gap-1.5">
             <span class="text-[13px] font-semibold text-soft">{{ 'settings.clinic.phone' | transloco }}</span>
-            <input type="tel" formControlName="phone" placeholder="+998 __ ___-__-__" class="w-full h-11 px-3 rounded-xl bg-surface border border-line-strong text-sm text-content placeholder:text-subtle outline-none focus:border-brand-300">
+            <!-- +998 подставлен заранее — вводятся только 9 цифр номера -->
+            <div class="flex items-center h-11 rounded-xl bg-field border border-line-strong focus-within:border-brand-300 focus-within:bg-surface">
+              <span class="pl-3 pr-1.5 text-sm font-medium text-soft select-none">+998</span>
+              <input appUzPhone formControlName="phone" placeholder="90 123-45-67" autocomplete="off" class="flex-1 min-w-0 h-full pr-3 bg-transparent text-sm text-content placeholder:text-subtle outline-none">
+            </div>
           </label>
           <label class="flex flex-col gap-1.5 sm:col-span-2">
             <span class="text-[13px] font-semibold text-soft">{{ 'settings.clinic.address' | transloco }}</span>
-            <input type="text" formControlName="address" class="w-full h-11 px-3 rounded-xl bg-surface border border-line-strong text-sm text-content outline-none focus:border-brand-300">
+            <input type="text" formControlName="address" class="w-full h-11 px-3 rounded-xl bg-field border border-line-strong text-sm text-content outline-none focus:border-brand-300 focus:bg-surface">
           </label>
           <div class="flex flex-col gap-1.5">
             <span class="text-[13px] font-semibold text-soft">{{ 'settings.clinic.hours' | transloco }}</span>
             <div class="flex items-center gap-2">
-              <input type="time" formControlName="openTime" [attr.aria-label]="'settings.clinic.open' | transloco" class="flex-1 min-w-0 h-11 px-3 rounded-xl bg-surface border border-line-strong text-sm text-content outline-none focus:border-brand-300">
+              <input type="time" formControlName="openTime" [attr.aria-label]="'settings.clinic.open' | transloco" class="flex-1 min-w-0 h-11 px-3 rounded-xl bg-field border border-line-strong text-sm text-content outline-none focus:border-brand-300 focus:bg-surface">
               <span class="text-muted">—</span>
-              <input type="time" formControlName="closeTime" [attr.aria-label]="'settings.clinic.close' | transloco" class="flex-1 min-w-0 h-11 px-3 rounded-xl bg-surface border border-line-strong text-sm text-content outline-none focus:border-brand-300">
+              <input type="time" formControlName="closeTime" [attr.aria-label]="'settings.clinic.close' | transloco" class="flex-1 min-w-0 h-11 px-3 rounded-xl bg-field border border-line-strong text-sm text-content outline-none focus:border-brand-300 focus:bg-surface">
             </div>
           </div>
           <div class="grid grid-cols-2 gap-3">
             <label class="flex flex-col gap-1.5 min-w-0">
               <span class="text-[13px] font-semibold text-soft">{{ 'settings.clinic.timezone' | transloco }}</span>
-              <select formControlName="timezone" class="w-full h-11 px-2 rounded-xl bg-surface border border-line-strong text-sm text-content outline-none focus:border-brand-300">
+              <select formControlName="timezone" class="w-full h-11 px-2 rounded-xl bg-field border border-line-strong text-sm text-content outline-none focus:border-brand-300 focus:bg-surface">
                 <option value="Asia/Tashkent">{{ 'settings.clinic.tashkent' | transloco }}</option>
               </select>
             </label>
             <label class="flex flex-col gap-1.5 min-w-0">
               <span class="text-[13px] font-semibold text-soft">{{ 'settings.clinic.currency' | transloco }}</span>
-              <select formControlName="currency" class="w-full h-11 px-2 rounded-xl bg-surface border border-line-strong text-sm text-content outline-none focus:border-brand-300">
+              <select formControlName="currency" class="w-full h-11 px-2 rounded-xl bg-field border border-line-strong text-sm text-content outline-none focus:border-brand-300 focus:bg-surface">
                 <option value="UZS">{{ 'settings.clinic.uzs' | transloco }}</option>
                 <option value="USD">{{ 'settings.clinic.usd' | transloco }}</option>
               </select>
@@ -301,11 +305,11 @@
         <form [formGroup]="passwordForm" class="grid grid-cols-1 sm:grid-cols-2 gap-3" (ngSubmit)="changePassword()">
           <label class="flex flex-col gap-1 min-w-0">
             <span class="text-xs font-medium text-soft">{{ 'settings.account.oldPassword' | transloco }}</span>
-            <input type="password" formControlName="oldPassword" autocomplete="current-password" class="w-full h-11 px-3 rounded-xl bg-page border border-transparent text-sm text-content outline-none focus:border-brand-300 focus:bg-surface">
+            <input type="password" formControlName="oldPassword" autocomplete="current-password" class="w-full h-11 px-3 rounded-xl bg-field border border-transparent text-sm text-content outline-none focus:border-brand-300 focus:bg-surface">
           </label>
           <label class="flex flex-col gap-1 min-w-0">
             <span class="text-xs font-medium text-soft">{{ 'settings.account.newPassword' | transloco }}</span>
-            <input type="password" formControlName="newPassword" autocomplete="new-password" class="w-full h-11 px-3 rounded-xl bg-page border text-sm text-content outline-none focus:border-brand-300 focus:bg-surface" [class.border-transparent]="!(passwordForm.controls.newPassword.invalid && passwordForm.controls.newPassword.touched)" [class.border-red-300]="passwordForm.controls.newPassword.invalid && passwordForm.controls.newPassword.touched">
+            <input type="password" formControlName="newPassword" autocomplete="new-password" class="w-full h-11 px-3 rounded-xl bg-field border text-sm text-content outline-none focus:border-brand-300 focus:bg-surface" [class.border-transparent]="!(passwordForm.controls.newPassword.invalid && passwordForm.controls.newPassword.touched)" [class.border-red-300]="passwordForm.controls.newPassword.invalid && passwordForm.controls.newPassword.touched">
             @if (passwordForm.controls.newPassword.invalid && passwordForm.controls.newPassword.touched) {
               <span class="text-xs text-red-600">{{ 'doctors.form.errors.password' | transloco }}</span>
             }
@@ -388,9 +392,9 @@
           <div class="flex flex-col gap-2">
             <span class="text-[13px] font-semibold text-soft">{{ 'doctors.form.workHours' | transloco }}</span>
             <div class="flex items-center gap-2 sm:max-w-sm">
-              <input type="time" formControlName="workStart" [attr.aria-label]="'settings.clinic.open' | transloco" class="flex-1 min-w-0 h-11 px-3 rounded-xl bg-surface border border-line-strong text-sm text-content outline-none focus:border-brand-300">
+              <input type="time" formControlName="workStart" [attr.aria-label]="'settings.clinic.open' | transloco" class="flex-1 min-w-0 h-11 px-3 rounded-xl bg-field border border-line-strong text-sm text-content outline-none focus:border-brand-300 focus:bg-surface">
               <span class="text-muted">—</span>
-              <input type="time" formControlName="workEnd" [attr.aria-label]="'settings.clinic.close' | transloco" class="flex-1 min-w-0 h-11 px-3 rounded-xl bg-surface border border-line-strong text-sm text-content outline-none focus:border-brand-300">
+              <input type="time" formControlName="workEnd" [attr.aria-label]="'settings.clinic.close' | transloco" class="flex-1 min-w-0 h-11 px-3 rounded-xl bg-field border border-line-strong text-sm text-content outline-none focus:border-brand-300 focus:bg-surface">
             </div>
             @if (workForm.hasError('timeRange')) {
               <span class="text-xs text-red-600">{{ 'doctors.form.errors.timeRange' | transloco }}</span>

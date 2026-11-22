@@ -39,6 +39,8 @@
   --color-line: var(--app-line);
   --color-line-strong: var(--app-line-strong);
   --color-accent: var(--app-accent);
+  /* Фон полей ввода без фокуса */
+  --color-field: var(--app-field);
 }
 
 /* Светлая тема */
@@ -55,6 +57,7 @@
   --app-line: #eef1f0;
   --app-line-strong: #e3e8e6;
   --app-accent: #0b7a68;
+  --app-field: #e9eeec; /* чуть темнее фона */
 }
 
 /* Тёмная тема */
@@ -71,4 +74,5 @@
   --app-line: #1c2b27;
   --app-line-strong: #273833;
   --app-accent: #5ee0c3;
+  --app-field: #1d302b; /* чуть светлее фона */
 }

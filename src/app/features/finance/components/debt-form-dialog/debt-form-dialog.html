@@ -18,26 +18,30 @@
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
       <label class="flex flex-col gap-1 min-w-0">
         <span class="text-xs font-medium text-soft">{{ 'finance.fields.counterparty' | transloco }} <span class="text-red-500">*</span></span>
-        <input type="text" formControlName="counterparty" autocomplete="off" class="w-full h-11 px-3 rounded-xl bg-page border text-sm text-content outline-none focus:border-brand-300 focus:bg-surface" [class.border-transparent]="!isInvalid('counterparty')" [class.border-red-300]="isInvalid('counterparty')">
+        <input type="text" formControlName="counterparty" autocomplete="off" class="w-full h-11 px-3 rounded-xl bg-field border text-sm text-content outline-none focus:border-brand-300 focus:bg-surface" [class.border-transparent]="!isInvalid('counterparty')" [class.border-red-300]="isInvalid('counterparty')">
         @if (isInvalid('counterparty')) {
           <span class="text-xs text-red-600">{{ 'appointmentForm.errors.minLength' | transloco }}</span>
         }
       </label>
       <label class="flex flex-col gap-1 min-w-0">
         <span class="text-xs font-medium text-soft">{{ 'finance.fields.phone' | transloco }}</span>
-        <input type="tel" formControlName="phone" autocomplete="off" placeholder="+998 90 123-45-67" class="w-full h-11 px-3 rounded-xl bg-page border border-transparent text-sm text-content placeholder:text-subtle outline-none focus:border-brand-300 focus:bg-surface">
+        <!-- +998 подставлен заранее — вводятся только 9 цифр номера -->
+        <div class="flex items-center h-11 rounded-xl bg-field border border-transparent focus-within:border-brand-300 focus-within:bg-surface">
+          <span class="pl-3 pr-1.5 text-sm font-medium text-soft select-none">+998</span>
+          <input appUzPhone formControlName="phone" placeholder="90 123-45-67" autocomplete="off" class="flex-1 min-w-0 h-full pr-3 bg-transparent text-sm text-content placeholder:text-subtle outline-none">
+        </div>
       </label>
       <label class="flex flex-col gap-1 min-w-0">
         <span class="text-xs font-medium text-soft">{{ 'finance.fields.date' | transloco }} <span class="text-red-500">*</span></span>
-        <input type="date" formControlName="date" class="w-full h-11 px-3 rounded-xl bg-page border text-sm text-content outline-none focus:border-brand-300 focus:bg-surface" [class.border-transparent]="!isInvalid('date')" [class.border-red-300]="isInvalid('date')">
+        <input type="date" formControlName="date" class="w-full h-11 px-3 rounded-xl bg-field border text-sm text-content outline-none focus:border-brand-300 focus:bg-surface" [class.border-transparent]="!isInvalid('date')" [class.border-red-300]="isInvalid('date')">
       </label>
       <label class="flex flex-col gap-1 min-w-0">
         <span class="text-xs font-medium text-soft">{{ 'finance.fields.dueDate' | transloco }}</span>
-        <input type="date" formControlName="dueDate" class="w-full h-11 px-3 rounded-xl bg-page border border-transparent text-sm text-content outline-none focus:border-brand-300 focus:bg-surface">
+        <input type="date" formControlName="dueDate" class="w-full h-11 px-3 rounded-xl bg-field border border-transparent text-sm text-content outline-none focus:border-brand-300 focus:bg-surface">
       </label>
       <label class="flex flex-col gap-1 min-w-0">
         <span class="text-xs font-medium text-soft">{{ 'finance.fields.debtAmount' | transloco }} <span class="text-red-500">*</span></span>
-        <input type="number" min="0" step="1000" formControlName="amount" class="w-full h-11 px-3 rounded-xl bg-page border text-sm text-content outline-none focus:border-brand-300 focus:bg-surface" [class.border-transparent]="!isInvalid('amount')" [class.border-red-300]="isInvalid('amount')">
+        <input type="number" min="0" step="1000" formControlName="amount" class="w-full h-11 px-3 rounded-xl bg-field border text-sm text-content outline-none focus:border-brand-300 focus:bg-surface" [class.border-transparent]="!isInvalid('amount')" [class.border-red-300]="isInvalid('amount')">
         @if (isInvalid('amount')) {
           <span class="text-xs text-red-600">{{ 'finance.errors.amount' | transloco }}</span>
         }
@@ -47,7 +51,7 @@
           {{ 'finance.fields.paid' | transloco }}
           <button type="button" class="text-xs font-semibold text-accent hover:underline" (click)="payInFull()">{{ 'finance.debts.payInFull' | transloco }}</button>
         </span>
-        <input type="number" min="0" step="1000" formControlName="paid" class="w-full h-11 px-3 rounded-xl bg-page border text-sm text-content outline-none focus:border-brand-300 focus:bg-surface" [class.border-transparent]="!paidTooMuch" [class.border-red-300]="paidTooMuch">
+        <input type="number" min="0" step="1000" formControlName="paid" class="w-full h-11 px-3 rounded-xl bg-field border text-sm text-content outline-none focus:border-brand-300 focus:bg-surface" [class.border-transparent]="!paidTooMuch" [class.border-red-300]="paidTooMuch">
         @if (paidTooMuch) {
           <span class="text-xs text-red-600">{{ 'finance.errors.paidTooMuch' | transloco }}</span>
         }
@@ -56,7 +60,7 @@
 
     <label class="flex flex-col gap-1">
       <span class="text-xs font-medium text-soft">{{ 'finance.fields.note' | transloco }}</span>
-      <textarea rows="2" formControlName="note" class="w-full px-3 py-2.5 rounded-xl bg-page border border-transparent text-sm text-content outline-none resize-none focus:border-brand-300 focus:bg-surface"></textarea>
+      <textarea rows="2" formControlName="note" class="w-full px-3 py-2.5 rounded-xl bg-field border border-transparent text-sm text-content outline-none resize-none focus:border-brand-300 focus:bg-surface"></textarea>
     </label>
   </form>
 </mat-dialog-content>

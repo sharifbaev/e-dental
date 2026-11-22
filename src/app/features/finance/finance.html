@@ -27,7 +27,7 @@
         <div class="flex gap-2">
           <div class="relative flex-1 md:max-w-sm">
             <mat-icon fontSet="material-symbols-outlined" class="absolute left-3 top-1/2 -translate-y-1/2 text-subtle pointer-events-none" style="font-size: 20px; width: 20px; height: 20px;">search</mat-icon>
-            <input type="text" class="w-full h-11 pl-10 pr-3 rounded-xl bg-page border border-line-strong text-sm text-content placeholder:text-subtle outline-none focus:border-brand-300 focus:bg-surface" [value]="expenseQuery()" (input)="expenseQuery.set($any($event.target).value)" [placeholder]="'finance.expenses.search' | transloco">
+            <input type="text" class="w-full h-11 pl-10 pr-3 rounded-xl bg-field border border-line-strong text-sm text-content placeholder:text-subtle outline-none focus:border-brand-300 focus:bg-surface" [value]="expenseQuery()" (input)="expenseQuery.set($any($event.target).value)" [placeholder]="'finance.expenses.search' | transloco">
           </div>
           <!-- Фильтры — в модалке -->
           <button type="button" class="relative shrink-0 w-11 h-11 flex items-center justify-center rounded-xl border border-line-strong text-soft" [class.bg-brand-50]="filtersOpen()" [class.text-accent]="expenseFiltersCount() > 0" [attr.aria-label]="'finance.filters' | transloco" [title]="'finance.filters' | transloco" (click)="filtersOpen.set(true)">
@@ -50,7 +50,7 @@
         <div class="flex gap-2">
           <div class="relative flex-1 md:max-w-sm">
             <mat-icon fontSet="material-symbols-outlined" class="absolute left-3 top-1/2 -translate-y-1/2 text-subtle pointer-events-none" style="font-size: 20px; width: 20px; height: 20px;">search</mat-icon>
-            <input type="text" class="w-full h-11 pl-10 pr-3 rounded-xl bg-page border border-line-strong text-sm text-content placeholder:text-subtle outline-none focus:border-brand-300 focus:bg-surface" [value]="debtQuery()" (input)="debtQuery.set($any($event.target).value)" [placeholder]="'finance.debts.search' | transloco">
+            <input type="text" class="w-full h-11 pl-10 pr-3 rounded-xl bg-field border border-line-strong text-sm text-content placeholder:text-subtle outline-none focus:border-brand-300 focus:bg-surface" [value]="debtQuery()" (input)="debtQuery.set($any($event.target).value)" [placeholder]="'finance.debts.search' | transloco">
           </div>
           <button type="button" class="relative shrink-0 w-11 h-11 flex items-center justify-center rounded-xl border border-line-strong text-soft" [class.bg-brand-50]="filtersOpen()" [class.text-accent]="debtFiltersCount() > 0" [attr.aria-label]="'finance.filters' | transloco" [title]="'finance.filters' | transloco" (click)="filtersOpen.set(true)">
             <mat-icon fontSet="material-symbols-outlined">tune</mat-icon>
@@ -287,7 +287,7 @@
       @if (tab() === 'expenses') {
         <label class="flex flex-col gap-1 min-w-0">
           <span class="text-xs font-medium text-soft">{{ 'finance.fields.category' | transloco }}</span>
-          <select class="w-full h-10 px-2 rounded-xl bg-page border border-transparent text-sm text-content outline-none cursor-pointer focus:border-brand-300" (change)="expenseCategory.set($any($event.target).value)">
+          <select class="w-full h-10 px-2 rounded-xl bg-field border border-transparent text-sm text-content outline-none cursor-pointer focus:border-brand-300 focus:bg-surface" (change)="expenseCategory.set($any($event.target).value)">
             <option value="" [selected]="!expenseCategory()">{{ 'finance.all' | transloco }}</option>
             @for (category of categories; track category) {
               <option [value]="category" [selected]="expenseCategory() === category">{{ ('finance.categories.' + category) | transloco }}</option>
@@ -296,7 +296,7 @@
         </label>
         <label class="flex flex-col gap-1 min-w-0">
           <span class="text-xs font-medium text-soft">{{ 'finance.fields.method' | transloco }}</span>
-          <select class="w-full h-10 px-2 rounded-xl bg-page border border-transparent text-sm text-content outline-none cursor-pointer focus:border-brand-300" (change)="expenseMethod.set($any($event.target).value)">
+          <select class="w-full h-10 px-2 rounded-xl bg-field border border-transparent text-sm text-content outline-none cursor-pointer focus:border-brand-300 focus:bg-surface" (change)="expenseMethod.set($any($event.target).value)">
             <option value="" [selected]="!expenseMethod()">{{ 'finance.all' | transloco }}</option>
             @for (method of methods; track method) {
               <option [value]="method" [selected]="expenseMethod() === method">{{ ('finance.methods.' + method) | transloco }}</option>
@@ -305,16 +305,16 @@
         </label>
         <label class="flex flex-col gap-1 min-w-0">
           <span class="text-xs font-medium text-soft">{{ 'finance.from' | transloco }}</span>
-          <input type="date" class="w-full h-10 px-2 rounded-xl bg-page border border-transparent text-sm text-content outline-none focus:border-brand-300" [value]="expenseFrom()" (change)="expenseFrom.set($any($event.target).value)">
+          <input type="date" class="w-full h-10 px-2 rounded-xl bg-field border border-transparent text-sm text-content outline-none focus:border-brand-300 focus:bg-surface" [value]="expenseFrom()" (change)="expenseFrom.set($any($event.target).value)">
         </label>
         <label class="flex flex-col gap-1 min-w-0">
           <span class="text-xs font-medium text-soft">{{ 'finance.to' | transloco }}</span>
-          <input type="date" class="w-full h-10 px-2 rounded-xl bg-page border border-transparent text-sm text-content outline-none focus:border-brand-300" [value]="expenseTo()" (change)="expenseTo.set($any($event.target).value)">
+          <input type="date" class="w-full h-10 px-2 rounded-xl bg-field border border-transparent text-sm text-content outline-none focus:border-brand-300 focus:bg-surface" [value]="expenseTo()" (change)="expenseTo.set($any($event.target).value)">
         </label>
       } @else {
         <label class="flex flex-col gap-1 min-w-0">
           <span class="text-xs font-medium text-soft">{{ 'finance.fields.direction' | transloco }}</span>
-          <select class="w-full h-10 px-2 rounded-xl bg-page border border-transparent text-sm text-content outline-none cursor-pointer focus:border-brand-300" (change)="debtDirection.set($any($event.target).value)">
+          <select class="w-full h-10 px-2 rounded-xl bg-field border border-transparent text-sm text-content outline-none cursor-pointer focus:border-brand-300 focus:bg-surface" (change)="debtDirection.set($any($event.target).value)">
             <option value="" [selected]="!debtDirection()">{{ 'finance.all' | transloco }}</option>
             @for (direction of directions; track direction) {
               <option [value]="direction" [selected]="debtDirection() === direction">{{ ('finance.directions.' + direction) | transloco }}</option>
@@ -323,7 +323,7 @@
         </label>
         <label class="flex flex-col gap-1 min-w-0">
           <span class="text-xs font-medium text-soft">{{ 'finance.fields.status' | transloco }}</span>
-          <select class="w-full h-10 px-2 rounded-xl bg-page border border-transparent text-sm text-content outline-none cursor-pointer focus:border-brand-300" (change)="debtStatusFilter.set($any($event.target).value)">
+          <select class="w-full h-10 px-2 rounded-xl bg-field border border-transparent text-sm text-content outline-none cursor-pointer focus:border-brand-300 focus:bg-surface" (change)="debtStatusFilter.set($any($event.target).value)">
             <option value="" [selected]="!debtStatusFilter()">{{ 'finance.all' | transloco }}</option>
             @for (status of debtStatuses; track status) {
               <option [value]="status" [selected]="debtStatusFilter() === status">{{ ('finance.statuses.' + status) | transloco }}</option>
@@ -332,11 +332,11 @@
         </label>
         <label class="flex flex-col gap-1 min-w-0">
           <span class="text-xs font-medium text-soft">{{ 'finance.from' | transloco }}</span>
-          <input type="date" class="w-full h-10 px-2 rounded-xl bg-page border border-transparent text-sm text-content outline-none focus:border-brand-300" [value]="debtFrom()" (change)="debtFrom.set($any($event.target).value)">
+          <input type="date" class="w-full h-10 px-2 rounded-xl bg-field border border-transparent text-sm text-content outline-none focus:border-brand-300 focus:bg-surface" [value]="debtFrom()" (change)="debtFrom.set($any($event.target).value)">
         </label>
         <label class="flex flex-col gap-1 min-w-0">
           <span class="text-xs font-medium text-soft">{{ 'finance.to' | transloco }}</span>
-          <input type="date" class="w-full h-10 px-2 rounded-xl bg-page border border-transparent text-sm text-content outline-none focus:border-brand-300" [value]="debtTo()" (change)="debtTo.set($any($event.target).value)">
+          <input type="date" class="w-full h-10 px-2 rounded-xl bg-field border border-transparent text-sm text-content outline-none focus:border-brand-300 focus:bg-surface" [value]="debtTo()" (change)="debtTo.set($any($event.target).value)">
         </label>
       }
     </div>

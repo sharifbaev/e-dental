@@ -23,13 +23,13 @@
     @if (!isRepayment) {
       <label class="flex flex-col gap-1">
         <span class="text-xs font-medium text-soft">{{ 'payments.dialog.amount' | transloco }} <span class="text-red-500">*</span></span>
-        <input type="number" min="0" step="1000" formControlName="amount" class="w-full h-11 px-3 rounded-xl bg-page border text-sm text-content outline-none focus:border-brand-300 focus:bg-surface" [class.border-transparent]="!isInvalid('amount')" [class.border-red-300]="isInvalid('amount')">
+        <input type="number" min="0" step="1000" formControlName="amount" class="w-full h-11 px-3 rounded-xl bg-field border text-sm text-content outline-none focus:border-brand-300 focus:bg-surface" [class.border-transparent]="!isInvalid('amount')" [class.border-red-300]="isInvalid('amount')">
       </label>
     }
 
     <label class="flex flex-col gap-1">
       <span class="text-xs font-medium text-soft">{{ 'payments.dialog.paid' | transloco }} <span class="text-red-500">*</span></span>
-      <input type="number" min="0" step="1000" formControlName="paid" class="w-full h-11 px-3 rounded-xl bg-page border text-sm text-content outline-none focus:border-brand-300 focus:bg-surface" [class.border-transparent]="!isInvalid('paid')" [class.border-red-300]="isInvalid('paid')">
+      <input type="number" min="0" step="1000" formControlName="paid" class="w-full h-11 px-3 rounded-xl bg-field border text-sm text-content outline-none focus:border-brand-300 focus:bg-surface" [class.border-transparent]="!isInvalid('paid')" [class.border-red-300]="isInvalid('paid')">
       @if (isInvalid('paid')) {
         <span class="text-xs text-red-600">{{ (isRepayment ? 'payments.dialog.errorRepayment' : 'payments.dialog.errorPaid') | transloco }}</span>
       }

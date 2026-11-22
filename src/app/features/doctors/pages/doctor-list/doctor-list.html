@@ -29,7 +29,7 @@
     <div class="flex gap-2">
     <div class="relative flex-1 md:max-w-md">
       <mat-icon fontSet="material-symbols-outlined" class="absolute left-3 top-1/2 -translate-y-1/2 text-subtle pointer-events-none" style="font-size: 20px; width: 20px; height: 20px;">search</mat-icon>
-      <input type="text" class="w-full h-11 pl-10 pr-9 rounded-xl bg-page border border-line-strong text-sm text-content placeholder:text-subtle outline-none focus:border-brand-300 focus:bg-surface" [formControl]="searchControl" [placeholder]="'doctors.search' | transloco">
+      <input type="text" class="w-full h-11 pl-10 pr-9 rounded-xl bg-field border border-line-strong text-sm text-content placeholder:text-subtle outline-none focus:border-brand-300 focus:bg-surface" [formControl]="searchControl" [placeholder]="'doctors.search' | transloco">
       @if (query()) {
         <button type="button" class="absolute right-2 top-1/2 -translate-y-1/2 w-6 h-6 flex items-center justify-center rounded-full text-subtle hover:bg-line-strong hover:text-soft" (click)="clearSearch()">
           <mat-icon fontSet="material-symbols-outlined" style="font-size: 16px; width: 16px; height: 16px;">close</mat-icon>
