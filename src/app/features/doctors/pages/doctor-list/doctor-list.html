@@ -195,17 +195,21 @@
         </div>
       </div>
 
-      <div class="flex gap-2">
-        <a class="flex-1 flex items-center justify-center gap-2 h-12 rounded-2xl border border-line-strong text-[15px] font-semibold text-content" [href]="'tel:' + d.phone">
+      <!-- Позвонить, изменить, удалить — в один ряд -->
+      <div class="grid grid-cols-3 gap-2">
+        <a class="min-w-0 flex items-center justify-center gap-1.5 h-12 px-2 rounded-2xl border border-line-strong text-sm font-semibold text-content" [href]="'tel:' + d.phone">
           <mat-icon fontSet="material-symbols-outlined" style="font-size: 20px; width: 20px; height: 20px;">call</mat-icon>
           {{ 'dashboard.appointmentDialog.call' | transloco }}
         </a>
-        <button type="button" class="flex-1 flex items-center justify-center gap-2 h-12 rounded-2xl bg-brand-700 text-white text-[15px] font-semibold" (click)="closeDetails(); openEdit(d)">
+        <button type="button" class="min-w-0 flex items-center justify-center gap-1.5 h-12 px-2 rounded-2xl bg-brand-700 text-white text-sm font-semibold" (click)="closeDetails(); openEdit(d)">
           <mat-icon fontSet="material-symbols-outlined" style="font-size: 20px; width: 20px; height: 20px;">edit</mat-icon>
           {{ 'doctors.actions.edit' | transloco }}
         </button>
+        <button type="button" class="min-w-0 flex items-center justify-center gap-1.5 h-12 px-2 rounded-2xl border border-red-200 dark:border-red-900 text-sm font-semibold text-red-600 dark:text-red-400" (click)="closeDetails(); remove(d)">
+          <mat-icon fontSet="material-symbols-outlined" style="font-size: 20px; width: 20px; height: 20px;">delete</mat-icon>
+          {{ 'doctors.actions.delete' | transloco }}
+        </button>
       </div>
-      <button type="button" class="self-center h-11 px-4 rounded-xl text-sm font-semibold text-red-600 dark:text-red-400" (click)="closeDetails(); remove(d)">{{ 'doctors.actions.delete' | transloco }}</button>
     </div>
   </div>
 }

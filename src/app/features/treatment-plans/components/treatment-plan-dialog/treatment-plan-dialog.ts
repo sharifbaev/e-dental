@@ -84,7 +84,7 @@ function fromMinutes(total: number): string {
   selector: 'app-treatment-plan-dialog',
   imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatIconModule, TranslocoPipe],
   templateUrl: './treatment-plan-dialog.html',
-  host: { class: 'flex flex-col h-full' }
+  host: { class: 'relative flex flex-col h-full' }
 })
 export class TreatmentPlanDialog {
   protected readonly data = inject<TreatmentPlanDialogData>(MAT_DIALOG_DATA);
@@ -226,6 +226,15 @@ export class TreatmentPlanDialog {
     this.weekdays.update(list => (list.includes(day) ? list.filter(d => d !== day) : [...list, day].sort()));
   }
 
+  // Первый визит в поле — дд.мм.гггг (системный текст даты скрыт)
+  protected readonly firstDateLabel = computed(() => {
+    const [year, month, day] = this.seriesParams().firstDate.split('-');
+    return year && month && day ? `${day}.${month}.${year}` : '';
+  });
+
+  // Окно «Одно время для всех визитов» (открывается иконкой у поля «Длительность»)
+  protected readonly commonTimeOpen = signal(false);
+
   protected setRepeat(repeat: SeriesRepeat): void {
     this.form.controls.repeat.setValue(repeat);
   }
@@ -347,6 +356,7 @@ export class TreatmentPlanDialog {
   protected applyCommonTime(time: string): void {
     this.commonTime.set(time);
     this.rows.update(rows => rows.map(row => ({ ...row, time })));
+    this.commonTimeOpen.set(false);
   }
 
   // Визиты для списка: день недели, конец, состояние и ближайшие свободные варианты

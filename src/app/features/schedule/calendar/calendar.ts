@@ -4,7 +4,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { MatIconModule } from '@angular/material/icon';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { MatDialog } from '@angular/material/dialog';
-import { filter, switchMap } from 'rxjs';
+import { filter } from 'rxjs';
 import { APPOINTMENT_FORM_DIALOG_CONFIG, AppointmentFormData, AppointmentFormDialog, AppointmentFormResult } from '../components/appointment-form-dialog/appointment-form-dialog';
 import { FeedbackService } from '../../../shared/services/feedback.service';
 import { Schedule } from '../schedule';
@@ -613,15 +613,13 @@ export class ScheduleCalendar extends Schedule implements AfterViewInit {
     const doctorId = laneDoctorId ?? (this.selectedDoctor() === 'all' ? undefined : Number(this.selectedDoctor()));
 
     this.calendarDialog
-      .open<AppointmentFormDialog, AppointmentFormData, AppointmentFormResult>(AppointmentFormDialog, {
+      .open<AppointmentFormDialog, AppointmentFormData, ScheduleAppointment>(AppointmentFormDialog, {
         ...APPOINTMENT_FORM_DIALOG_CONFIG,
-        data: { date, doctorId, time }
+        // Сохранение — внутри формы: при ошибке сервера форма не закрывается и данные не теряются
+        data: { date, doctorId, time, save: (result: AppointmentFormResult) => this.calendarSchedule.add(result, result.date, result.doctorId ?? doctorId) }
       })
       .afterClosed()
-      .pipe(
-        filter((result): result is AppointmentFormResult => !!result),
-        switchMap(result => this.calendarSchedule.add(result, result.date, result.doctorId ?? doctorId))
-      )
+      .pipe(filter((created): created is ScheduleAppointment => !!created))
       .subscribe({
         next: created => {
           const dateText = new Intl.DateTimeFormat(this.calendarLocale(), { day: 'numeric', month: 'long' }).format(fromDateKey(created.date));

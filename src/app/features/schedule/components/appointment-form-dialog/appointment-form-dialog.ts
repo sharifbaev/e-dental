@@ -15,7 +15,8 @@ import { PATIENT_RATINGS, PATIENT_RATING_DOT, PatientRating } from '../../../../
 import { DoctorsService } from '../../../doctors/services/doctors.service';
 import { shortName } from '../../../../shared/utils/names';
 import { toObservable } from '@angular/core/rxjs-interop';
-import { catchError } from 'rxjs';
+import { Observable, catchError } from 'rxjs';
+import { FeedbackService } from '../../../../shared/services/feedback.service';
 
 // «Другое» в списке услуг: повод визита пишется вручную
 export const OTHER_SERVICE_ID = 0;
@@ -62,6 +63,9 @@ export interface AppointmentFormData {
   date?: string;               // 'YYYY-MM-DD' — дата по умолчанию для новой записи
   doctorId?: number;           // врач по умолчанию (например, выбранный в фильтре расписания)
   time?: string;               // 'HH:mm' — время по умолчанию (клик по пустому месту в календаре); продолжительность тогда выбирают вручную
+  // Сохранение из самой формы: при ошибке сервера (выходной врача, занято и т. п.) форма остаётся открытой с введёнными данными.
+  // Модалка закрывается с тем, что вернул save (например, созданный приём)
+  save?: (result: AppointmentFormResult) => Observable<unknown>;
 }
 
 // Что возвращает форма при сохранении
@@ -109,6 +113,10 @@ export class AppointmentFormDialog {
   private readonly scheduleService = inject(ScheduleService);
   private readonly auth = inject(AuthService);
   private readonly doctorsService = inject(DoctorsService);
+  private readonly feedback = inject(FeedbackService);
+
+  // Идёт сохранение (кнопка не нажимается повторно)
+  protected readonly saving = signal(false);
 
   // Врач записывает только к себе — выбор врача в форме скрыт
   protected readonly isDoctor = this.auth.user()?.role === 'doctor';
@@ -463,7 +471,7 @@ export class AppointmentFormDialog {
     const patient = this.selectedPatient();
     const isSearch = this.mode() === 'search';
 
-    this.dialogRef.close({
+    const result: AppointmentFormResult = {
       patientId: isSearch ? patient?.id ?? null : null,
       patientName: isSearch ? patient?.fullName ?? '' : this.newPatient.fullName.value.trim(),
       phone: isSearch ? patient?.phone ?? '' : `${PHONE_PREFIX} ${this.newPatient.phone.value.trim()}`,
@@ -477,6 +485,23 @@ export class AppointmentFormDialog {
       rating: isSearch ? undefined : this.form.controls.rating.value,
       birthDate: isSearch ? undefined : this.newPatient.birthDate.value || undefined,
       otherReason: serviceIds.includes(OTHER_SERVICE_ID) ? this.form.controls.otherReason.value.trim() : undefined
+    };
+
+    const save = this.data?.save;
+    if (!save) {
+      this.dialogRef.close(result);
+      return;
+    }
+    if (this.saving()) return;
+
+    this.saving.set(true);
+    save(result).subscribe({
+      // Тип результата задаёт тот, кто открыл модалку (open<..., ..., R>)
+      next: saved => this.dialogRef.close(saved as AppointmentFormResult),
+      error: err => {
+        this.saving.set(false);
+        this.feedback.error(err);
+      }
     });
   }
 }

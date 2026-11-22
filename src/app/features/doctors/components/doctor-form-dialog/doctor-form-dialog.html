@@ -31,24 +31,44 @@
       }
     </label>
 
-    <!-- Специальность -->
-    <label class="flex flex-col gap-1">
+    <!-- Специальность: можно несколько -->
+    <div class="flex flex-col gap-1 sm:col-span-2">
       <span class="text-xs font-medium text-soft">{{ 'doctors.form.specialty' | transloco }} <span class="text-red-500">*</span></span>
-      <select formControlName="specialty" class="w-full h-11 px-3 rounded-xl bg-field border text-sm text-content outline-none focus:border-brand-300 focus:bg-surface" [class.border-transparent]="!isInvalid('specialty')" [class.border-red-300]="isInvalid('specialty')">
-        <option value="" disabled>{{ 'doctors.form.selectSpecialty' | transloco }}</option>
-        @for (specialty of specialties(); track specialty) {
-          <option [value]="specialty">{{ specialty }}</option>
+      <div class="flex flex-wrap items-center gap-1.5 min-h-11 px-2 py-1.5 rounded-xl bg-field border" [class.border-brand-300]="specialtiesOpen()" [class.border-red-300]="!specialtiesOpen() && isInvalid('specialties')" [class.border-transparent]="!specialtiesOpen() && !isInvalid('specialties')">
+        @for (specialty of selectedSpecialties(); track specialty) {
+          <span class="inline-flex items-center gap-0.5 h-8 pl-2.5 pr-0.5 rounded-lg bg-brand-100 text-[13px] font-semibold text-accent">
+            {{ specialty }}
+            <button type="button" class="w-7 h-7 flex items-center justify-center rounded-md hover:bg-brand-50" [attr.aria-label]="('appointmentForm.service.remove' | transloco) + ': ' + specialty" (click)="toggleSpecialty(specialty)">
+              <mat-icon fontSet="material-symbols-outlined" style="font-size: 16px; width: 16px; height: 16px;">close</mat-icon>
+            </button>
+          </span>
         }
-      </select>
-      @if (isInvalid('specialty')) {
+        <button type="button" class="flex-1 min-w-36 h-8 px-1.5 flex items-center justify-between gap-2 text-sm text-subtle" [attr.aria-expanded]="specialtiesOpen()" (click)="toggleSpecialtiesList()">
+          {{ (selectedSpecialties().length ? 'doctors.form.addSpecialty' : 'doctors.form.selectSpecialty') | transloco }}
+          <mat-icon fontSet="material-symbols-outlined" style="font-size: 20px; width: 20px; height: 20px;">{{ specialtiesOpen() ? 'expand_less' : 'expand_more' }}</mat-icon>
+        </button>
+      </div>
+
+      @if (specialtiesOpen()) {
+        <div class="mt-1 rounded-xl border border-line-strong p-1 flex flex-col" role="listbox" aria-multiselectable="true">
+          @for (specialty of specialties(); track specialty) {
+            <label class="flex items-center gap-3 min-h-11 px-2.5 rounded-lg cursor-pointer" [class.bg-brand-50]="selectedSpecialties().includes(specialty)">
+              <input type="checkbox" class="w-[18px] h-[18px] accent-brand-700" [checked]="selectedSpecialties().includes(specialty)" (change)="toggleSpecialty(specialty)">
+              <span class="flex-1 text-sm font-medium text-content">{{ specialty }}</span>
+            </label>
+          }
+          <button type="button" class="m-1 h-10 rounded-lg bg-brand-700 text-sm font-semibold text-white" (click)="toggleSpecialtiesList()">{{ 'appointmentForm.service.done' | transloco }}</button>
+        </div>
+      }
+      @if (isInvalid('specialties')) {
         <span class="text-xs text-red-600">{{ 'doctors.form.errors.required' | transloco }}</span>
       }
-    </label>
+    </div>
 
     <!-- Услуги врача: можно несколько, «Другое» — первым пунктом -->
     <div class="flex flex-col gap-1 sm:col-span-2">
       <span class="text-xs font-medium text-soft">{{ 'doctors.form.services' | transloco }}</span>
-      <div class="flex flex-wrap items-center gap-1.5 min-h-11 px-2 py-1.5 rounded-xl bg-page border" [class.border-brand-300]="servicesOpen()" [class.border-transparent]="!servicesOpen()">
+      <div class="flex flex-wrap items-center gap-1.5 min-h-11 px-2 py-1.5 rounded-xl bg-field border" [class.border-brand-300]="servicesOpen()" [class.border-transparent]="!servicesOpen()">
         @for (chip of selectedServices(); track chip.id) {
           <span class="inline-flex items-center gap-0.5 h-8 pl-2.5 pr-0.5 rounded-lg bg-brand-100 text-[13px] font-semibold text-accent">
             {{ chip.id === otherServiceId ? ('appointmentForm.service.other' | transloco) : chip.name }}

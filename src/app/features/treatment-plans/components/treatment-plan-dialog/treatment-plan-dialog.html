@@ -51,29 +51,16 @@
       </label>
 
       @if (form.controls.withNext.value) {
-        <!-- 1. Правило -->
-        <div class="grid grid-cols-2 gap-3">
+        <!-- 1. Повтор -->
+        <div class="flex flex-col gap-2">
           <label class="flex flex-col gap-1 min-w-0">
-            <span class="text-xs font-medium text-soft">{{ 'treatmentPlan.dialog.firstDate' | transloco }}</span>
-            <input type="date" formControlName="firstDate" [min]="todayKey" class="w-full h-11 px-3 rounded-xl bg-field border border-transparent text-sm text-content outline-none focus:border-brand-300 focus:bg-surface">
-          </label>
-          <label class="flex flex-col gap-1 min-w-0">
-            <span class="text-xs font-medium text-soft">{{ 'treatmentPlan.dialog.duration' | transloco }}</span>
-            <select formControlName="duration" class="w-full h-11 px-3 rounded-xl bg-field border border-transparent text-sm text-content outline-none focus:border-brand-300 focus:bg-surface">
-              @for (d of durations; track d) {
-                <option [ngValue]="d">{{ 'treatmentPlan.dialog.minutes' | transloco: { count: d } }}</option>
+            <span class="text-xs font-medium text-soft">{{ 'treatmentPlan.dialog.repeat' | transloco }}</span>
+            <select formControlName="repeat" class="w-full h-11 px-3 rounded-xl bg-field border border-transparent text-sm text-content outline-none focus:border-brand-300 focus:bg-surface">
+              @for (repeat of repeats; track repeat) {
+                <option [ngValue]="repeat">{{ ('treatmentPlan.dialog.repeats.' + repeat) | transloco }}</option>
               }
             </select>
           </label>
-        </div>
-
-        <div class="flex flex-col gap-2">
-          <span class="text-xs font-medium text-soft">{{ 'treatmentPlan.dialog.repeat' | transloco }}</span>
-          <div class="flex flex-wrap gap-2">
-            @for (repeat of repeats; track repeat) {
-              <button type="button" class="px-3 py-1.5 rounded-full border text-sm font-medium transition-colors" [class.bg-brand-700]="form.controls.repeat.value === repeat" [class.border-brand-700]="form.controls.repeat.value === repeat" [class.text-white]="form.controls.repeat.value === repeat" [class.border-line-strong]="form.controls.repeat.value !== repeat" [class.text-soft]="form.controls.repeat.value !== repeat" [attr.aria-pressed]="form.controls.repeat.value === repeat" (click)="setRepeat(repeat)">{{ ('treatmentPlan.dialog.repeats.' + repeat) | transloco }}</button>
-            }
-          </div>
           @if (form.controls.repeat.value === 'weekdays') {
             <div class="grid grid-cols-7 gap-1">
               @for (option of weekdayOptions(); track option.day) {
@@ -83,31 +70,31 @@
           }
         </div>
 
-        <!-- 2. Одно время для всех визитов -->
-        @if (rowsView().length > 0) {
-          <div class="flex flex-col gap-2">
-            <span class="text-xs font-medium text-soft">{{ 'treatmentPlan.dialog.commonTime' | transloco: { count: rowsView().length } }}</span>
-            @if (commonOptions().full.length > 0) {
-              <div class="grid grid-cols-4 sm:grid-cols-6 gap-2">
-                @for (time of commonOptions().full; track time) {
-                  <button type="button" class="h-9 rounded-lg border text-sm font-medium transition-colors" [class.bg-brand-700]="commonTime() === time" [class.text-white]="commonTime() === time" [class.border-brand-700]="commonTime() === time" [class.border-line-strong]="commonTime() !== time" [class.text-soft]="commonTime() !== time" [class.hover:bg-page]="commonTime() !== time" (click)="applyCommonTime(time)">{{ time }}</button>
+        <!-- Первый визит и длительность -->
+        <div class="grid grid-cols-2 gap-3">
+          <label class="flex flex-col gap-1 min-w-0">
+            <span class="text-xs font-medium text-soft">{{ 'treatmentPlan.dialog.firstDate' | transloco }}</span>
+            <!-- Системный текст даты скрыт, поверх — дд.мм.гггг; календарь открывается как обычно -->
+            <div class="relative">
+              <input type="date" formControlName="firstDate" [min]="todayKey" class="w-full h-11 px-3 rounded-xl bg-field border border-transparent text-sm text-transparent outline-none focus:border-brand-300 focus:bg-surface">
+              <span class="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none text-sm text-content">{{ firstDateLabel() }}</span>
+            </div>
+          </label>
+          <div class="flex flex-col gap-1 min-w-0">
+            <span class="text-xs font-medium text-soft">{{ 'treatmentPlan.dialog.duration' | transloco }}</span>
+            <div class="flex gap-2">
+              <select formControlName="duration" class="flex-1 min-w-0 h-11 px-3 rounded-xl bg-field border border-transparent text-sm text-content outline-none focus:border-brand-300 focus:bg-surface" [attr.aria-label]="'treatmentPlan.dialog.duration' | transloco">
+                @for (d of durations; track d) {
+                  <option [ngValue]="d">{{ 'treatmentPlan.dialog.minutes' | transloco: { count: d } }}</option>
                 }
-              </div>
-            } @else if (commonOptions().partial.length > 0) {
-              <span class="text-xs text-amber-700 dark:text-amber-300">{{ 'treatmentPlan.dialog.noCommon' | transloco }}</span>
-              <div class="grid grid-cols-3 sm:grid-cols-6 gap-2">
-                @for (option of commonOptions().partial; track option.time) {
-                  <button type="button" class="flex flex-col items-center justify-center py-1 rounded-lg border text-sm font-medium transition-colors" [class.bg-brand-700]="commonTime() === option.time" [class.text-white]="commonTime() === option.time" [class.border-brand-700]="commonTime() === option.time" [class.border-line-strong]="commonTime() !== option.time" [class.text-soft]="commonTime() !== option.time" (click)="applyCommonTime(option.time)">
-                    {{ option.time }}
-                    <span class="text-[10px] font-normal opacity-80">{{ 'treatmentPlan.dialog.coverage' | transloco: { free: option.free, total: rowsView().length } }}</span>
-                  </button>
-                }
-              </div>
-            } @else {
-              <div class="py-3 rounded-xl bg-page text-center text-sm text-subtle">{{ 'treatmentPlan.dialog.noSlots' | transloco }}</div>
-            }
+              </select>
+              <!-- Одно время для всех визитов — в отдельном окне -->
+              <button type="button" class="w-11 h-11 shrink-0 flex items-center justify-center rounded-xl border border-line-strong text-accent hover:bg-brand-50 disabled:opacity-40 disabled:cursor-not-allowed" [disabled]="rowsView().length === 0" [title]="'treatmentPlan.dialog.commonTime' | transloco: { count: rowsView().length }" [attr.aria-label]="'treatmentPlan.dialog.commonTime' | transloco: { count: rowsView().length }" (click)="commonTimeOpen.set(true)">
+                <mat-icon fontSet="material-symbols-outlined" style="font-size: 20px; width: 20px; height: 20px;">schedule</mat-icon>
+              </button>
+            </div>
           </div>
-        }
+        </div>
 
         <!-- 3. Визиты: каждый можно поправить вручную -->
         <div class="flex flex-col gap-2">
@@ -163,7 +150,42 @@
   </form>
 </mat-dialog-content>
 
-<div class="px-6 py-4 border-t border-line-strong flex flex-col-reverse sm:flex-row gap-2">
+<!-- Окно «Одно время для всех визитов» -->
+@if (commonTimeOpen()) {
+  <div class="absolute inset-0 z-10 flex items-center justify-center p-4">
+    <button type="button" class="absolute inset-0 bg-black/40" [attr.aria-label]="'common.close' | transloco" (click)="commonTimeOpen.set(false)"></button>
+    <div class="relative w-full max-w-md max-h-full overflow-y-auto rounded-2xl bg-surface p-4 shadow-xl flex flex-col gap-3" role="dialog" [attr.aria-label]="'treatmentPlan.dialog.commonTime' | transloco: { count: rowsView().length }">
+      <div class="flex items-center justify-between gap-2">
+        <span class="text-sm font-semibold text-content">{{ 'treatmentPlan.dialog.commonTime' | transloco: { count: rowsView().length } }}</span>
+        <button type="button" class="w-9 h-9 -my-2 -mr-2 rounded-full flex items-center justify-center text-soft hover:bg-page" [attr.aria-label]="'common.close' | transloco" (click)="commonTimeOpen.set(false)">
+          <mat-icon fontSet="material-symbols-outlined">close</mat-icon>
+        </button>
+      </div>
+      @if (commonOptions().full.length > 0) {
+        <div class="grid grid-cols-4 sm:grid-cols-6 gap-2">
+          @for (time of commonOptions().full; track time) {
+            <button type="button" class="h-9 rounded-lg border text-sm font-medium transition-colors" [class.bg-brand-700]="commonTime() === time" [class.text-white]="commonTime() === time" [class.border-brand-700]="commonTime() === time" [class.border-line-strong]="commonTime() !== time" [class.text-soft]="commonTime() !== time" [class.hover:bg-page]="commonTime() !== time" (click)="applyCommonTime(time)">{{ time }}</button>
+          }
+        </div>
+      } @else if (commonOptions().partial.length > 0) {
+        <span class="text-xs text-amber-700 dark:text-amber-300">{{ 'treatmentPlan.dialog.noCommon' | transloco }}</span>
+        <div class="grid grid-cols-3 sm:grid-cols-6 gap-2">
+          @for (option of commonOptions().partial; track option.time) {
+            <button type="button" class="flex flex-col items-center justify-center py-1 rounded-lg border text-sm font-medium transition-colors" [class.bg-brand-700]="commonTime() === option.time" [class.text-white]="commonTime() === option.time" [class.border-brand-700]="commonTime() === option.time" [class.border-line-strong]="commonTime() !== option.time" [class.text-soft]="commonTime() !== option.time" (click)="applyCommonTime(option.time)">
+              {{ option.time }}
+              <span class="text-[10px] font-normal opacity-80">{{ 'treatmentPlan.dialog.coverage' | transloco: { free: option.free, total: rowsView().length } }}</span>
+            </button>
+          }
+        </div>
+      } @else {
+        <div class="py-3 rounded-xl bg-page text-center text-sm text-subtle">{{ 'treatmentPlan.dialog.noSlots' | transloco }}</div>
+      }
+    </div>
+  </div>
+}
+
+<!-- Кнопки — в один ряд -->
+<div class="px-6 py-4 border-t border-line-strong flex flex-row gap-2">
   <button type="button" class="flex-1 px-4 py-3 rounded-lg border border-line-strong text-sm font-medium text-soft hover:bg-page" (click)="skip()">{{ 'treatmentPlan.dialog.skip' | transloco }}</button>
   <button type="button" class="flex-1 px-4 py-3 rounded-lg bg-brand-700 text-sm font-medium text-white hover:bg-brand-800" (click)="save()">{{ 'treatmentPlan.dialog.save' | transloco }}</button>
 </div>

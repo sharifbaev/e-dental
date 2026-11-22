@@ -371,15 +371,13 @@ export class Schedule {
     const doctorId = this.selectedDoctor() === 'all' ? undefined : Number(this.selectedDoctor());
 
     this.dialog
-      .open<AppointmentFormDialog, AppointmentFormData, AppointmentFormResult>(AppointmentFormDialog, {
+      .open<AppointmentFormDialog, AppointmentFormData, ScheduleAppointment>(AppointmentFormDialog, {
         ...APPOINTMENT_FORM_DIALOG_CONFIG,
-        data: { date, doctorId }
+        // Сохранение — внутри формы: при ошибке сервера форма не закрывается и данные не теряются
+        data: { date, doctorId, save: (result: AppointmentFormResult) => this.scheduleService.add(result, result.date, result.doctorId ?? doctorId) }
       })
       .afterClosed()
-      .pipe(
-        filter((result): result is AppointmentFormResult => !!result),
-        switchMap(result => this.scheduleService.add(result, result.date, result.doctorId ?? doctorId))
-      )
+      .pipe(filter((created): created is ScheduleAppointment => !!created))
       .subscribe({
         next: created => {
           const dateText = new Intl.DateTimeFormat(this.locale(), { day: 'numeric', month: 'long' }).format(fromDateKey(created.date));
@@ -424,23 +422,24 @@ export class Schedule {
   // Изменение приёма: та же форма записи, но с данными приёма
   protected edit(appointment: ScheduleAppointment): void {
     this.dialog
-      .open<AppointmentFormDialog, AppointmentFormData, AppointmentFormResult>(AppointmentFormDialog, {
+      .open<AppointmentFormDialog, AppointmentFormData, ScheduleAppointment>(AppointmentFormDialog, {
         ...APPOINTMENT_FORM_DIALOG_CONFIG,
-        data: { appointment }
+        data: {
+          appointment,
+          // Пациента в записи сменить нельзя — меняются врач, дата, время, длительность и услуги.
+          // Сохранение — внутри формы: при ошибке сервера форма не закрывается
+          save: (result: AppointmentFormResult) => this.scheduleService.update(appointment.id, {
+            doctorId: result.doctorId,
+            date: result.date,
+            start: result.time,
+            durationMinutes: result.durationMinutes,
+            serviceIds: result.serviceIds?.length ? result.serviceIds : [result.serviceId],
+            otherReason: result.otherReason
+          })
+        }
       })
       .afterClosed()
-      .pipe(
-        filter((result): result is AppointmentFormResult => !!result),
-        // Пациента в записи сменить нельзя — меняются врач, дата, время, длительность и услуги
-        switchMap(result => this.scheduleService.update(appointment.id, {
-          doctorId: result.doctorId,
-          date: result.date,
-          start: result.time,
-          durationMinutes: result.durationMinutes,
-          serviceIds: result.serviceIds?.length ? result.serviceIds : [result.serviceId],
-          otherReason: result.otherReason
-        }))
-      )
+      .pipe(filter((updated): updated is ScheduleAppointment => !!updated))
       .subscribe({
         next: () => this.feedback.success('feedback.updated'),
         error: err => this.feedback.error(err)

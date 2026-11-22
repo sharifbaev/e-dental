@@ -54,6 +54,16 @@ function accountValidator(group: AbstractControl): ValidationErrors | null {
   return Object.keys(errors).length ? errors : null;
 }
 
+// 'Терапевт, Хирург' → ['Терапевт', 'Хирург']
+function splitSpecialties(value: string | undefined | null): string[] {
+  return (value ?? '').split(',').map(item => item.trim()).filter(Boolean);
+}
+
+// Нужна хотя бы одна специальность
+function specialtiesRequired(control: AbstractControl): ValidationErrors | null {
+  return (control.value as string[])?.length ? null : { required: true };
+}
+
 @Component({
   selector: 'app-doctor-form-dialog',
   imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatIconModule, TranslocoPipe, UzPhoneInputDirective],
@@ -80,13 +90,15 @@ export class DoctorFormDialog {
   // Специальности — с API (GET /specialties); если у врача своя, которой нет в справочнике, — добавляем её в список
   protected readonly specialties = computed(() => {
     const list = this.doctorsService.specialties();
-    return this.doctor && this.doctor.specialty && !list.includes(this.doctor.specialty) ? [...list, this.doctor.specialty] : list;
+    const own = splitSpecialties(this.doctor?.specialty).filter(item => !list.includes(item));
+    return [...list, ...own];
   });
 
   protected readonly form = this.fb.nonNullable.group({
     fullName: [this.doctor?.fullName ?? '', [Validators.required, Validators.minLength(3)]],
     phone: [this.doctor?.phone ?? '', [Validators.required, uzPhoneValidator]],
-    specialty: [this.doctor?.specialty ?? '', Validators.required],
+    // Специальности: можно несколько; на сервер уходят строкой через запятую (поле specialty не меняется)
+    specialties: [splitSpecialties(this.doctor?.specialty), specialtiesRequired],
     cabinet: [this.doctor?.cabinet ?? 1, [Validators.required, Validators.min(1), Validators.max(50)]],
     experienceYears: [this.doctor?.experienceYears ?? 0, [Validators.min(0), Validators.max(60)]],
     workDays: [this.doctor?.workDays ?? [1, 2, 3, 4, 5], workDaysRequired],
@@ -146,6 +158,26 @@ export class DoctorFormDialog {
     this.servicesOpen.update(open => !open);
   }
 
+  // ---- Специальности (несколько) ----
+
+  protected readonly specialtiesOpen = signal(false);
+
+  protected readonly selectedSpecialties = toSignal(this.form.controls.specialties.valueChanges, {
+    initialValue: this.form.controls.specialties.value
+  });
+
+  protected toggleSpecialty(specialty: string): void {
+    const control = this.form.controls.specialties;
+    const list = control.value;
+    control.setValue(list.includes(specialty) ? list.filter(item => item !== specialty) : [...list, specialty]);
+    control.markAsTouched();
+  }
+
+  protected toggleSpecialtiesList(): void {
+    this.specialtiesOpen.update(open => !open);
+    this.form.controls.specialties.markAsTouched();
+  }
+
   private readonly formStatus = toSignal(this.form.statusChanges, { initialValue: this.form.status });
   protected readonly canSubmit = computed(() => this.formStatus() === 'VALID');
 
@@ -197,11 +229,12 @@ export class DoctorFormDialog {
       return;
     }
 
-    const { account, ...value } = this.form.getRawValue();
+    const { account, specialties, ...value } = this.form.getRawValue();
     const username = account.username.trim();
     this.dialogRef.close({
       ...value,
       ...(!this.isEdit && username ? { account: { username, password: account.password } } : {}),
+      specialty: specialties.join(', '),
       fullName: value.fullName.trim(),
       phone: value.phone.trim(),
       cabinet: Number(value.cabinet),

@@ -15,10 +15,12 @@ import { Appointment } from './models/dashboard.model';
 import { DashboardService } from './services/dashboard.service';
 import { DashboardPrefsService } from './services/dashboard-prefs.service';
 import { APPOINTMENT_FORM_DIALOG_CONFIG, AppointmentFormDialog } from '../schedule/components/appointment-form-dialog/appointment-form-dialog';
-import { catchError, filter, of, switchMap } from 'rxjs';
+import { catchError, filter, of } from 'rxjs';
 import { FeedbackService } from '../../shared/services/feedback.service';
 import { AppointmentFormData, AppointmentFormResult } from '../schedule/components/appointment-form-dialog/appointment-form-dialog';
 import { ScheduleService } from '../schedule/services/schedule.service';
+import { ScheduleAppointment } from '../schedule/models/schedule.model';
+import { DoctorsService } from '../doctors/services/doctors.service';
 
 const LOCALES: Record<string, string> = { ru: 'ru-RU', uz: 'uz-Latn-UZ' };
 
@@ -124,15 +126,27 @@ export class Dashboard {
   protected readonly doctorControl = new FormControl<string>(this.auth.user()?.role === 'doctor' ? this.auth.user()?.doctorName ?? '' : '', { nonNullable: true });
   private readonly doctorQuery = toSignal(this.doctorControl.valueChanges, { initialValue: '' });
 
+  private readonly doctorsService = inject(DoctorsService);
+
+  // Врачи для фильтра: со свободными окнами на сегодня + все остальные из справочника (у кого сегодня выходной — без окон)
+  private readonly filterDoctors = computed(() => {
+    const withSlots = this.summary()?.freeSlots ?? [];
+    const ids = new Set(withSlots.map(d => d.doctorId));
+    const rest = this.doctorsService.doctors()
+      .filter(d => !ids.has(d.id))
+      .map(d => ({ doctorId: d.id, doctorName: d.fullName, slots: [] as string[] }));
+    return [...withSlots, ...rest];
+  });
+
   protected readonly selectedDoctorName = computed(() => {
     const id = this.selectedDoctor();
     if (id === 'all') return '';
-    return this.summary()?.freeSlots.find(d => String(d.doctorId) === id)?.doctorName ?? '';
+    return this.filterDoctors().find(d => String(d.doctorId) === id)?.doctorName ?? '';
   });
 
   // Врачи для выпадающего списка с учётом поиска
   protected readonly filteredDoctors = computed(() => {
-    const doctors = this.summary()?.freeSlots ?? [];
+    const doctors = this.filterDoctors();
     const query = this.doctorQuery().trim().toLowerCase();
 
     // Пустой запрос или в поле уже стоит выбранный врач — показываем всех
@@ -201,7 +215,7 @@ export class Dashboard {
       return;
     }
 
-    const doctor = this.summary()?.freeSlots.find(d => d.doctorName === name);
+    const doctor = this.filterDoctors().find(d => d.doctorName === name);
     this.selectedDoctor.set(doctor ? String(doctor.doctorId) : 'all');
   }
 
@@ -257,12 +271,13 @@ export class Dashboard {
   // Быстрая запись: по умолчанию на сегодня, в ближайшие полчаса (дату и время можно поменять в форме)
   protected openAppointmentForm(): void {
     this.dialog
-      .open<AppointmentFormDialog, AppointmentFormData, AppointmentFormResult>(AppointmentFormDialog, APPOINTMENT_FORM_DIALOG_CONFIG)
+      // Сохранение — внутри формы: при ошибке сервера форма не закрывается и данные не теряются
+      .open<AppointmentFormDialog, AppointmentFormData, ScheduleAppointment>(AppointmentFormDialog, {
+        ...APPOINTMENT_FORM_DIALOG_CONFIG,
+        data: { save: (result: AppointmentFormResult) => this.scheduleService.add(result, result.date, result.doctorId) }
+      })
       .afterClosed()
-      .pipe(
-        filter((result): result is AppointmentFormResult => !!result),
-        switchMap(result => this.scheduleService.add(result, result.date, result.doctorId))
-      )
+      .pipe(filter((created): created is ScheduleAppointment => !!created))
       .subscribe({
         next: created => this.feedback.success('feedback.created', 'feedback.createdMessage', {
           patient: created.patientName,
