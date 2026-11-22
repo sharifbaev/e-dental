@@ -1,6 +1,7 @@
 // statusOverdue — через 30 мин после приёма статус всё ещё «Первичный»: нужно поменять статус
 // pendingDecision — перед концом смены у врача остались пациенты «Ожидает решения» (одно уведомление на врача)
-export type NotificationType = 'onlineBooking' | 'cancellation' | 'waitingList' | 'noShow' | 'statusOverdue' | 'pendingDecision';
+// newAppointment — новая запись к врачу (сделал админ или владелец; видит только врач приёма)
+export type NotificationType = 'onlineBooking' | 'cancellation' | 'waitingList' | 'noShow' | 'statusOverdue' | 'pendingDecision' | 'newAppointment';
 
 export interface AppNotification {
   id: number;

@@ -63,7 +63,9 @@
         </div>
         <div class="flex items-center gap-2">
           <span class="font-display text-[34px] leading-none font-extrabold tracking-tight text-content">{{ s.patientsToday }}</span>
-          <span class="max-md:hidden px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300">+{{ s.patientsTrend }}%</span>
+          @if (s.patientsTrend) {
+            <span class="max-md:hidden px-2 py-0.5 rounded-full text-xs font-semibold" [class]="s.patientsTrend > 0 ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300' : 'bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400'">{{ s.patientsTrend > 0 ? '+' : '' }}{{ s.patientsTrend }}%</span>
+          }
         </div>
         <span class="max-md:hidden text-xs text-subtle">{{ 'dashboard.kpi.patientsHint' | transloco }}</span>
       </button>

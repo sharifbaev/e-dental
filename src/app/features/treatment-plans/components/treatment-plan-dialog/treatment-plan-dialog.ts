@@ -8,7 +8,6 @@ import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { ScheduleAppointment } from '../../../schedule/models/schedule.model';
 import { AppointmentFormService } from '../../../schedule/services/appointment-form.service';
 import { ScheduleService, addMinutes, toDateKey } from '../../../schedule/services/schedule.service';
-import { SERVICE_PRICES } from '../../../payments/models/payment.model';
 import { formatMoney } from '../../../payments/services/payments.service';
 import { NextVisitDraft, TreatmentPlanDialogResult } from '../../models/treatment-plan.model';
 import { DoctorsService } from '../../../doctors/services/doctors.service';
@@ -132,6 +131,12 @@ export class TreatmentPlanDialog {
   constructor() {
     this.updateCost();
 
+    // Занятость врача на даты серии — подгружаем приёмы этих месяцев с API
+    effect(() => {
+      const dates = [...this.rows().map(row => row.date), this.value().nextDate ?? ''].filter(Boolean).sort();
+      if (dates.length) untracked(() => this.scheduleService.ensureRange(dates[0], dates[dates.length - 1]));
+    });
+
     // Правило серии изменилось — пересобираем даты; выбранное общее время сохраняем
     effect(() => {
       const { visits, firstDate, repeat } = this.seriesParams();
@@ -159,7 +164,8 @@ export class TreatmentPlanDialog {
 
   private updateCost(): void {
     if (this.costEdited) return;
-    const sum = this.selected().reduce((total, id) => total + (SERVICE_PRICES[id] ?? 0), 0);
+    // Цены — из справочника услуг («Настройки → Услуги»)
+    const sum = this.selected().reduce((total, id) => total + (this.allServices().find(s => s.id === id)?.price ?? 0), 0);
     this.form.controls.cost.setValue(sum);
   }
 
@@ -225,7 +231,11 @@ export class TreatmentPlanDialog {
   }
 
   // Врач приёма из справочника — режим работы и рабочие дни
-  private readonly doctor = computed(() => this.doctorsService.doctors().find(d => d.id === this.appointment.doctorId) ?? null);
+  // (врачу сервер отдаёт справочник без графика — тогда считаем по рабочему дню клиники, проверит сервер)
+  private readonly doctor = computed(() => {
+    const doctor = this.doctorsService.doctors().find(d => d.id === this.appointment.doctorId);
+    return doctor?.workDays && doctor.workStart && doctor.workEnd ? doctor : null;
+  });
 
   // Рабочие часы врача в этот день (минуты); null — выходной
   private workHours(date: string): { start: number; end: number } | null {
@@ -422,8 +432,8 @@ export class TreatmentPlanDialog {
       return;
     }
 
-    // Услуга следующего приёма — первая выбранная плитка, иначе «Консультация и осмотр»
-    const firstService = this.services().find(s => this.selected().includes(s.id)) ?? this.services().find(s => s.id === 3);
+    // Услуга следующего приёма — первая выбранная плитка, иначе «Другое» (сервер подставит процедуры плана)
+    const firstService = this.services().find(s => this.selected().includes(s.id));
 
     // Визиты серии — по дате и времени
     const series: NextVisitDraft[] = value.withNext
@@ -433,7 +443,7 @@ export class TreatmentPlanDialog {
             date: row.date,
             time: row.time!,
             durationMinutes: value.duration,
-            serviceId: firstService?.id ?? 3,
+            serviceId: firstService?.id ?? 0,
             serviceName: firstService?.name ?? procedures[0]
           }))
       : [];

@@ -1,37 +1,10 @@
-import { Injectable, computed, signal } from '@angular/core';
-import { Observable, delay, map, of, tap } from 'rxjs';
-import { AppointmentConfirmation, AppointmentDraft, PatientStatus, ScheduleAppointment } from '../models/schedule.model';
-import { mockPatientRating } from '../../../shared/models/patient-rating';
+import { HttpClient } from '@angular/common/http';
+import { Injectable, computed, effect, inject, signal, untracked } from '@angular/core';
+import { Observable, forkJoin, map, of, tap } from 'rxjs';
+import { AppointmentConfirmation, AppointmentDraft, AppointmentDto, PatientStatus, ScheduleAppointment, fromAppointmentDto } from '../models/schedule.model';
 import { NO_SHOW_AFTER_MINUTES, STATUS_OVERDUE_AFTER_MINUTES } from '../../../shared/models/patient-status';
-
-// Шаблоны приёмов для mock-данных
-const TEMPLATES: Omit<ScheduleAppointment, 'id' | 'date' | 'status'>[] = [
-  { start: '09:00', end: '10:00', cabinet: 2, patientId: 7, patientName: 'Смирнова Елена Васильевна', phone: '+998 90 111-22-33', serviceId: 2, service: 'Профессиональная гигиена AirFlow', doctorId: 4, doctorName: 'Савина А. И.' },
-  { start: '09:30', end: '10:15', cabinet: 3, patientId: 9, patientName: 'Юлдашева Малика Бахтиёровна', phone: '+998 95 610-20-30', serviceId: 1, service: 'Лечение кариеса', doctorId: 3, doctorName: 'Юсупов Б. Т.' },
-  { start: '10:00', end: '10:30', cabinet: 1, patientId: 10, patientName: 'Иванов Дмитрий Андреевич', phone: '+998 33 870-45-12', serviceId: 3, service: 'Консультация и осмотр', doctorId: 1, doctorName: 'Сидоров А. П.' },
-  { start: '10:30', end: '11:15', cabinet: 2, patientId: 1, patientName: 'Ковалёв Максим Дмитриевич', phone: '+998 93 555-12-34', serviceId: 1, service: 'Лечение кариеса', doctorId: 4, doctorName: 'Савина А. И.' },
-  { start: '11:00', end: '11:30', cabinet: 1, patientId: 2, patientName: 'Смирнов Артур Павлович', phone: '+998 90 123-45-67', serviceId: 3, service: 'Консультация и осмотр', doctorId: 1, doctorName: 'Сидоров А. П.' },
-  { start: '12:00', end: '12:30', cabinet: 1, patientId: 3, patientName: 'Михайлова Дарья Игоревна', phone: '+998 97 700-11-22', serviceId: 3, service: 'Консультация и осмотр', doctorId: 1, doctorName: 'Сидоров А. П.' },
-  { start: '13:00', end: '13:40', cabinet: 3, patientId: 5, patientName: 'Турсунов Жасур Алишерович', phone: '+998 91 444-78-90', serviceId: 4, service: 'Удаление зуба', doctorId: 3, doctorName: 'Юсупов Б. Т.' },
-  { start: '14:00', end: '15:00', cabinet: 2, patientId: 4, patientName: 'Абдуллаева Нилуфар Рустамовна', phone: '+998 99 321-65-87', serviceId: 2, service: 'Профессиональная гигиена AirFlow', doctorId: 2, doctorName: 'Каримова Д. Р.' },
-  { start: '15:30', end: '16:15', cabinet: 1, patientId: 6, patientName: 'Петров Сергей Олегович', phone: '+998 94 222-33-44', serviceId: 1, service: 'Лечение кариеса', doctorId: 1, doctorName: 'Сидоров А. П.' },
-  { start: '16:30', end: '17:00', cabinet: 3, patientId: 8, patientName: 'Кузнецов Артём Игоревич', phone: '+998 95 777-88-99', serviceId: 3, service: 'Консультация и осмотр', doctorId: 3, doctorName: 'Юсупов Б. Т.' },
-  { start: '17:00', end: '18:00', cabinet: 2, patientId: 11, patientName: 'Хасанов Бекзод Улугбекович', phone: '+998 88 505-60-70', serviceId: 2, service: 'Профессиональная гигиена AirFlow', doctorId: 2, doctorName: 'Каримова Д. Р.' },
-  { start: '18:00', end: '18:40', cabinet: 3, patientId: 12, patientName: 'Сергеева Анна Викторовна', phone: '+998 90 909-18-27', serviceId: 4, service: 'Удаление зуба', doctorId: 3, doctorName: 'Юсупов Б. Т.' }
-];
-
-// Сколько приёмов в день недели (по кругу) и какие статусы
-const COUNTS = [8, 9, 6, 8, 11, 5, 4];
-const TODAY_STATUSES: PatientStatus[] = ['completed', 'inTreatment', 'primary', 'awaitingDecision', 'inTreatment', 'primary', 'primary', 'cancelled'];
-const FUTURE_STATUSES: PatientStatus[] = ['primary', 'inTreatment', 'primary', 'primary', 'inTreatment', 'cancelled'];
-
-const MOCK_DAYS = 60;
-// Прошедшие дни в mock-данных — чтобы в календаре было что показать за прошлые даты
-const MOCK_PAST_DAYS = 30;
-const PAST_STATUSES: PatientStatus[] = ['completed', 'archived', 'cancelled', 'completed'];
-
-// Имитация задержки ответа сервера
-const MOCK_DELAY_MS = 300;
+import { AuthService } from '../../../core/auth/auth.service';
+import { api, params } from '../../../core/api/api';
 
 // Date → 'YYYY-MM-DD' по местному времени
 export function toDateKey(date: Date): string {
@@ -69,100 +42,194 @@ export function nextHalfHour(): string {
   return `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`;
 }
 
-function buildMock(): ScheduleAppointment[] {
-  const result: ScheduleAppointment[] = [];
-  const today = new Date();
+// Месяц 'YYYY-MM' → первый и последний день (сервер отдаёт приёмы за период до 31 дня)
+function monthRange(month: string): { from: string; to: string } {
+  const [year, m] = month.split('-').map(Number);
+  return { from: toDateKey(new Date(year, m - 1, 1)), to: toDateKey(new Date(year, m, 0)) };
+}
 
-  for (let dayIndex = -MOCK_PAST_DAYS; dayIndex < MOCK_DAYS; dayIndex++) {
-    const date = new Date(today.getFullYear(), today.getMonth(), today.getDate() + dayIndex);
-    const statuses = dayIndex === 0 ? TODAY_STATUSES : dayIndex < 0 ? PAST_STATUSES : FUTURE_STATUSES;
-    const index = Math.abs(dayIndex);
-    const count = COUNTS[index % COUNTS.length];
-
-    for (let k = 0; k < count; k++) {
-      const template = TEMPLATES[(index * 3 + k) % TEMPLATES.length];
-      result.push({
-        ...template,
-        // Прошедшие дни — отдельный диапазон id, чтобы не пересекаться с текущими
-        id: dayIndex < 0 ? 100000 + index * 100 + k + 1 : dayIndex * 100 + k + 1,
-        date: toDateKey(date),
-        status: statuses[(k + index) % statuses.length],
-        patientRating: mockPatientRating(template.patientId),
-        // Часть сегодняшних и будущих записей уже подтверждена
-        confirmation: dayIndex >= 0 ? (['sms', 'call', undefined] as const)[(k + index) % 3] : undefined
-      });
-    }
+// Все месяцы 'YYYY-MM', которые захватывает интервал дат
+function monthsBetween(from: string, to: string): string[] {
+  const result: string[] = [];
+  const [fy, fm] = from.split('-').map(Number);
+  const [ty, tm] = to.split('-').map(Number);
+  for (let y = fy, m = fm; y < ty || (y === ty && m <= tm); m === 12 ? (y++, m = 1) : m++) {
+    result.push(`${y}-${String(m).padStart(2, '0')}`);
   }
-
   return result;
 }
 
+// Как часто перезагружать уже открытые месяцы — чтобы видеть записи, сделанные с других устройств
+const RELOAD_MS = 60_000;
+
+// Изменение записи (PATCH /appointments/:id): пациента сменить нельзя
+export interface AppointmentChanges {
+  doctorId?: number;
+  date?: string;
+  start?: string;
+  durationMinutes?: number;
+  serviceIds?: number[];
+  otherReason?: string;
+  cabinet?: number;
+}
+
+export interface TimeSlot {
+  start: string;
+  end: string;
+}
+
+// Приёмы клиники. Загружаются с API помесячно — по мере того, как экраны открывают даты (ensureRange)
 @Injectable({ providedIn: 'root' })
 export class ScheduleService {
-  // TODO: заменить на загрузку с API по выбранному периоду:
-  // this.http.get<ScheduleAppointment[]>(`${apiUrl}/schedule`, { params: { from, to } })
-  private readonly _appointments = signal<ScheduleAppointment[]>(buildMock());
+  private readonly http = inject(HttpClient);
+  private readonly auth = inject(AuthService);
+
+  private readonly _appointments = signal<ScheduleAppointment[]>([]);
+
+  // Загруженные месяцы 'YYYY-MM'
+  private readonly loadedMonths = new Set<string>();
+
+  readonly loading = signal(false);
 
   // По дате, затем по времени начала
   readonly appointments = computed(() =>
     [...this._appointments()].sort((a, b) => a.date.localeCompare(b.date) || a.start.localeCompare(b.start))
   );
 
-  // Новая запись. Время — из формы; если не передано: сегодня — ближайшие полчаса, иначе 09:00;
-  // врач — переданный или первый из расписания
-  // TODO: на API — POST /appointments, данные врача, даты и слота — из формы
+  constructor() {
+    // Другой пользователь — другие данные: очищаем и грузим текущий месяц заново
+    effect(() => {
+      const userId = this.auth.user()?.id;
+      untracked(() => {
+        this.loadedMonths.clear();
+        this._appointments.set([]);
+        if (userId) this.ensureRange(toDateKey(new Date()), toDateKey(new Date()));
+      });
+    });
+    setInterval(() => this.reload(), RELOAD_MS);
+  }
+
+  // Подгрузить приёмы за интервал (уже загруженные месяцы повторно не запрашиваются)
+  ensureRange(from: string, to: string): void {
+    if (!this.auth.isAuthenticated()) return;
+    const months = monthsBetween(from, to).filter(month => !this.loadedMonths.has(month));
+    if (months.length) this.loadMonths(months);
+  }
+
+  // Перезагрузить все открытые месяцы
+  reload(): void {
+    if (!this.auth.isAuthenticated() || !this.loadedMonths.size) return;
+    this.loadMonths([...this.loadedMonths]);
+  }
+
+  private loadMonths(months: string[]): void {
+    months.forEach(month => this.loadedMonths.add(month));
+    this.loading.set(true);
+    forkJoin(months.map(month => this.http
+      .get<AppointmentDto[]>(api('/appointments'), { params: params(monthRange(month)) })
+      .pipe(map(list => ({ month, list: list.map(fromAppointmentDto) })))))
+      .subscribe({
+        next: results => {
+          this._appointments.update(current => {
+            const replaced = new Set(results.map(r => r.month));
+            const kept = current.filter(a => !replaced.has(a.date.slice(0, 7)));
+            return [...kept, ...results.flatMap(r => r.list)];
+          });
+          this.loading.set(false);
+        },
+        error: () => {
+          // Не загрузилось — попробуем снова при следующем открытии
+          months.forEach(month => this.loadedMonths.delete(month));
+          this.loading.set(false);
+        }
+      });
+  }
+
+  // Ответ сервера → в список (новый или заменить по id)
+  upsert(...items: ScheduleAppointment[]): void {
+    this._appointments.update(list => {
+      const ids = new Set(items.map(a => a.id));
+      return [...list.filter(a => !ids.has(a.id)), ...items.filter(a => this.loadedMonths.has(a.date.slice(0, 7)))];
+    });
+  }
+
+  // Новая запись: POST /appointments. Новый пациент создаётся сервером в той же транзакции
   add(draft: AppointmentDraft, date: string, doctorId?: number): Observable<ScheduleAppointment> {
-    const list = this._appointments();
-    const doctor = list.find(a => a.doctorId === doctorId) ?? list[0];
-    const start = draft.time ?? (date === toDateKey(new Date()) ? nextHalfHour() : '09:00');
-
-    const appointment: ScheduleAppointment = {
-      id: Date.now(),
+    const serviceIds = draft.serviceIds?.length ? draft.serviceIds : [draft.serviceId];
+    const body = {
+      ...(draft.patientId
+        ? { patientId: draft.patientId }
+        : {
+            newPatient: {
+              fullName: draft.patientName,
+              phone: draft.phone,
+              birthDate: draft.birthDate || undefined,
+              gender: draft.gender,
+              rating: draft.rating
+            }
+          }),
+      doctorId,
       date,
-      start,
-      end: addMinutes(start, draft.durationMinutes),
-      cabinet: 1,
-      patientId: draft.patientId ?? Date.now(),
-      patientName: draft.patientName,
-      phone: draft.phone,
-      serviceId: draft.serviceId,
-      service: draft.serviceName,
-      doctorId: doctor.doctorId,
-      doctorName: doctor.doctorName,
-      status: draft.status ?? 'primary',
-      patientRating: draft.rating ?? (draft.patientId ? mockPatientRating(draft.patientId) : 'good')
+      start: draft.time ?? (date === toDateKey(new Date()) ? nextHalfHour() : '09:00'),
+      durationMinutes: draft.durationMinutes,
+      serviceIds,
+      otherReason: serviceIds.includes(0) ? draft.otherReason : undefined,
+      cabinet: draft.cabinet
     };
-
-    return of(appointment).pipe(
-      delay(MOCK_DELAY_MS),
-      tap(created => this._appointments.update(items => [...items, created]))
+    return this.http.post<AppointmentDto>(api('/appointments'), body).pipe(
+      map(fromAppointmentDto),
+      tap(created => this.upsert(created))
     );
   }
 
-  // TODO: на API — PATCH /appointments/:id
-  update(id: number, changes: Partial<ScheduleAppointment>): Observable<void> {
-    return of(undefined).pipe(
-      delay(MOCK_DELAY_MS),
-      tap(() => this._appointments.update(list =>
-        list.map(a => (a.id === id ? { ...a, ...changes } : a))
-      )),
-      map(() => undefined)
+  // PATCH /appointments/:id
+  update(id: number, changes: AppointmentChanges): Observable<ScheduleAppointment> {
+    return this.http.patch<AppointmentDto>(api(`/appointments/${id}`), changes).pipe(
+      map(fromAppointmentDto),
+      tap(updated => this.upsert(updated))
     );
   }
 
-  // TODO: на API — PATCH /appointments/:id/status
-  changeStatus(id: number, status: PatientStatus): Observable<void> {
-    return this.update(id, { status });
+  // PATCH /appointments/:id/status (кроме «Отменён» — для него cancel)
+  changeStatus(id: number, status: PatientStatus): Observable<ScheduleAppointment> {
+    return this.http.patch<AppointmentDto>(api(`/appointments/${id}/status`), { status }).pipe(
+      map(fromAppointmentDto),
+      tap(updated => this.upsert(updated))
+    );
   }
 
   // Подтверждение записи; null — сбросить
-  // TODO: на API — PATCH /appointments/:id/confirmation
-  confirm(id: number, confirmation: AppointmentConfirmation | null): Observable<void> {
-    return this.update(id, { confirmation: confirmation ?? undefined });
+  confirm(id: number, confirmation: AppointmentConfirmation | null): Observable<ScheduleAppointment> {
+    return this.http.patch<AppointmentDto>(api(`/appointments/${id}/confirmation`), { confirmation }).pipe(
+      map(fromAppointmentDto),
+      tap(updated => this.upsert(updated))
+    );
   }
 
-  // TODO: на API — POST /appointments/:id/cancel
-  cancel(id: number): Observable<void> {
-    return this.update(id, { status: 'cancelled' });
+  // POST /appointments/:id/cancel
+  cancel(id: number, reason?: string): Observable<ScheduleAppointment> {
+    return this.http.post<AppointmentDto>(api(`/appointments/${id}/cancel`), { reason }).pipe(
+      map(fromAppointmentDto),
+      tap(updated => this.upsert(updated))
+    );
+  }
+
+  // Один приём (например, из уведомления, если его месяц ещё не загружен)
+  get(id: number): Observable<ScheduleAppointment> {
+    const cached = this._appointments().find(a => a.id === id);
+    if (cached) return of(cached);
+    return this.http.get<AppointmentDto>(api(`/appointments/${id}`)).pipe(map(fromAppointmentDto));
+  }
+
+  // История приёмов пациента, новые сверху
+  forPatient(patientId: number): Observable<ScheduleAppointment[]> {
+    return this.http.get<AppointmentDto[]>(api(`/patients/${patientId}/appointments`)).pipe(
+      map(list => list.map(fromAppointmentDto))
+    );
+  }
+
+  // Свободное время врача на дату нужной длительности
+  freeSlots(doctorId: number, date: string, minutes: number): Observable<TimeSlot[]> {
+    return this.http.get<TimeSlot[]>(api(`/doctors/${doctorId}/free-slots`), { params: params({ date, minutes }) });
   }
 }

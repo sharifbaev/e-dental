@@ -9,7 +9,7 @@ import { filter, switchMap } from 'rxjs';
 import { CONFIRM_DIALOG_CONFIG, ConfirmDialog, ConfirmDialogData } from '../../../../shared/components/confirm-dialog/confirm-dialog';
 import { FeedbackService } from '../../../../shared/services/feedback.service';
 import { DOCTOR_FORM_DIALOG_CONFIG, DoctorFormData, DoctorFormDialog } from '../../components/doctor-form-dialog/doctor-form-dialog';
-import { DOCTOR_STATUS_CLASSES, DOCTOR_STATUSES, Doctor, DoctorDraft, DoctorStatus } from '../../models/doctor.model';
+import { DOCTOR_STATUS_CLASSES, DOCTOR_STATUSES, Doctor, DoctorFormResult, DoctorStatus } from '../../models/doctor.model';
 import { DoctorsService } from '../../services/doctors.service';
 
 const LOCALES: Record<string, string> = { ru: 'ru-RU', uz: 'uz-Latn-UZ' };
@@ -210,32 +210,32 @@ export class DoctorList {
 
   protected openCreate(): void {
     this.dialog
-      .open<DoctorFormDialog, DoctorFormData, DoctorDraft>(DoctorFormDialog, DOCTOR_FORM_DIALOG_CONFIG)
+      .open<DoctorFormDialog, DoctorFormData, DoctorFormResult>(DoctorFormDialog, DOCTOR_FORM_DIALOG_CONFIG)
       .afterClosed()
       .pipe(
-        filter((draft): draft is DoctorDraft => !!draft),
-        switchMap(draft => this.doctorsService.add(draft))
+        filter((result): result is DoctorFormResult => !!result),
+        switchMap(({ account, ...draft }) => this.doctorsService.add(draft, account))
       )
       .subscribe({
         next: () => this.feedback.success('feedback.doctorCreated'),
-        error: () => this.feedback.error()
+        error: err => this.feedback.error(err)
       });
   }
 
   protected openEdit(doctor: Doctor): void {
     this.dialog
-      .open<DoctorFormDialog, DoctorFormData, DoctorDraft>(DoctorFormDialog, {
+      .open<DoctorFormDialog, DoctorFormData, DoctorFormResult>(DoctorFormDialog, {
         ...DOCTOR_FORM_DIALOG_CONFIG,
         data: { doctor }
       })
       .afterClosed()
       .pipe(
-        filter((draft): draft is DoctorDraft => !!draft),
-        switchMap(draft => this.doctorsService.update(doctor.id, draft))
+        filter((result): result is DoctorFormResult => !!result),
+        switchMap(({ account: _account, ...draft }) => this.doctorsService.update(doctor.id, draft))
       )
       .subscribe({
         next: () => this.feedback.success('feedback.doctorUpdated'),
-        error: () => this.feedback.error()
+        error: err => this.feedback.error(err)
       });
   }
 
@@ -259,7 +259,7 @@ export class DoctorList {
       )
       .subscribe({
         next: () => this.feedback.success('feedback.doctorDeleted'),
-        error: () => this.feedback.error()
+        error: err => this.feedback.error(err)
       });
   }
 }

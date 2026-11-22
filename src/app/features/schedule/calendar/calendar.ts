@@ -27,6 +27,9 @@ const SWIPE_PX = 50;
 
 const MOBILE_QUERY = '(max-width: 767px)';
 
+// Сколько врачей можно выбрать в фильтре одновременно (шкала делится на столько колонок)
+const MAX_DOCTORS = 3;
+
 // Шаг времени при клике по пустому месту шкалы, мин
 const CLICK_STEP_MINUTES = 15;
 
@@ -281,6 +284,16 @@ export class ScheduleCalendar extends Schedule implements AfterViewInit {
   // Понедельник показываемой недели
   protected readonly weekStart = signal<Date>(startOfWeek(new Date()));
 
+  // Календарь показывает неделю: подгружаем приёмы её дней (и выбранного дня)
+  protected override visibleRange(): [string, string] {
+    if (this.isRange()) return super.visibleRange();
+    const start = this.weekStart();
+    const from = toDateKey(start);
+    const to = toDateKey(new Date(start.getFullYear(), start.getMonth(), start.getDate() + 6));
+    const day = this.selectedDate();
+    return [day < from ? day : from, day > to ? day : to];
+  }
+
   protected prevWeek(): void {
     const start = this.weekStart();
     this.weekStart.set(new Date(start.getFullYear(), start.getMonth(), start.getDate() - 7));
@@ -322,11 +335,48 @@ export class ScheduleCalendar extends Schedule implements AfterViewInit {
       : `${cap(month.format(first))} – ${cap(month.format(last))} ${last.getFullYear()}`;
   });
 
-  // Приёмы выбранного врача (все даты, без отменённых — для точек в ленте)
+  // ---- Врачи: до 3 сразу ----
+
+  // Выбранные врачи (id строкой): пусто — все врачи; 2–3 — шкала делится на колонки по врачам
+  protected readonly maxDoctors = MAX_DOCTORS;
+  protected readonly selectedDoctorIds = signal<string[]>(this.selectedDoctor() === 'all' ? [] : [this.selectedDoctor()]);
+  protected readonly doctorMenuOpen = signal(false);
+
+  protected isDoctorSelected(id: string): boolean {
+    return this.selectedDoctorIds().includes(id);
+  }
+
+  // Отметить / снять врача; больше MAX_DOCTORS выбрать нельзя
+  protected toggleDoctor(id: string): void {
+    const ids = this.selectedDoctorIds();
+    if (ids.includes(id)) {
+      this.setDoctorIds(ids.filter(x => x !== id));
+    } else if (ids.length < MAX_DOCTORS) {
+      this.setDoctorIds([...ids, id]);
+    }
+  }
+
+  protected clearDoctors(): void {
+    this.setDoctorIds([]);
+  }
+
+  // Один врач — он же в общем фильтре (новая запись сразу к нему); никого или несколько — «Все врачи»
+  private setDoctorIds(ids: string[]): void {
+    this.selectedDoctorIds.set(ids);
+    this.selectedDoctor.set(ids.length === 1 ? ids[0] : 'all');
+  }
+
+  // Имя единственного выбранного врача — для кнопки фильтра
+  protected readonly singleDoctorName = computed(() => {
+    const ids = this.selectedDoctorIds();
+    return ids.length === 1 ? this.doctorOptions().find(d => d.id === ids[0])?.name ?? '' : '';
+  });
+
+  // Приёмы выбранных врачей (все даты, без отменённых — для точек в ленте)
   private readonly visibleAppointments = computed(() => {
-    const doctor = this.selectedDoctor();
+    const ids = this.selectedDoctorIds();
     return this.calendarSchedule.appointments()
-      .filter(a => doctor === 'all' || String(a.doctorId) === doctor);
+      .filter(a => ids.length === 0 || ids.includes(String(a.doctorId)));
   });
 
   protected readonly days = computed(() => {
@@ -385,16 +435,22 @@ export class ScheduleCalendar extends Schedule implements AfterViewInit {
   // Режим работы на выбранный день: врач — его часы, «Все врачи» — от самого раннего до самого позднего
   // среди врачей расписания, работающих в этот день
   protected readonly workHours = computed(() => {
+    const selected = this.selectedDoctorIds();
+    const ids = selected.length ? selected.map(Number) : this.doctorOptions().map(d => Number(d.id));
+    return this.hoursFor(ids, selected.length === 1);
+  });
+
+  // Режим работы группы врачей на выбранный день; single — выбран один врач (для запасных часов)
+  private hoursFor(ids: number[], single: boolean): { start: string; end: string; dayOff: boolean } {
     const weekday = isoWeekday(fromDateKey(this.selectedDate()));
-    const all = this.doctorsService.doctors();
-    const selected = this.selectedDoctor();
-    const ids = selected === 'all' ? this.doctorOptions().map(d => Number(d.id)) : [Number(selected)];
+    // Врачу сервер отдаёт справочник без графика — таких не учитываем (часы по умолчанию)
+    const all = this.doctorsService.doctors().filter(d => !!d.workDays);
     const doctors = all.filter(d => ids.includes(d.id));
     const working = doctors.filter(d => d.workDays.includes(weekday));
 
     if (working.length === 0) {
       // Врач не найден в справочнике — 09:00–18:00; найден, но не работает — выходной
-      const fallback = selected !== 'all' && doctors[0] ? doctors[0] : null;
+      const fallback = single && doctors[0] ? doctors[0] : null;
       return {
         start: fallback?.workStart ?? DEFAULT_START,
         end: fallback?.workEnd ?? DEFAULT_END,
@@ -405,7 +461,7 @@ export class ScheduleCalendar extends Schedule implements AfterViewInit {
     const start = working.map(d => d.workStart).sort()[0];
     const end = working.map(d => d.workEnd).sort().at(-1)!;
     return { start, end, dayOff: false };
-  });
+  }
 
   // Границы шкалы в минутах: по умолчанию 09:00–18:00, расширяется до приёмов вне этого времени, по целым часам
   private readonly range = computed(() => {
@@ -436,9 +492,10 @@ export class ScheduleCalendar extends Schedule implements AfterViewInit {
   });
 
   // Нерабочее время внутри шкалы — затемняем (до начала и после конца режима работы)
-  protected readonly offHours = computed(() => {
+  protected readonly offHours = computed(() => this.offBlocks(this.workHours()));
+
+  private offBlocks(work: { start: string; end: string; dayOff: boolean }): { top: number; height: number }[] {
     const { from, to } = this.range();
-    const work = this.workHours();
     if (work.dayOff) return [{ top: 0, height: this.timelineHeight() }];
     const start = toMinutes(work.start);
     const end = toMinutes(work.end);
@@ -446,7 +503,7 @@ export class ScheduleCalendar extends Schedule implements AfterViewInit {
     if (start > from) blocks.push({ top: 0, height: ((start - from) / 60) * this.hourPx() });
     if (end < to) blocks.push({ top: ((end - from) / 60) * this.hourPx(), height: ((to - end) / 60) * this.hourPx() });
     return blocks;
-  });
+  }
 
   // Красная линия «сейчас» — только на сегодняшнем дне и в пределах шкалы
   protected readonly nowLine = computed(() => {
@@ -464,10 +521,27 @@ export class ScheduleCalendar extends Schedule implements AfterViewInit {
   // ---- Приёмы на шкале ----
 
   // Позиция блоков; пересекающиеся приёмы встают в колонки рядом друг с другом
-  protected readonly events = computed(() => {
+  protected readonly events = computed(() => this.layout(this.dayAppointments()));
+
+  // Выбрано 2–3 врача: шкала делится по вертикали на колонки — у каждого врача свои приёмы и своё нерабочее время
+  protected readonly lanes = computed(() => {
+    const ids = this.selectedDoctorIds();
+    if (ids.length < 2) return [];
+    const day = this.dayAppointments();
+    return this.doctorOptions()
+      .filter(d => ids.includes(d.id))
+      .map(doctor => ({
+        id: Number(doctor.id),
+        name: doctor.name,
+        events: this.layout(day.filter(a => String(a.doctorId) === doctor.id)),
+        offHours: this.offBlocks(this.hoursFor([Number(doctor.id)], true))
+      }));
+  });
+
+  private layout(appointments: ScheduleAppointment[]) {
     const { from } = this.range();
     const now = this.clock();
-    const list = [...this.dayAppointments()].sort((a, b) => a.start.localeCompare(b.start) || b.end.localeCompare(a.end));
+    const list = [...appointments].sort((a, b) => a.start.localeCompare(b.start) || b.end.localeCompare(a.end));
 
     type Placed = { appointment: ScheduleAppointment; column: number; group: number };
     const placed: Placed[] = [];
@@ -520,13 +594,14 @@ export class ScheduleCalendar extends Schedule implements AfterViewInit {
         ratingDot: PATIENT_RATING_DOT[appointment.patientRating ?? 'good']
       };
     });
-  });
+  }
 
   // ---- Новая запись кликом по шкале ----
 
   // Клик по пустому месту: время — по позиции клика (с шагом 15 мин), дата — выбранный день,
   // врач — выбранный в фильтре. Продолжительность выбирают в форме вручную
-  protected addAtPosition(event: MouseEvent): void {
+  // laneDoctorId — клик в колонке конкретного врача (выбрано несколько врачей)
+  protected addAtPosition(event: MouseEvent, laneDoctorId?: number): void {
     const area = event.currentTarget as HTMLElement;
     const y = event.clientY - area.getBoundingClientRect().top;
     const { from, to } = this.range();
@@ -535,7 +610,7 @@ export class ScheduleCalendar extends Schedule implements AfterViewInit {
     const time = `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`;
 
     const date = this.selectedDate();
-    const doctorId = this.selectedDoctor() === 'all' ? undefined : Number(this.selectedDoctor());
+    const doctorId = laneDoctorId ?? (this.selectedDoctor() === 'all' ? undefined : Number(this.selectedDoctor()));
 
     this.calendarDialog
       .open<AppointmentFormDialog, AppointmentFormData, AppointmentFormResult>(AppointmentFormDialog, {

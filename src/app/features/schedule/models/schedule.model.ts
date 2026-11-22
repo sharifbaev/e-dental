@@ -15,8 +15,11 @@ export interface ScheduleAppointment {
   patientId: number;
   patientName: string;
   phone: string;
-  serviceId: number;
-  service: string;
+  serviceId: number;            // первая из serviceIds (для совместимости)
+  serviceIds?: number[];       // все услуги приёма; 0 — «Другое»
+  service: string;             // названия услуг через запятую
+  otherReason?: string;        // повод своими словами, если выбрано «Другое»
+  urgent?: boolean;            // срочный повод (острая боль)
   doctorId: number;
   doctorName: string;          // 'Савина А. И.'
   status: PatientStatus;
@@ -25,9 +28,11 @@ export interface ScheduleAppointment {
   planId?: number;             // план лечения, к которому относится визит
   visitIndex?: number;         // номер визита в серии плана (с 1)
   visitTotal?: number;         // всего визитов в серии
+  paymentState?: 'paid' | 'debt';  // считает сервер по оплатам; нет — оплаты не было
+  statusOverdue?: boolean;     // сервер: статус «Первичный» не сменили через 30 мин после конца
 }
 
-// Данные новой записи из формы (врач, дата и время пока подставляются автоматически)
+// Данные новой записи из формы
 export interface AppointmentDraft {
   patientId: number | null;    // null — новый пациент
   patientName: string;
@@ -37,5 +42,18 @@ export interface AppointmentDraft {
   durationMinutes: number;
   time?: string;               // 'HH:mm' — время из формы
   rating?: PatientRating;       // рейтинг пациента из формы
-  status?: PatientStatus;       // нет — «Первичный» (следующий визит по плану лечения — «В лечении»)
+  serviceIds?: number[];       // все выбранные услуги
+  otherReason?: string;        // повод визита, если выбрано «Другое»
+  birthDate?: string;          // 'YYYY-MM-DD' — новый пациент
+  gender?: 'female' | 'male';  // новый пациент
+  cabinet?: number;
+}
+
+// Приём в ответе сервера (GET /appointments и др.)
+export type AppointmentDto = Omit<ScheduleAppointment, 'serviceId'> & { serviceIds: number[] };
+
+// Ответ сервера → приём для экранов: serviceId — первая услуга
+export function fromAppointmentDto(dto: AppointmentDto): ScheduleAppointment {
+  const ids = dto.serviceIds ?? [];
+  return { ...dto, serviceIds: ids, serviceId: ids.find(id => id !== 0) ?? ids[0] ?? 0 };
 }

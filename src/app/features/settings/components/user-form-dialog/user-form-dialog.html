@@ -1,0 +1,67 @@
+<!-- Шапка -->
+<div class="flex items-center justify-between gap-2 px-6 pt-5 pb-2">
+  <h2 class="font-display text-lg font-bold text-content">{{ (isEdit ? 'settings.users.editTitle' : 'settings.users.addTitle') | transloco }}</h2>
+  <button matIconButton mat-dialog-close type="button" [title]="'common.close' | transloco">
+    <mat-icon fontSet="material-symbols-outlined">close</mat-icon>
+  </button>
+</div>
+
+<mat-dialog-content>
+  <form [formGroup]="form" class="flex flex-col gap-4 pb-2" (ngSubmit)="save()">
+    <label class="flex flex-col gap-1">
+      <span class="text-xs font-medium text-soft">{{ 'settings.users.fullName' | transloco }} <span class="text-red-500">*</span></span>
+      <input type="text" formControlName="fullName" autocomplete="off" class="w-full h-11 px-3 rounded-xl bg-page border text-sm text-content outline-none focus:border-brand-300 focus:bg-surface" [class.border-transparent]="!isInvalid('fullName')" [class.border-red-300]="isInvalid('fullName')">
+      @if (isInvalid('fullName')) {
+        <span class="text-xs text-red-600">{{ 'appointmentForm.errors.minLength' | transloco }}</span>
+      }
+    </label>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <label class="flex flex-col gap-1 min-w-0">
+        <span class="text-xs font-medium text-soft">{{ 'settings.users.username' | transloco }} <span class="text-red-500">*</span></span>
+        <input type="text" formControlName="username" autocomplete="off" class="w-full h-11 px-3 rounded-xl bg-page border text-sm text-content outline-none focus:border-brand-300 focus:bg-surface disabled:text-muted" [class.border-transparent]="!isInvalid('username')" [class.border-red-300]="isInvalid('username')">
+        @if (isInvalid('username')) {
+          <span class="text-xs text-red-600">{{ 'doctors.form.errors.username' | transloco }}</span>
+        }
+      </label>
+      <label class="flex flex-col gap-1 min-w-0">
+        <span class="text-xs font-medium text-soft">{{ (isEdit ? 'settings.users.newPassword' : 'settings.users.password') | transloco }} @if (!isEdit) {<span class="text-red-500">*</span>}</span>
+        <input type="password" formControlName="password" autocomplete="new-password" class="w-full h-11 px-3 rounded-xl bg-page border text-sm text-content outline-none focus:border-brand-300 focus:bg-surface" [class.border-transparent]="!isInvalid('password')" [class.border-red-300]="isInvalid('password')">
+        @if (isInvalid('password')) {
+          <span class="text-xs text-red-600">{{ 'doctors.form.errors.password' | transloco }}</span>
+        }
+      </label>
+    </div>
+
+    @if (!isOwnerAccount) {
+      <label class="flex flex-col gap-1">
+        <span class="text-xs font-medium text-soft">{{ 'settings.users.role' | transloco }}</span>
+        <select formControlName="role" class="w-full h-11 px-3 rounded-xl bg-page border border-transparent text-sm text-content outline-none focus:border-brand-300 focus:bg-surface">
+          @for (role of roles; track role) {
+            <option [value]="role">{{ ('roles.' + role) | transloco }}</option>
+          }
+        </select>
+      </label>
+
+      @if (isDoctorRole()) {
+        <label class="flex flex-col gap-1">
+          <span class="text-xs font-medium text-soft">{{ 'settings.users.doctor' | transloco }} <span class="text-red-500">*</span></span>
+          <select formControlName="doctorId" class="w-full h-11 px-3 rounded-xl bg-page border text-sm text-content outline-none focus:border-brand-300 focus:bg-surface" [class.border-transparent]="!isInvalid('doctorId')" [class.border-red-300]="isInvalid('doctorId')">
+            <option [ngValue]="null" disabled>{{ 'settings.users.selectDoctor' | transloco }}</option>
+            @for (doctor of doctors(); track doctor.id) {
+              <option [ngValue]="doctor.id">{{ doctor.fullName }}</option>
+            }
+          </select>
+          @if (isInvalid('doctorId')) {
+            <span class="text-xs text-red-600">{{ 'doctors.form.errors.required' | transloco }}</span>
+          }
+        </label>
+      }
+    }
+  </form>
+</mat-dialog-content>
+
+<div class="px-6 py-4 flex flex-col-reverse sm:flex-row gap-2">
+  <button type="button" mat-dialog-close class="flex-1 px-4 py-3 rounded-xl border border-line-strong text-sm font-medium text-soft hover:bg-page">{{ 'common.cancel' | transloco }}</button>
+  <button type="button" class="flex-1 px-4 py-3 rounded-xl bg-brand-700 text-sm font-semibold text-white hover:bg-brand-800" (click)="save()">{{ (isEdit ? 'finance.saveChanges' : 'finance.add') | transloco }}</button>
+</div>

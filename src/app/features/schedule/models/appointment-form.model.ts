@@ -1,3 +1,5 @@
+import type { PatientRating } from '../../../shared/models/patient-rating';
+
 export type PatientMode = 'search' | 'new';
 export type Gender = 'female' | 'male';
 
@@ -5,7 +7,8 @@ export interface PatientShort {
   id: number;
   fullName: string;
   phone: string;               // '+998 90 123-45-67'
-  birthDate: string;           // 'YYYY-MM-DD'
+  birthDate?: string;          // 'YYYY-MM-DD'
+  rating?: PatientRating;
 }
 
 export interface VisitService {

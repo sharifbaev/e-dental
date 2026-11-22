@@ -5,17 +5,14 @@ export interface DoctorSlots {
 }
 
 export interface DashboardSummary {
-  clinicOpen: boolean;
   clinicLoad: number;          // загрузка клиники, %
   waitingList: number;         // в листе ожидания
   patientsToday: number;
-  patientsTrend: number;       // изменение к прошлой неделе, %
+  patientsTrend: number;       // изменение к тому же дню прошлой недели, %
   freeSlots: DoctorSlots[];    // свободные окна по врачам
   doctorsOnShift: number;
   doctorsTotal: number;
-  revenueToday: number;        // сум
-  revenueTrend: number;        // %
-  revenuePlanPercent: number;  // выполнение дневного плана, %
+  revenueToday?: number;       // сум, только владельцу
 }
 
 export interface TodayPatient {

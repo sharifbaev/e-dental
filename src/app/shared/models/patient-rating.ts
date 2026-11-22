@@ -16,15 +16,3 @@ export const PATIENT_RATING_CLASSES: Record<PatientRating, string> = {
   warn: 'bg-amber-50 text-amber-800 dark:bg-amber-500/15 dark:text-amber-300',
   risk: 'bg-red-50 text-red-700 dark:bg-red-500/15 dark:text-red-300'
 };
-
-// TODO: рейтинг будет приходить с API вместе с пациентом. Пока — mock по id пациента
-const MOCK_RATINGS: Record<number, PatientRating> = {
-  2: 'warn',
-  5: 'risk',
-  8: 'warn',
-  11: 'risk'
-};
-
-export function mockPatientRating(patientId: number): PatientRating {
-  return MOCK_RATINGS[patientId] ?? 'good';
-}

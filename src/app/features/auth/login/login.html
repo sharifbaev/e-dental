@@ -54,7 +54,7 @@
       <form [formGroup]="form" (ngSubmit)="submit()" class="w-full flex flex-col gap-1">
         <mat-form-field appearance="outline">
           <mat-label>{{ 'login.username' | transloco }}</mat-label>
-          <input matInput formControlName="username" autocomplete="username">
+          <input matInput formControlName="username" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="clinic_login">
           <mat-error>{{ 'login.errors.required' | transloco }}</mat-error>
         </mat-form-field>
 
@@ -73,8 +73,8 @@
           <mat-error>{{ 'login.errors.required' | transloco }}</mat-error>
         </mat-form-field>
 
-        @if (invalidCredentials()) {
-          <div class="mb-3 px-3 py-2 rounded-xl bg-red-50 dark:bg-red-500/10 text-red-700 dark:text-red-300 text-sm">{{ 'login.errors.invalid' | transloco }}</div>
+        @if (errorKey()) {
+          <div class="mb-3 px-3 py-2 rounded-xl bg-red-50 dark:bg-red-500/10 text-red-700 dark:text-red-300 text-sm">{{ errorKey() | transloco }}</div>
         }
 
         <button matButton="filled" type="submit" class="login-submit" [disabled]="loading()">

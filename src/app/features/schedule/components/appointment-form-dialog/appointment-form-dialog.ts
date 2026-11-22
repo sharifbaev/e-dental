@@ -11,7 +11,11 @@ import { ScheduleAppointment } from '../../models/schedule.model';
 import { AppointmentFormService } from '../../services/appointment-form.service';
 import { ScheduleService, addMinutes, nextHalfHour, toDateKey } from '../../services/schedule.service';
 import { AuthService } from '../../../../core/auth/auth.service';
-import { PATIENT_RATINGS, PATIENT_RATING_DOT, PatientRating, mockPatientRating } from '../../../../shared/models/patient-rating';
+import { PATIENT_RATINGS, PATIENT_RATING_DOT, PatientRating } from '../../../../shared/models/patient-rating';
+import { DoctorsService } from '../../../doctors/services/doctors.service';
+import { shortName } from '../../../../shared/utils/names';
+import { toObservable } from '@angular/core/rxjs-interop';
+import { catchError } from 'rxjs';
 
 // «Другое» в списке услуг: повод визита пишется вручную
 export const OTHER_SERVICE_ID = 0;
@@ -35,10 +39,6 @@ function formatLocalPhone(value: string): string {
   return result;
 }
 
-// Рабочий день для подбора свободного времени и шаг сетки, минуты
-const DAY_START_MINUTES = 9 * 60;
-const DAY_END_MINUTES = 18 * 60;
-const SLOT_STEP_MINUTES = 30;
 
 // 'HH:mm' → минуты от начала дня
 function toMinutes(time: string): number {
@@ -77,6 +77,8 @@ export interface AppointmentFormResult {
   serviceIds?: number[];       // все выбранные услуги (serviceId — первая из них)
   doctorId?: number;           // выбранный врач
   rating?: PatientRating;      // рейтинг нового пациента
+  birthDate?: string;          // 'YYYY-MM-DD' — дата рождения нового пациента (если указана)
+  otherReason?: string;        // повод визита своими словами («Другое»)
 }
 
 // Номер без кода страны: ровно 9 цифр (+998 подставляется сам)
@@ -106,6 +108,7 @@ export class AppointmentFormDialog {
   private readonly data = inject<AppointmentFormData | null>(MAT_DIALOG_DATA, { optional: true });
   private readonly scheduleService = inject(ScheduleService);
   private readonly auth = inject(AuthService);
+  private readonly doctorsService = inject(DoctorsService);
 
   // Врач записывает только к себе — выбор врача в форме скрыт
   protected readonly isDoctor = this.auth.user()?.role === 'doctor';
@@ -192,11 +195,11 @@ export class AppointmentFormDialog {
         id: appointment.patientId,
         fullName: appointment.patientName,
         phone: appointment.phone,
-        birthDate: ''
+        rating: appointment.patientRating
       });
-      this.form.controls.serviceIds.setValue([appointment.serviceId]);
-      if (appointment.serviceId === OTHER_SERVICE_ID) {
-        this.form.controls.otherReason.setValue(appointment.service);
+      this.form.controls.serviceIds.setValue(appointment.serviceIds?.length ? appointment.serviceIds : [appointment.serviceId]);
+      if (this.form.controls.serviceIds.value.includes(OTHER_SERVICE_ID)) {
+        this.form.controls.otherReason.setValue(appointment.otherReason ?? appointment.service);
       }
       this.form.controls.doctorId.setValue(appointment.doctorId);
       this.applyDuration(toMinutes(appointment.end) - toMinutes(appointment.start));
@@ -265,6 +268,9 @@ export class AppointmentFormDialog {
   // ---- Пациент: новый ----
 
   protected readonly phonePrefix = PHONE_PREFIX;
+
+  // Дата рождения не может быть позже сегодняшнего дня
+  protected readonly today = toDateKey(new Date());
 
   // Телефон: только цифры после +998, формат '90 123-45-67'. Вставленный номер с 998 — без кода
   protected onPhoneInput(event: Event): void {
@@ -353,11 +359,12 @@ export class AppointmentFormDialog {
 
   // ---- Врач и свободное время ----
 
-  // Врачи из расписания, по алфавиту
+  // Врачи из справочника (и из расписания), по алфавиту
   protected readonly doctors = computed(() => {
     const map = new Map<number, string>();
+    for (const doctor of this.doctorsService.doctors()) map.set(doctor.id, shortName(doctor.fullName));
     for (const appointment of this.scheduleService.appointments()) {
-      map.set(appointment.doctorId, appointment.doctorName);
+      if (!map.has(appointment.doctorId)) map.set(appointment.doctorId, appointment.doctorName);
     }
     return [...map.entries()]
       .map(([id, name]) => ({ id, name }))
@@ -381,31 +388,30 @@ export class AppointmentFormDialog {
     initialValue: this.form.controls.time.value
   });
 
-  // Свободные интервалы выбранного врача на дату — с учётом продолжительности
-  // TODO: на API — GET /doctors/:id/free-slots?date=&minutes=
-  protected readonly freeSlots = computed(() => {
-    const doctorId = this.doctorIdValue();
-    const date = this.dateValue();
-    const minutes = this.minutes();
-    if (!doctorId || !date || minutes <= 0) return [];
+  // Свободные интервалы выбранного врача на дату — с учётом продолжительности (GET /doctors/:id/free-slots).
+  // При изменении записи текущее время приёма тоже считается свободным
+  protected readonly freeSlots = toSignal(
+    toObservable(computed(() => ({ doctorId: this.doctorIdValue(), date: this.dateValue(), minutes: this.minutes() }))).pipe(
+      debounceTime(150),
+      distinctUntilChanged((a, b) => a.doctorId === b.doctorId && a.date === b.date && a.minutes === b.minutes),
+      switchMap(({ doctorId, date, minutes }) => {
+        if (!doctorId || !date || minutes <= 0) return of([]);
+        return this.scheduleService.freeSlots(doctorId, date, minutes).pipe(
+          map(slots => this.withOwnSlot(slots, doctorId, date, minutes)),
+          catchError(() => of([]))
+        );
+      })
+    ),
+    { initialValue: [] as { start: string; end: string }[] }
+  );
 
-    const editId = this.data?.appointment?.id;
-    const busy = this.scheduleService.appointments()
-      .filter(a => a.doctorId === doctorId && a.date === date && a.status !== 'cancelled' && a.id !== editId)
-      .map(a => [toMinutes(a.start), toMinutes(a.end)]);
-
-    const now = new Date();
-    const nowMinutes = date === toDateKey(now) ? now.getHours() * 60 + now.getMinutes() : 0;
-
-    const slots: { start: string; end: string }[] = [];
-    for (let t = DAY_START_MINUTES; t + minutes <= DAY_END_MINUTES; t += SLOT_STEP_MINUTES) {
-      if (t < nowMinutes) continue;
-      if (busy.some(([start, end]) => t < end && t + minutes > start)) continue;
-      const start = `${String(Math.floor(t / 60)).padStart(2, '0')}:${String(t % 60).padStart(2, '0')}`;
-      slots.push({ start, end: addMinutes(start, minutes) });
-    }
-    return slots;
-  });
+  // Режим изменения: своё же время приёма сервер считает занятым — добавляем его в список
+  private withOwnSlot(slots: { start: string; end: string }[], doctorId: number, date: string, minutes: number): { start: string; end: string }[] {
+    const own = this.data?.appointment;
+    if (!own || own.doctorId !== doctorId || own.date !== date || toMinutes(own.end) - toMinutes(own.start) < minutes) return slots;
+    if (slots.some(slot => slot.start === own.start)) return slots;
+    return [...slots, { start: own.start, end: addMinutes(own.start, minutes) }].sort((a, b) => a.start.localeCompare(b.start));
+  }
 
   protected selectSlot(start: string): void {
     this.form.controls.time.setValue(start);
@@ -429,10 +435,10 @@ export class AppointmentFormDialog {
     this.form.controls.rating.setValue(rating);
   }
 
-  // Рейтинг выбранного из базы пациента (пока mock)
+  // Рейтинг выбранного из базы пациента
   protected readonly selectedPatientRating = computed(() => {
     const patient = this.selectedPatient();
-    return patient ? mockPatientRating(patient.id) : null;
+    return patient ? patient.rating ?? 'good' : null;
   });
 
   // ---- Отправка ----
@@ -457,7 +463,6 @@ export class AppointmentFormDialog {
     const patient = this.selectedPatient();
     const isSearch = this.mode() === 'search';
 
-    // TODO: на следующих шагах — врач, слот, комментарий и сохранение через API
     this.dialogRef.close({
       patientId: isSearch ? patient?.id ?? null : null,
       patientName: isSearch ? patient?.fullName ?? '' : this.newPatient.fullName.value.trim(),
@@ -469,7 +474,9 @@ export class AppointmentFormDialog {
       time: this.form.controls.time.value,
       serviceIds,
       doctorId: this.form.controls.doctorId.value ?? undefined,
-      rating: isSearch ? undefined : this.form.controls.rating.value
+      rating: isSearch ? undefined : this.form.controls.rating.value,
+      birthDate: isSearch ? undefined : this.newPatient.birthDate.value || undefined,
+      otherReason: serviceIds.includes(OTHER_SERVICE_ID) ? this.form.controls.otherReason.value.trim() : undefined
     });
   }
 }

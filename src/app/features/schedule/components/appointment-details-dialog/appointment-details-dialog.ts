@@ -86,6 +86,10 @@ export class AppointmentDetailsDialog {
 
   constructor() {
     this.destroyRef.onDestroy(() => clearTimeout(this.copiedTimer));
+    // Оплата приёма — с API, если она была
+    if (this.appointment.paymentState) {
+      this.paymentsService.loadForAppointment(this.appointment.id).subscribe({ error: () => undefined });
+    }
   }
 
   protected copyPhone(): void {

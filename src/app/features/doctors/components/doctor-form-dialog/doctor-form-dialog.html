@@ -32,7 +32,7 @@
       <span class="text-xs font-medium text-soft">{{ 'doctors.form.specialty' | transloco }} <span class="text-red-500">*</span></span>
       <select formControlName="specialty" class="w-full h-11 px-3 rounded-xl bg-page border text-sm text-content outline-none focus:border-brand-300 focus:bg-surface" [class.border-transparent]="!isInvalid('specialty')" [class.border-red-300]="isInvalid('specialty')">
         <option value="" disabled>{{ 'doctors.form.selectSpecialty' | transloco }}</option>
-        @for (specialty of specialties; track specialty) {
+        @for (specialty of specialties(); track specialty) {
           <option [value]="specialty">{{ specialty }}</option>
         }
       </select>
@@ -136,6 +136,27 @@
         }
       </select>
     </label>
+
+    <!-- Логин врача — только при создании -->
+    @if (!isEdit) {
+      <div formGroupName="account" class="sm:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-line">
+        <span class="sm:col-span-2 text-xs text-muted">{{ 'doctors.form.accountHint' | transloco }}</span>
+        <label class="flex flex-col gap-1">
+          <span class="text-xs font-medium text-soft">{{ 'doctors.form.username' | transloco }}</span>
+          <input type="text" formControlName="username" autocomplete="off" class="w-full h-11 px-3 rounded-xl bg-page border text-sm text-content outline-none focus:border-brand-300 focus:bg-surface" [class.border-transparent]="!accountError('username')" [class.border-red-300]="accountError('username')">
+          @if (accountError('username')) {
+            <span class="text-xs text-red-600">{{ 'doctors.form.errors.username' | transloco }}</span>
+          }
+        </label>
+        <label class="flex flex-col gap-1">
+          <span class="text-xs font-medium text-soft">{{ 'doctors.form.password' | transloco }}</span>
+          <input type="password" formControlName="password" autocomplete="new-password" class="w-full h-11 px-3 rounded-xl bg-page border text-sm text-content outline-none focus:border-brand-300 focus:bg-surface" [class.border-transparent]="!accountError('password')" [class.border-red-300]="accountError('password')">
+          @if (accountError('password')) {
+            <span class="text-xs text-red-600">{{ 'doctors.form.errors.password' | transloco }}</span>
+          }
+        </label>
+      </div>
+    }
   </div>
 </mat-dialog-content>
 

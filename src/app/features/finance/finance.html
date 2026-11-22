@@ -4,9 +4,8 @@
     <h1 class="font-display text-xl leading-tight md:text-[30px] md:leading-normal font-extrabold tracking-tight text-content">{{ 'finance.title' | transloco }}</h1>
 
     <!-- Добавить — ПК -->
-    <button type="button" class="hidden md:flex items-center justify-center gap-1 h-11 px-5 rounded-xl bg-brand-700 text-white text-sm font-semibold hover:bg-brand-800" (click)="add()">
+    <button type="button" class="hidden md:flex items-center justify-center w-11 h-11 rounded-xl bg-brand-700 text-white hover:bg-brand-800" [title]="(tab() === 'expenses' ? 'finance.expenses.add' : 'finance.debts.add') | transloco" [attr.aria-label]="(tab() === 'expenses' ? 'finance.expenses.add' : 'finance.debts.add') | transloco" (click)="add()">
       <mat-icon fontSet="material-symbols-outlined">add</mat-icon>
-      {{ (tab() === 'expenses' ? 'finance.expenses.add' : 'finance.debts.add') | transloco }}
     </button>
   </section>
 
@@ -30,48 +29,19 @@
             <mat-icon fontSet="material-symbols-outlined" class="absolute left-3 top-1/2 -translate-y-1/2 text-subtle pointer-events-none" style="font-size: 20px; width: 20px; height: 20px;">search</mat-icon>
             <input type="text" class="w-full h-11 pl-10 pr-3 rounded-xl bg-page border border-line-strong text-sm text-content placeholder:text-subtle outline-none focus:border-brand-300 focus:bg-surface" [value]="expenseQuery()" (input)="expenseQuery.set($any($event.target).value)" [placeholder]="'finance.expenses.search' | transloco">
           </div>
-          <!-- Мобилка: показать/скрыть фильтры -->
-          <button type="button" class="md:hidden relative shrink-0 w-11 h-11 flex items-center justify-center rounded-xl border border-line-strong text-soft" [class.bg-brand-50]="filtersOpen()" [attr.aria-expanded]="filtersOpen()" [title]="'finance.filters' | transloco" (click)="filtersOpen.set(!filtersOpen())">
+          <!-- Фильтры — в модалке -->
+          <button type="button" class="relative shrink-0 w-11 h-11 flex items-center justify-center rounded-xl border border-line-strong text-soft" [class.bg-brand-50]="filtersOpen()" [class.text-accent]="expenseFiltersCount() > 0" [attr.aria-label]="'finance.filters' | transloco" [title]="'finance.filters' | transloco" (click)="filtersOpen.set(true)">
             <mat-icon fontSet="material-symbols-outlined">tune</mat-icon>
             @if (expenseFiltersCount() > 0) {
               <span class="absolute -top-1 -right-1 min-w-5 h-5 px-1 rounded-full bg-brand-700 text-white text-[11px] leading-5 text-center">{{ expenseFiltersCount() }}</span>
             }
           </button>
-        </div>
-
-        <div class="md:grid grid-cols-2 md:grid-cols-5 gap-2" [class.grid]="filtersOpen()" [class.hidden]="!filtersOpen()">
-          <label class="flex flex-col gap-1 min-w-0">
-            <span class="text-xs font-medium text-soft">{{ 'finance.fields.category' | transloco }}</span>
-            <select class="w-full h-10 px-2 rounded-xl bg-page border border-transparent text-sm text-content outline-none cursor-pointer focus:border-brand-300" (change)="expenseCategory.set($any($event.target).value)">
-              <option value="" [selected]="!expenseCategory()">{{ 'finance.all' | transloco }}</option>
-              @for (category of categories; track category) {
-                <option [value]="category" [selected]="expenseCategory() === category">{{ ('finance.categories.' + category) | transloco }}</option>
-              }
-            </select>
-          </label>
-          <label class="flex flex-col gap-1 min-w-0">
-            <span class="text-xs font-medium text-soft">{{ 'finance.fields.method' | transloco }}</span>
-            <select class="w-full h-10 px-2 rounded-xl bg-page border border-transparent text-sm text-content outline-none cursor-pointer focus:border-brand-300" (change)="expenseMethod.set($any($event.target).value)">
-              <option value="" [selected]="!expenseMethod()">{{ 'finance.all' | transloco }}</option>
-              @for (method of methods; track method) {
-                <option [value]="method" [selected]="expenseMethod() === method">{{ ('finance.methods.' + method) | transloco }}</option>
-              }
-            </select>
-          </label>
-          <label class="flex flex-col gap-1 min-w-0">
-            <span class="text-xs font-medium text-soft">{{ 'finance.from' | transloco }}</span>
-            <input type="date" class="w-full h-10 px-2 rounded-xl bg-page border border-transparent text-sm text-content outline-none focus:border-brand-300" [value]="expenseFrom()" (change)="expenseFrom.set($any($event.target).value)">
-          </label>
-          <label class="flex flex-col gap-1 min-w-0">
-            <span class="text-xs font-medium text-soft">{{ 'finance.to' | transloco }}</span>
-            <input type="date" class="w-full h-10 px-2 rounded-xl bg-page border border-transparent text-sm text-content outline-none focus:border-brand-300" [value]="expenseTo()" (change)="expenseTo.set($any($event.target).value)">
-          </label>
-          <div class="flex items-end col-span-2 md:col-span-1">
-            <button type="button" class="w-full h-10 flex items-center justify-center gap-1 rounded-xl border border-line-strong text-sm font-medium text-soft hover:bg-page disabled:opacity-40" [disabled]="expenseFiltersCount() === 0" (click)="resetExpenseFilters()">
-              <mat-icon fontSet="material-symbols-outlined" style="font-size: 18px; width: 18px; height: 18px;">filter_alt_off</mat-icon>
-              {{ 'finance.reset' | transloco }}
+          <!-- Сбросить фильтры и поиск — только когда что-то выбрано -->
+          @if (expenseFiltersCount() > 0) {
+            <button type="button" class="shrink-0 w-11 h-11 flex items-center justify-center rounded-xl border border-line-strong text-soft hover:text-accent hover:border-brand-300" [title]="'finance.reset' | transloco" [attr.aria-label]="'finance.reset' | transloco" (click)="resetExpenseFilters()">
+              <mat-icon fontSet="material-symbols-outlined">filter_alt_off</mat-icon>
             </button>
-          </div>
+          }
         </div>
       </section>
     } @else {
@@ -82,47 +52,18 @@
             <mat-icon fontSet="material-symbols-outlined" class="absolute left-3 top-1/2 -translate-y-1/2 text-subtle pointer-events-none" style="font-size: 20px; width: 20px; height: 20px;">search</mat-icon>
             <input type="text" class="w-full h-11 pl-10 pr-3 rounded-xl bg-page border border-line-strong text-sm text-content placeholder:text-subtle outline-none focus:border-brand-300 focus:bg-surface" [value]="debtQuery()" (input)="debtQuery.set($any($event.target).value)" [placeholder]="'finance.debts.search' | transloco">
           </div>
-          <button type="button" class="md:hidden relative shrink-0 w-11 h-11 flex items-center justify-center rounded-xl border border-line-strong text-soft" [class.bg-brand-50]="filtersOpen()" [attr.aria-expanded]="filtersOpen()" [title]="'finance.filters' | transloco" (click)="filtersOpen.set(!filtersOpen())">
+          <button type="button" class="relative shrink-0 w-11 h-11 flex items-center justify-center rounded-xl border border-line-strong text-soft" [class.bg-brand-50]="filtersOpen()" [class.text-accent]="debtFiltersCount() > 0" [attr.aria-label]="'finance.filters' | transloco" [title]="'finance.filters' | transloco" (click)="filtersOpen.set(true)">
             <mat-icon fontSet="material-symbols-outlined">tune</mat-icon>
             @if (debtFiltersCount() > 0) {
               <span class="absolute -top-1 -right-1 min-w-5 h-5 px-1 rounded-full bg-brand-700 text-white text-[11px] leading-5 text-center">{{ debtFiltersCount() }}</span>
             }
           </button>
-        </div>
-
-        <div class="md:grid grid-cols-2 md:grid-cols-5 gap-2" [class.grid]="filtersOpen()" [class.hidden]="!filtersOpen()">
-          <label class="flex flex-col gap-1 min-w-0">
-            <span class="text-xs font-medium text-soft">{{ 'finance.fields.direction' | transloco }}</span>
-            <select class="w-full h-10 px-2 rounded-xl bg-page border border-transparent text-sm text-content outline-none cursor-pointer focus:border-brand-300" (change)="debtDirection.set($any($event.target).value)">
-              <option value="" [selected]="!debtDirection()">{{ 'finance.all' | transloco }}</option>
-              @for (direction of directions; track direction) {
-                <option [value]="direction" [selected]="debtDirection() === direction">{{ ('finance.directions.' + direction) | transloco }}</option>
-              }
-            </select>
-          </label>
-          <label class="flex flex-col gap-1 min-w-0">
-            <span class="text-xs font-medium text-soft">{{ 'finance.fields.status' | transloco }}</span>
-            <select class="w-full h-10 px-2 rounded-xl bg-page border border-transparent text-sm text-content outline-none cursor-pointer focus:border-brand-300" (change)="debtStatusFilter.set($any($event.target).value)">
-              <option value="" [selected]="!debtStatusFilter()">{{ 'finance.all' | transloco }}</option>
-              @for (status of debtStatuses; track status) {
-                <option [value]="status" [selected]="debtStatusFilter() === status">{{ ('finance.statuses.' + status) | transloco }}</option>
-              }
-            </select>
-          </label>
-          <label class="flex flex-col gap-1 min-w-0">
-            <span class="text-xs font-medium text-soft">{{ 'finance.from' | transloco }}</span>
-            <input type="date" class="w-full h-10 px-2 rounded-xl bg-page border border-transparent text-sm text-content outline-none focus:border-brand-300" [value]="debtFrom()" (change)="debtFrom.set($any($event.target).value)">
-          </label>
-          <label class="flex flex-col gap-1 min-w-0">
-            <span class="text-xs font-medium text-soft">{{ 'finance.to' | transloco }}</span>
-            <input type="date" class="w-full h-10 px-2 rounded-xl bg-page border border-transparent text-sm text-content outline-none focus:border-brand-300" [value]="debtTo()" (change)="debtTo.set($any($event.target).value)">
-          </label>
-          <div class="flex items-end col-span-2 md:col-span-1">
-            <button type="button" class="w-full h-10 flex items-center justify-center gap-1 rounded-xl border border-line-strong text-sm font-medium text-soft hover:bg-page disabled:opacity-40" [disabled]="debtFiltersCount() === 0" (click)="resetDebtFilters()">
-              <mat-icon fontSet="material-symbols-outlined" style="font-size: 18px; width: 18px; height: 18px;">filter_alt_off</mat-icon>
-              {{ 'finance.reset' | transloco }}
+          <!-- Сбросить фильтры и поиск — только когда что-то выбрано -->
+          @if (debtFiltersCount() > 0) {
+            <button type="button" class="shrink-0 w-11 h-11 flex items-center justify-center rounded-xl border border-line-strong text-soft hover:text-accent hover:border-brand-300" [title]="'finance.reset' | transloco" [attr.aria-label]="'finance.reset' | transloco" (click)="resetDebtFilters()">
+              <mat-icon fontSet="material-symbols-outlined">filter_alt_off</mat-icon>
             </button>
-          </div>
+          }
         </div>
       </section>
     }
@@ -203,13 +144,11 @@
               </div>
             </div>
             <div class="flex justify-end gap-1 pt-2 border-t border-line">
-              <button type="button" class="h-9 px-3 flex items-center gap-1 rounded-lg bg-page text-sm font-medium text-soft" (click)="openExpense(e)">
-                <mat-icon fontSet="material-symbols-outlined" style="font-size: 18px; width: 18px; height: 18px;">edit</mat-icon>
-                {{ 'finance.edit' | transloco }}
+              <button type="button" class="w-9 h-9 flex items-center justify-center rounded-lg bg-page text-soft" [title]="'finance.edit' | transloco" [attr.aria-label]="'finance.edit' | transloco" (click)="openExpense(e)">
+                <mat-icon fontSet="material-symbols-outlined" style="font-size: 20px; width: 20px; height: 20px;">edit</mat-icon>
               </button>
-              <button type="button" class="h-9 px-3 flex items-center gap-1 rounded-lg bg-page text-sm font-medium text-red-600 dark:text-red-400" (click)="removeExpense(e)">
-                <mat-icon fontSet="material-symbols-outlined" style="font-size: 18px; width: 18px; height: 18px;">delete</mat-icon>
-                {{ 'finance.delete' | transloco }}
+              <button type="button" class="w-9 h-9 flex items-center justify-center rounded-lg bg-page text-red-600 dark:text-red-400" [title]="'finance.delete' | transloco" [attr.aria-label]="'finance.delete' | transloco" (click)="removeExpense(e)">
+                <mat-icon fontSet="material-symbols-outlined" style="font-size: 20px; width: 20px; height: 20px;">delete</mat-icon>
               </button>
             </div>
           </div>
@@ -311,13 +250,11 @@
               </div>
             </div>
             <div class="flex justify-end gap-1 pt-2 border-t border-line">
-              <button type="button" class="h-9 px-3 flex items-center gap-1 rounded-lg bg-page text-sm font-medium text-soft" (click)="openDebt(d)">
-                <mat-icon fontSet="material-symbols-outlined" style="font-size: 18px; width: 18px; height: 18px;">edit</mat-icon>
-                {{ 'finance.edit' | transloco }}
+              <button type="button" class="w-9 h-9 flex items-center justify-center rounded-lg bg-page text-soft" [title]="'finance.edit' | transloco" [attr.aria-label]="'finance.edit' | transloco" (click)="openDebt(d)">
+                <mat-icon fontSet="material-symbols-outlined" style="font-size: 20px; width: 20px; height: 20px;">edit</mat-icon>
               </button>
-              <button type="button" class="h-9 px-3 flex items-center gap-1 rounded-lg bg-page text-sm font-medium text-red-600 dark:text-red-400" (click)="removeDebt(d)">
-                <mat-icon fontSet="material-symbols-outlined" style="font-size: 18px; width: 18px; height: 18px;">delete</mat-icon>
-                {{ 'finance.delete' | transloco }}
+              <button type="button" class="w-9 h-9 flex items-center justify-center rounded-lg bg-page text-red-600 dark:text-red-400" [title]="'finance.delete' | transloco" [attr.aria-label]="'finance.delete' | transloco" (click)="removeDebt(d)">
+                <mat-icon fontSet="material-symbols-outlined" style="font-size: 20px; width: 20px; height: 20px;">delete</mat-icon>
               </button>
             </div>
           </div>
@@ -331,7 +268,84 @@
 </div>
 
 <!-- Добавить — мобилка: плавающая кнопка над нижним меню -->
-<button type="button" class="md:hidden fixed right-4 bottom-24 z-40 flex items-center gap-1 h-12 px-5 rounded-full bg-brand-700 text-white text-sm font-semibold shadow-lg hover:bg-brand-800" (click)="add()">
+<button type="button" class="md:hidden fixed right-4 bottom-24 z-40 flex items-center justify-center w-12 h-12 rounded-full bg-brand-700 text-white shadow-lg hover:bg-brand-800" [title]="(tab() === 'expenses' ? 'finance.expenses.add' : 'finance.debts.add') | transloco" [attr.aria-label]="(tab() === 'expenses' ? 'finance.expenses.add' : 'finance.debts.add') | transloco" (click)="add()">
   <mat-icon fontSet="material-symbols-outlined">add</mat-icon>
-  {{ (tab() === 'expenses' ? 'finance.expenses.add' : 'finance.debts.add') | transloco }}
 </button>
+
+<!-- Модалка фильтров (ПК и мобилка); закрытие — крестик, «Готово» или затемнение -->
+@if (filtersOpen()) {
+  <div class="fixed inset-0 z-[60] bg-black/50" (click)="filtersOpen.set(false)"></div>
+  <div class="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-[61] w-[calc(100%-1.5rem)] max-w-md max-h-[85dvh] overflow-y-auto p-4 rounded-2xl bg-surface shadow-xl flex flex-col gap-4" role="dialog" [attr.aria-label]="'finance.filters' | transloco">
+    <div class="flex items-center justify-between gap-2">
+      <span class="text-base font-semibold text-content">{{ 'finance.filters' | transloco }}</span>
+      <button type="button" class="w-9 h-9 -my-2 -mr-2 rounded-full flex items-center justify-center text-soft hover:bg-page" [title]="'common.close' | transloco" [attr.aria-label]="'common.close' | transloco" (click)="filtersOpen.set(false)">
+        <mat-icon fontSet="material-symbols-outlined">close</mat-icon>
+      </button>
+    </div>
+
+    <div class="grid grid-cols-2 gap-3">
+      @if (tab() === 'expenses') {
+        <label class="flex flex-col gap-1 min-w-0">
+          <span class="text-xs font-medium text-soft">{{ 'finance.fields.category' | transloco }}</span>
+          <select class="w-full h-10 px-2 rounded-xl bg-page border border-transparent text-sm text-content outline-none cursor-pointer focus:border-brand-300" (change)="expenseCategory.set($any($event.target).value)">
+            <option value="" [selected]="!expenseCategory()">{{ 'finance.all' | transloco }}</option>
+            @for (category of categories; track category) {
+              <option [value]="category" [selected]="expenseCategory() === category">{{ ('finance.categories.' + category) | transloco }}</option>
+            }
+          </select>
+        </label>
+        <label class="flex flex-col gap-1 min-w-0">
+          <span class="text-xs font-medium text-soft">{{ 'finance.fields.method' | transloco }}</span>
+          <select class="w-full h-10 px-2 rounded-xl bg-page border border-transparent text-sm text-content outline-none cursor-pointer focus:border-brand-300" (change)="expenseMethod.set($any($event.target).value)">
+            <option value="" [selected]="!expenseMethod()">{{ 'finance.all' | transloco }}</option>
+            @for (method of methods; track method) {
+              <option [value]="method" [selected]="expenseMethod() === method">{{ ('finance.methods.' + method) | transloco }}</option>
+            }
+          </select>
+        </label>
+        <label class="flex flex-col gap-1 min-w-0">
+          <span class="text-xs font-medium text-soft">{{ 'finance.from' | transloco }}</span>
+          <input type="date" class="w-full h-10 px-2 rounded-xl bg-page border border-transparent text-sm text-content outline-none focus:border-brand-300" [value]="expenseFrom()" (change)="expenseFrom.set($any($event.target).value)">
+        </label>
+        <label class="flex flex-col gap-1 min-w-0">
+          <span class="text-xs font-medium text-soft">{{ 'finance.to' | transloco }}</span>
+          <input type="date" class="w-full h-10 px-2 rounded-xl bg-page border border-transparent text-sm text-content outline-none focus:border-brand-300" [value]="expenseTo()" (change)="expenseTo.set($any($event.target).value)">
+        </label>
+      } @else {
+        <label class="flex flex-col gap-1 min-w-0">
+          <span class="text-xs font-medium text-soft">{{ 'finance.fields.direction' | transloco }}</span>
+          <select class="w-full h-10 px-2 rounded-xl bg-page border border-transparent text-sm text-content outline-none cursor-pointer focus:border-brand-300" (change)="debtDirection.set($any($event.target).value)">
+            <option value="" [selected]="!debtDirection()">{{ 'finance.all' | transloco }}</option>
+            @for (direction of directions; track direction) {
+              <option [value]="direction" [selected]="debtDirection() === direction">{{ ('finance.directions.' + direction) | transloco }}</option>
+            }
+          </select>
+        </label>
+        <label class="flex flex-col gap-1 min-w-0">
+          <span class="text-xs font-medium text-soft">{{ 'finance.fields.status' | transloco }}</span>
+          <select class="w-full h-10 px-2 rounded-xl bg-page border border-transparent text-sm text-content outline-none cursor-pointer focus:border-brand-300" (change)="debtStatusFilter.set($any($event.target).value)">
+            <option value="" [selected]="!debtStatusFilter()">{{ 'finance.all' | transloco }}</option>
+            @for (status of debtStatuses; track status) {
+              <option [value]="status" [selected]="debtStatusFilter() === status">{{ ('finance.statuses.' + status) | transloco }}</option>
+            }
+          </select>
+        </label>
+        <label class="flex flex-col gap-1 min-w-0">
+          <span class="text-xs font-medium text-soft">{{ 'finance.from' | transloco }}</span>
+          <input type="date" class="w-full h-10 px-2 rounded-xl bg-page border border-transparent text-sm text-content outline-none focus:border-brand-300" [value]="debtFrom()" (change)="debtFrom.set($any($event.target).value)">
+        </label>
+        <label class="flex flex-col gap-1 min-w-0">
+          <span class="text-xs font-medium text-soft">{{ 'finance.to' | transloco }}</span>
+          <input type="date" class="w-full h-10 px-2 rounded-xl bg-page border border-transparent text-sm text-content outline-none focus:border-brand-300" [value]="debtTo()" (change)="debtTo.set($any($event.target).value)">
+        </label>
+      }
+    </div>
+
+    <div class="flex gap-2">
+      <button type="button" class="w-11 h-11 shrink-0 flex items-center justify-center rounded-xl border border-line-strong text-soft hover:bg-page disabled:opacity-40" [title]="'finance.reset' | transloco" [attr.aria-label]="'finance.reset' | transloco" [disabled]="(tab() === 'expenses' ? expenseFiltersCount() : debtFiltersCount()) === 0" (click)="tab() === 'expenses' ? resetExpenseFilters() : resetDebtFilters()">
+        <mat-icon fontSet="material-symbols-outlined">filter_alt_off</mat-icon>
+      </button>
+      <button type="button" class="flex-1 h-11 rounded-xl bg-brand-700 text-white text-sm font-semibold hover:bg-brand-800" (click)="filtersOpen.set(false)">{{ 'finance.done' | transloco }}</button>
+    </div>
+  </div>
+}

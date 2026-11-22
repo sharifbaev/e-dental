@@ -18,13 +18,16 @@ export interface Patient {
   id: number;
   fullName: string;
   phone: string;               // '+998 90 123-45-67'
-  birthDate: string;           // 'YYYY-MM-DD'
-  gender: Gender;
+  birthDate?: string;          // 'YYYY-MM-DD'
+  gender?: Gender;             // может быть пустым у пациента из формы записи
   status: PatientStatus;
+  doctorId?: number;           // лечащий врач
   doctorName: string;          // лечащий врач, 'Савина А. И.'
   lastVisit?: string;          // 'YYYY-MM-DD'
   nextVisit?: string;          // 'YYYY-MM-DD'
   nextVisitTime?: string;      // 'HH:mm'
-  diagnoses: Diagnosis[];      // история, новые сверху
+  diagnoses?: Diagnosis[];     // история, новые сверху — только в карточке (GET /patients/:id)
   rating?: PatientRating;      // рейтинг пациента; нет — считаем «надёжный»
 }
+
+export type DiagnosisDraft = Omit<Diagnosis, 'id' | 'doctorName'>;

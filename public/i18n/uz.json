@@ -20,9 +20,9 @@
     "expand": "Menyuni yoyish"
   },
   "roles": {
+    "owner": "Klinika egasi",
     "admin": "Administrator",
-    "doctor": "Shifokor",
-    "receptionist": "Registrator"
+    "doctor": "Shifokor"
   },
   "menu": {
     "dashboard": "Bosh sahifa",
@@ -205,6 +205,10 @@
       "pendingDecision": {
         "title": "Bemorlar qaror kutmoqda",
         "text": "Dr. {{doctor}} da «Qaror kutilmoqda» holatidagi bemorlar: {{count}}. Smena oxirigacha ({{time}}) holatni yangilang"
+      },
+      "newAppointment": {
+        "title": "Yangi yozuv",
+        "text": "{{patient}} {{time}} ga Dr. {{doctor}} qabuliga yozildi"
       }
     },
     "pendingDialog": {
@@ -430,11 +434,16 @@
         "phone": "Format: +998 XX XXX-XX-XX",
         "cabinet": "Xona raqami 1 dan 50 gacha",
         "workDays": "Kamida bitta kunni tanlang",
-        "timeRange": "Ish kunining oxiri boshlanishidan keyin bo'lishi kerak"
+        "timeRange": "Ish kunining oxiri boshlanishidan keyin bo'lishi kerak",
+        "username": "Login — kamida 3 belgi",
+        "password": "Parol — kamida 6 belgi"
       },
       "services": "Shifokor xizmatlari · bir nechtasini tanlash mumkin",
       "otherService": "Boshqa xizmat",
-      "otherServicePlaceholder": "Masalan: bolalar stomatologiyasi"
+      "otherServicePlaceholder": "Masalan: bolalar stomatologiyasi",
+      "accountHint": "Shifokor kirishi uchun login — ixtiyoriy, keyinroq «Sozlamalar → Foydalanuvchilar» bo'limida qo'shish mumkin",
+      "username": "Login",
+      "password": "Parol"
     }
   },
   "login": {
@@ -444,7 +453,11 @@
     "submit": "Kirish",
     "errors": {
       "required": "Majburiy maydon",
-      "invalid": "Login yoki parol noto'g'ri"
+      "invalid": "Login yoki parol noto'g'ri",
+      "blocked": "Hisob bloklangan. Klinika egasiga murojaat qiling",
+      "tooManyAttempts": "Juda ko'p urinish. Bir daqiqa kutib, qayta urinib ko'ring",
+      "network": "Server bilan aloqa yo'q. Internetni tekshiring",
+      "failed": "Kirib bo'lmadi. Qayta urinib ko'ring"
     },
     "title": "Tizimga kirish",
     "heroTitle": "Butun klinika —",
@@ -455,7 +468,8 @@
       "schedule": "Jadval",
       "patients": "Bemor kartalari",
       "payments": "To'lovlar va qarzlar"
-    }
+    },
+    "usernameHint": "Klinika kodi va login «_» orqali, masalan smile_ivanov"
   },
   "rating": {
     "label": "Reyting",
@@ -476,7 +490,10 @@
       "appearance": "Ko'rinish",
       "notifications": "Bildirishnomalar",
       "services": "Xizmatlar",
-      "workMode": "Ish tartibi"
+      "dictionaries": "Ma'lumotnomalar",
+      "workMode": "Ish tartibi",
+      "users": "Foydalanuvchilar",
+      "account": "Hisob"
     },
     "clinic": {
       "logo": "Logotip",
@@ -545,6 +562,50 @@
     },
     "workMode": {
       "hint": "Ish kunlaringiz va qabul soatlaringiz"
+    },
+    "dictionaries": {
+      "hint": "Bemor kartalarida ishlatiladigan qiymatlar ro'yxatlari",
+      "toothStates": "Tish holatlari",
+      "toothStatesHint": "Bemor kartasidagi «Tish formulasi» bo'limi uchun belgilar",
+      "add": "Holat qo'shish",
+      "addTitle": "Yangi tish holati",
+      "editTitle": "Tish holatini o'zgartirish",
+      "name": "Nomi",
+      "nameError": "Kamida 2 ta belgi",
+      "color": "Rang",
+      "base": "Asosiy holat — belgilanmagan tish, o'chirib bo'lmaydi",
+      "created": "Holat qo'shildi",
+      "deleted": "Holat o'chirildi",
+      "deleteTitle": "Holatni o'chirasizmi?",
+      "deleteMessage": "«{{name}}» holati o'chiriladi. Bu holatdagi tishlar sog'lom deb ko'rsatiladi."
+    },
+    "users": {
+      "hint": "Xodimlarning loginlari va rollari. Klinikada egasi bitta bo'ladi",
+      "add": "Qo'shish",
+      "addTitle": "Yangi foydalanuvchi",
+      "editTitle": "Foydalanuvchini o'zgartirish",
+      "fullName": "F.I.Sh.",
+      "username": "Login",
+      "password": "Parol",
+      "newPassword": "Yangi parol (ixtiyoriy)",
+      "role": "Rol",
+      "doctor": "Ma'lumotnomadagi shifokor",
+      "selectDoctor": "Shifokorni tanlang",
+      "created": "Foydalanuvchi qo'shildi",
+      "block": "Bloklash",
+      "unblock": "Blokdan chiqarish",
+      "blocked": "Foydalanuvchi bloklandi",
+      "unblocked": "Foydalanuvchi blokdan chiqarildi",
+      "inactive": "bloklangan",
+      "empty": "Hozircha foydalanuvchilar yo'q"
+    },
+    "account": {
+      "title": "Parolni o'zgartirish",
+      "hint": "Parol o'zgargach, boshqa qurilmalar tizimdan chiqadi",
+      "oldPassword": "Joriy parol",
+      "newPassword": "Yangi parol",
+      "submit": "Parolni o'zgartirish",
+      "changed": "Parol o'zgartirildi"
     }
   },
   "payments": {
@@ -631,12 +692,34 @@
     }
   },
   "dentalChart": {
+    "adult": "Kattalar",
+    "child": "Bolalar",
     "right": "O'ng tomon",
     "left": "Chap tomon",
     "upper": "Yuqori jag",
     "lower": "Pastki jag",
     "tooth": "{{number}}-tish",
     "hint": "Holatini belgilash uchun tishni bosing",
+    "state": "Holati",
+    "milk": "Sut tishi",
+    "diagnoses": "Tish bo'yicha tashxislar",
+    "noDiagnoses": "Bu tish bo'yicha tashxislar yo'q",
+    "types": {
+      "central": "Markaziy kesuvchi tish",
+      "lateral": "Yon kesuvchi tish",
+      "canine": "Qoziq tish",
+      "premolar1": "Birinchi kichik oziq tish",
+      "premolar2": "Ikkinchi kichik oziq tish",
+      "molar1": "Birinchi katta oziq tish",
+      "molar2": "Ikkinchi katta oziq tish",
+      "molar3": "Uchinchi katta oziq tish (aql tishi)"
+    },
+    "position": {
+      "upperRight": "Yuqori jag', o'ng tomon",
+      "upperLeft": "Yuqori jag', chap tomon",
+      "lowerLeft": "Pastki jag', chap tomon",
+      "lowerRight": "Pastki jag', o'ng tomon"
+    },
     "states": {
       "healthy": "Sog'lom",
       "caries": "Karies",
@@ -654,6 +737,7 @@
       "debts": "Qarzlar"
     },
     "filters": "Filtrlar",
+    "done": "Tayyor",
     "all": "Hammasi",
     "from": "Sanadan",
     "to": "Sanagacha",
@@ -743,6 +827,30 @@
     "workHours": "Ish vaqti: {{start}}–{{end}}",
     "empty": "Bu kunga qabullar yo'q",
     "interval": "Oraliq",
-    "clickToAdd": "Qabul qo'shish uchun bo'sh vaqtni bosing"
+    "clickToAdd": "Qabul qo'shish uchun bo'sh vaqtni bosing",
+    "doctorsSelected": "Tanlangan shifokorlar: {{count}}",
+    "maxDoctors": "{{count}} tagacha shifokor tanlash mumkin",
+    "clearDoctors": "Shifokorlar tanlovini tozalash"
+  },
+  "apiErrors": {
+    "network": "Server bilan aloqa yo'q. Internetni tekshirib, qayta urinib ko'ring",
+    "unauthorized": "Seans tugadi. Qayta kiring",
+    "forbidden": "Bu amal uchun huquq yetarli emas",
+    "userBlocked": "Hisob bloklangan",
+    "tooManyAttempts": "Juda ko'p urinish. Bir daqiqa kuting",
+    "notFound": "Yozuv topilmadi — ehtimol, u allaqachon o'chirilgan",
+    "validationFailed": "Maydonlar to'g'ri to'ldirilganini tekshiring",
+    "slotTaken": "Shifokorning bu vaqti band. Boshqa vaqtni tanlang",
+    "outsideWorkHours": "Shifokor bu vaqtda ishlamaydi (dam olish, ta'til yoki jadvaldan tashqari)",
+    "phoneExists": "Bu telefon raqamli bemor allaqachon bor — uni qidiruv orqali toping",
+    "noShowTooEarly": "«Kelmadi» belgisini qabul boshlanganidan 15 daqiqa keyin qo'yish mumkin",
+    "appointmentCancelled": "Qabul bekor qilingan — uni o'zgartirib bo'lmaydi",
+    "useCancelEndpoint": "Qabulni bekor qilish uchun «Bekor qilish» tugmasidan foydalaning",
+    "doctorHasAppointments": "Shifokorning kelgusi qabullari bor — avval ularni ko'chiring yoki bekor qiling",
+    "usernameTaken": "Bu login band",
+    "serviceExists": "Bunday nomli xizmat allaqachon bor",
+    "wrongPassword": "Joriy parol noto'g'ri",
+    "lastOwner": "O'zingizni bloklash yoki egalik rolini olib tashlash mumkin emas",
+    "internal": "Serverda xatolik. Keyinroq urinib ko'ring"
   }
 }

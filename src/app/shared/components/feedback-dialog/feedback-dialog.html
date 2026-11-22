@@ -7,6 +7,8 @@
     <h2 class="font-display text-lg font-bold text-content">{{ data.titleKey | transloco }}</h2>
     @if (data.messageKey) {
       <p class="mt-1 text-sm text-soft">{{ data.messageKey | transloco: data.messageParams }}</p>
+    } @else if (data.message) {
+      <p class="mt-1 text-sm text-soft">{{ data.message }}</p>
     }
   </div>
 

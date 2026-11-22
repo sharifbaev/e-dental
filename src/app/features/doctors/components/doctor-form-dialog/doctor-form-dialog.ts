@@ -6,8 +6,9 @@ import { MAT_DIALOG_DATA, MatDialogConfig, MatDialogModule, MatDialogRef } from 
 import { MatIconModule } from '@angular/material/icon';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { uzPhoneValidator } from '../../../../shared/validators/uz-phone.validator';
-import { DOCTOR_STATUSES, Doctor, DoctorDraft, DoctorStatus, SPECIALTIES } from '../../models/doctor.model';
+import { DOCTOR_STATUSES, Doctor, DoctorFormResult, DoctorStatus } from '../../models/doctor.model';
 import { AppointmentFormService } from '../../../schedule/services/appointment-form.service';
+import { DoctorsService } from '../../services/doctors.service';
 
 // «Другое» в списке услуг — та же договорённость, что и в форме записи
 const OTHER_SERVICE_ID = 0;
@@ -41,6 +42,17 @@ function timeRangeValidator(group: AbstractControl): ValidationErrors | null {
   return start && end && end <= start ? { timeRange: true } : null;
 }
 
+// Логин врача: либо оба поля пустые, либо логин от 3 символов и пароль от 6
+function accountValidator(group: AbstractControl): ValidationErrors | null {
+  const username = String(group.get('username')?.value ?? '').trim();
+  const password = String(group.get('password')?.value ?? '');
+  if (!username && !password) return null;
+  const errors: ValidationErrors = {};
+  if (username.length < 3) errors['username'] = true;
+  if (password.length < 6) errors['password'] = true;
+  return Object.keys(errors).length ? errors : null;
+}
+
 @Component({
   selector: 'app-doctor-form-dialog',
   imports: [ReactiveFormsModule, MatDialogModule, MatButtonModule, MatIconModule, TranslocoPipe],
@@ -50,7 +62,7 @@ function timeRangeValidator(group: AbstractControl): ValidationErrors | null {
 })
 export class DoctorFormDialog {
   private readonly fb = inject(FormBuilder);
-  private readonly dialogRef = inject<MatDialogRef<DoctorFormDialog, DoctorDraft>>(MatDialogRef);
+  private readonly dialogRef = inject<MatDialogRef<DoctorFormDialog, DoctorFormResult>>(MatDialogRef);
   private readonly data = inject<DoctorFormData | null>(MAT_DIALOG_DATA, { optional: true });
   private readonly transloco = inject(TranslocoService);
   private readonly formService = inject(AppointmentFormService);
@@ -62,10 +74,13 @@ export class DoctorFormDialog {
 
   protected readonly statuses = DOCTOR_STATUSES;
 
-  // Специальности: если у врача своя, которой нет в справочнике, — добавляем её в список
-  protected readonly specialties = this.doctor && !SPECIALTIES.includes(this.doctor.specialty)
-    ? [...SPECIALTIES, this.doctor.specialty]
-    : SPECIALTIES;
+  private readonly doctorsService = inject(DoctorsService);
+
+  // Специальности — с API (GET /specialties); если у врача своя, которой нет в справочнике, — добавляем её в список
+  protected readonly specialties = computed(() => {
+    const list = this.doctorsService.specialties();
+    return this.doctor && this.doctor.specialty && !list.includes(this.doctor.specialty) ? [...list, this.doctor.specialty] : list;
+  });
 
   protected readonly form = this.fb.nonNullable.group({
     fullName: [this.doctor?.fullName ?? '', [Validators.required, Validators.minLength(3)]],
@@ -79,6 +94,11 @@ export class DoctorFormDialog {
     status: [this.doctor?.status ?? ('offShift' as DoctorStatus)],
     // Услуги врача: можно несколько; «Другое» — своя услуга текстом
     serviceIds: [this.doctor?.serviceIds ?? ([] as number[])],
+    // Логин и пароль врача — только при создании, необязательно (можно завести позже в «Пользователях»)
+    account: this.fb.nonNullable.group({
+      username: [''],
+      password: ['']
+    }, { validators: accountValidator }),
     otherService: [{ value: this.doctor?.otherService ?? '', disabled: !this.doctor?.serviceIds?.includes(OTHER_SERVICE_ID) }, [Validators.required, Validators.minLength(3)]]
   }, { validators: timeRangeValidator });
 
@@ -161,6 +181,11 @@ export class DoctorFormDialog {
     return control.invalid && control.touched;
   }
 
+  protected accountError(field: 'username' | 'password'): boolean {
+    const group = this.form.controls.account;
+    return !!this.formStatus() && group.hasError(field) && group.controls[field].touched;
+  }
+
   protected readonly timeRangeInvalid = computed(() =>
     this.formStatus() && this.form.hasError('timeRange') && (this.form.controls.workStart.touched || this.form.controls.workEnd.touched)
   );
@@ -171,9 +196,11 @@ export class DoctorFormDialog {
       return;
     }
 
-    const value = this.form.getRawValue();
+    const { account, ...value } = this.form.getRawValue();
+    const username = account.username.trim();
     this.dialogRef.close({
       ...value,
+      ...(!this.isEdit && username ? { account: { username, password: account.password } } : {}),
       fullName: value.fullName.trim(),
       phone: value.phone.trim(),
       cabinet: Number(value.cabinet),

@@ -1,3 +1,4 @@
+import { catchError, of } from 'rxjs';
 import { Component, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
@@ -38,7 +39,7 @@ export class PatientsTodayDialog {
   protected readonly isDoctor = computed(() => this.auth.user()?.role === 'doctor');
   protected readonly showDoctorFilter = computed(() => !this.isDoctor() || this.prefs.showOtherDoctors());
 
-  private readonly patients = toSignal(this.dashboardService.getTodayPatients());
+  private readonly patients = toSignal(this.dashboardService.getTodayPatients().pipe(catchError(() => of([]))));
 
   protected readonly loading = computed(() => this.patients() === undefined);
 

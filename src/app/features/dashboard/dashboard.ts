@@ -15,7 +15,7 @@ import { Appointment } from './models/dashboard.model';
 import { DashboardService } from './services/dashboard.service';
 import { DashboardPrefsService } from './services/dashboard-prefs.service';
 import { APPOINTMENT_FORM_DIALOG_CONFIG, AppointmentFormDialog } from '../schedule/components/appointment-form-dialog/appointment-form-dialog';
-import { filter, switchMap } from 'rxjs';
+import { catchError, filter, of, switchMap } from 'rxjs';
 import { FeedbackService } from '../../shared/services/feedback.service';
 import { AppointmentFormData, AppointmentFormResult } from '../schedule/components/appointment-form-dialog/appointment-form-dialog';
 import { ScheduleService } from '../schedule/services/schedule.service';
@@ -64,8 +64,9 @@ export class Dashboard {
   // Мобилка: показывать ли карточки «Пациенты сегодня» и «Свободные слоты» (включается в настройках)
   protected readonly showKpiMobile = inject(DashboardPrefsService).showKpiMobile;
 
-  protected readonly summary = toSignal(this.dashboardService.getSummary());
-  private readonly appointments = toSignal(this.dashboardService.getUpcomingAppointments());
+  // Ошибка загрузки — пустые данные (сообщение не показываем, страница остаётся рабочей)
+  protected readonly summary = toSignal(this.dashboardService.getSummary().pipe(catchError(() => of(null))));
+  private readonly appointments = toSignal(this.dashboardService.getUpcomingAppointments().pipe(catchError(() => of([]))));
 
   private readonly lang = toSignal(this.transloco.langChanges$, {
     initialValue: this.transloco.getActiveLang()
@@ -269,7 +270,7 @@ export class Dashboard {
           date: new Intl.DateTimeFormat(this.locale(), { day: 'numeric', month: 'long' }).format(new Date(`${created.date}T00:00`)),
           time: created.start
         }),
-        error: () => this.feedback.error()
+        error: err => this.feedback.error(err)
       });
   }
 }

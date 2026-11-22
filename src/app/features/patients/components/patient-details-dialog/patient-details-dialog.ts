@@ -6,7 +6,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { APPOINTMENT_STATUSES, PATIENT_STATUS_CLASSES, PATIENT_STATUSES, PatientStatus } from '../../../../shared/models/patient-status';
-import { PATIENT_RATING_CLASSES, PATIENT_RATING_DOT, mockPatientRating } from '../../../../shared/models/patient-rating';
+import { PATIENT_RATING_CLASSES, PATIENT_RATING_DOT } from '../../../../shared/models/patient-rating';
 import { FeedbackService } from '../../../../shared/services/feedback.service';
 import { uzPhoneValidator } from '../../../../shared/validators/uz-phone.validator';
 import { Gender } from '../../models/patient.model';
@@ -17,7 +17,10 @@ import { PaymentsService, formatMoney } from '../../../payments/services/payment
 import { PaymentDraft } from '../../../payments/models/payment.model';
 import { PAYMENT_DIALOG_CONFIG, PaymentDialog, PaymentDialogData } from '../../../payments/components/payment-dialog/payment-dialog';
 import { TreatmentPlansService } from '../../../treatment-plans/services/treatment-plans.service';
-import { filter, switchMap } from 'rxjs';
+import { forkJoin, filter, of, switchMap } from 'rxjs';
+import { DoctorsService } from '../../../doctors/services/doctors.service';
+import { ScheduleAppointment } from '../../../schedule/models/schedule.model';
+import { shortName } from '../../../../shared/utils/names';
 
 // Разделы карточки пациента
 type Section = 'overview' | 'chart' | 'treatment' | 'visits';
@@ -90,12 +93,38 @@ export class PatientDetailsDialog {
   private readonly locale = computed(() => LOCALES[this.lang()] ?? 'ru-RU');
 
   protected readonly statuses = PATIENT_STATUSES;
-  protected readonly doctors = this.patientsService.doctors;
+  private readonly doctorsService = inject(DoctorsService);
+
+  // Лечащий врач — из справочника врачей
+  protected readonly doctors = computed(() =>
+    this.doctorsService.doctors()
+      .map(d => ({ id: d.id, name: shortName(d.fullName) }))
+      .sort((a, b) => a.name.localeCompare(b.name, 'ru'))
+  );
 
   // Пациент берётся из сервиса — после сохранения данные в модалке обновятся сами
   protected readonly patient = computed(() =>
     this.patientsService.patients().find(p => p.id === this.data.patientId)
   );
+
+  // Визиты пациента (GET /patients/:id/appointments)
+  private readonly patientVisits = signal<ScheduleAppointment[]>([]);
+
+  constructor() {
+    // Карточка с диагнозами, визиты, оплаты, планы — с API при открытии
+    const id = this.data.patientId;
+    this.patientsService.load(id).subscribe({ error: err => this.feedback.error(err) });
+    this.loadVisits();
+    this.paymentsService.loadForPatient(id);
+    this.plansService.loadForPatient(id);
+  }
+
+  private loadVisits(): void {
+    this.scheduleService.forPatient(this.data.patientId).subscribe({
+      next: list => this.patientVisits.set(list),
+      error: () => undefined
+    });
+  }
 
   // Данные для режима чтения: даты, возраст, статус, инициалы — всё считаем заранее
   protected readonly view = computed(() => {
@@ -107,16 +136,16 @@ export class PatientDetailsDialog {
     return {
       ...patient,
       initials: getInitials(patient.fullName),
-      age: getAge(patient.birthDate),
-      birthDateLabel: dateFormat.format(fromDateKey(patient.birthDate)),
+      age: patient.birthDate ? getAge(patient.birthDate) : null,
+      birthDateLabel: patient.birthDate ? dateFormat.format(fromDateKey(patient.birthDate)) : '',
       statusKey: `schedule.status.${patient.status}`,
       statusClass: PATIENT_STATUS_CLASSES[patient.status],
-      ratingKey: `rating.${patient.rating ?? mockPatientRating(patient.id)}`,
-      ratingClass: PATIENT_RATING_CLASSES[patient.rating ?? mockPatientRating(patient.id)],
-      ratingDot: PATIENT_RATING_DOT[patient.rating ?? mockPatientRating(patient.id)],
+      ratingKey: `rating.${patient.rating ?? 'good'}`,
+      ratingClass: PATIENT_RATING_CLASSES[patient.rating ?? 'good'],
+      ratingDot: PATIENT_RATING_DOT[patient.rating ?? 'good'],
       lastVisitLabel: patient.lastVisit ? dateFormat.format(fromDateKey(patient.lastVisit)) : '',
       nextVisitLabel: patient.nextVisit ? `${dateFormat.format(fromDateKey(patient.nextVisit))}, ${patient.nextVisitTime}` : '',
-      diagnoses: patient.diagnoses.map(d => ({ ...d, dateLabel: dateFormat.format(fromDateKey(d.date)) }))
+      diagnoses: (patient.diagnoses ?? []).map(d => ({ ...d, dateLabel: dateFormat.format(fromDateKey(d.date)) }))
     };
   });
 
@@ -142,12 +171,17 @@ export class PatientDetailsDialog {
   protected readonly plans = computed(() => {
     const patient = this.patient();
     if (!patient) return [];
-    const appointments = this.scheduleService.appointments();
+    const appointments = this.patientVisits();
+    const today = toDateKey(new Date());
 
     return this.plansService.forPatient(patient.id).map(plan => {
-      const next = appointments.find(a => a.id === plan.nextAppointmentId);
+      // Следующий визит серии — ближайший неотменённый, начиная с сегодня
+      const next = appointments
+        .filter(a => (plan.appointmentIds ?? []).includes(a.id) && a.date >= today && a.status !== 'cancelled')
+        .sort((a, b) => a.date.localeCompare(b.date) || a.start.localeCompare(b.start))[0];
       return {
         ...plan,
+        doctorName: plan.doctorName ?? appointments.find(a => a.doctorId === plan.doctorId)?.doctorName ?? this.doctors().find(d => d.id === plan.doctorId)?.name ?? '',
         createdLabel: this.dayFormat().format(fromDateKey(plan.createdAt)),
         costLabel: formatMoney(plan.cost, this.locale()),
         nextLabel: next ? `${this.dayFormat().format(fromDateKey(next.date))}, ${next.start}` : ''
@@ -202,7 +236,7 @@ export class PatientDetailsDialog {
       )
       .subscribe({
         next: () => this.feedback.success('feedback.paymentSaved'),
-        error: () => this.feedback.error()
+        error: err => this.feedback.error(err)
       });
   }
 
@@ -233,7 +267,9 @@ export class PatientDetailsDialog {
   private readonly allVisits = computed(() => {
     const patient = this.patient();
     if (!patient) return [];
-    return this.scheduleService.appointments().filter(a => a.patientId === patient.id);
+    // Свежие данные приёма (статус, оплата) — из расписания, если он там уже есть
+    const schedule = new Map(this.scheduleService.appointments().map(a => [a.id, a]));
+    return this.patientVisits().map(a => schedule.get(a.id) ?? a);
   });
 
   // Врачи, у которых был пациент
@@ -248,7 +284,6 @@ export class PatientDetailsDialog {
   protected readonly visits = computed(() => {
     const patient = this.patient();
     if (!patient) return [];
-    const paid = this.paymentsService.byAppointment();
     const status = this.visitStatus();
     const doctor = this.visitDoctor();
     const payment = this.visitPayment();
@@ -261,25 +296,18 @@ export class PatientDetailsDialog {
         if (doctor && String(a.doctorId) !== doctor) return false;
         if (from && a.date < from) return false;
         if (to && a.date > to) return false;
-        if (payment) {
-          const p = paid.get(a.id);
-          const state = p ? (p.amount > p.paid ? 'debt' : 'paid') : 'unpaid';
-          if (state !== payment) return false;
-        }
+        if (payment && (a.paymentState ?? 'unpaid') !== payment) return false;
         return true;
       })
       .sort((a, b) => b.date.localeCompare(a.date) || b.start.localeCompare(a.start))
-      .map(a => {
-        const payment = paid.get(a.id);
-        return {
-          ...a,
-          dateLabel: this.dayFormat().format(fromDateKey(a.date)),
-          statusKey: `schedule.status.${a.status}`,
-          statusClass: PATIENT_STATUS_CLASSES[a.status],
-          paymentKey: payment ? (payment.amount > payment.paid ? 'payments.badge.debt' : 'payments.badge.paid') : '',
-          paymentOwes: !!payment && payment.amount > payment.paid
-        };
-      });
+      .map(a => ({
+        ...a,
+        dateLabel: this.dayFormat().format(fromDateKey(a.date)),
+        statusKey: `schedule.status.${a.status}`,
+        statusClass: PATIENT_STATUS_CLASSES[a.status],
+        paymentKey: a.paymentState ? `payments.badge.${a.paymentState}` : '',
+        paymentOwes: a.paymentState === 'debt'
+      }));
   });
 
   // ---- Вкладки диагнозов ----
@@ -314,9 +342,9 @@ export class PatientDetailsDialog {
       birthDate: [patient.birthDate],
       gender: [patient.gender as Gender],
       status: [patient.status as PatientStatus],
-      doctorName: [patient.doctorName],
+      doctorId: [patient.doctorId ?? null as number | null],
       diagnoses: this.fb.array(
-        patient.diagnoses.map(d => this.fb.nonNullable.group({
+        (patient.diagnoses ?? []).map(d => this.fb.nonNullable.group({
           id: [d.id],
           title: [d.title, Validators.required],
           tooth: [d.tooth ?? null as number | null],
@@ -349,12 +377,13 @@ export class PatientDetailsDialog {
 
     const value = this.form.getRawValue();
 
-    // Изменённые поля диагнозов накладываем на исходные (дата, врач, состояние не меняются)
-    const diagnoses = patient.diagnoses.map(d => {
+    // Изменённые диагнозы — отдельными запросами (дата, врач, состояние не меняются)
+    const diagnoses$ = (patient.diagnoses ?? []).flatMap(d => {
       const changed = value.diagnoses.find((item: { id: number }) => item.id === d.id);
-      return changed
-        ? { ...d, title: changed.title.trim(), tooth: changed.tooth || undefined, description: changed.description.trim() }
-        : d;
+      if (!changed) return [];
+      const draft = { title: changed.title.trim(), tooth: changed.tooth || undefined, description: changed.description.trim(), date: d.date, status: d.status };
+      if (draft.title === d.title && draft.tooth === d.tooth && draft.description === d.description) return [];
+      return [this.patientsService.updateDiagnosis(patient.id, d.id, draft)];
     });
 
     this.saving.set(true);
@@ -362,20 +391,21 @@ export class PatientDetailsDialog {
     this.patientsService.update(patient.id, {
       fullName: value.fullName.trim(),
       phone: value.phone.trim(),
-      birthDate: value.birthDate,
-      gender: value.gender,
+      birthDate: value.birthDate || undefined,
+      gender: value.gender || undefined,
       status: value.status,
-      doctorName: value.doctorName,
-      diagnoses
-    }).subscribe({
+      doctorId: value.doctorId ?? undefined
+    }).pipe(
+      switchMap(() => (diagnoses$.length ? forkJoin(diagnoses$) : of([])))
+    ).subscribe({
       next: () => {
         this.saving.set(false);
         this.cancelEdit();
         this.feedback.success('feedback.patientUpdated');
       },
-      error: () => {
+      error: err => {
         this.saving.set(false);
-        this.feedback.error();
+        this.feedback.error(err);
       }
     });
   }

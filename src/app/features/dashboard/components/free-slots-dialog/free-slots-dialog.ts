@@ -16,7 +16,7 @@ export interface FreeSlotsDialogData {
   selectedDoctorId: string;    // 'all' — все врачи, иначе doctorId
 }
 
-// TODO: получать длительность окна с API (у разных врачей может отличаться)
+// Сервер отдаёт окна по 30 минут (GET /dashboard/free-slots)
 const SLOT_DURATION_MINUTES = 30;
 
 // 'HH:mm' → минуты от начала дня

@@ -78,7 +78,7 @@ export class Finance {
     this.mobileLimit.update(limit => limit + Finance.MOBILE_PAGE);
   }
 
-  // Мобилка: фильтры свёрнуты, чтобы не занимать экран
+  // Модалка фильтров (ПК и мобилка)
   protected readonly filtersOpen = signal(false);
 
   // ---- Расходы: фильтры ----
@@ -224,7 +224,7 @@ export class Finance {
       )
       .subscribe({
         next: () => this.feedback.success(expense ? 'feedback.updated' : 'finance.feedback.saved'),
-        error: () => this.feedback.error()
+        error: err => this.feedback.error(err)
       });
   }
 
@@ -233,7 +233,7 @@ export class Finance {
       .pipe(switchMap(() => this.financeService.removeExpense(expense.id)))
       .subscribe({
         next: () => this.feedback.success('finance.feedback.deleted'),
-        error: () => this.feedback.error()
+        error: err => this.feedback.error(err)
       });
   }
 
@@ -247,7 +247,7 @@ export class Finance {
       )
       .subscribe({
         next: () => this.feedback.success(debt ? 'feedback.updated' : 'finance.feedback.saved'),
-        error: () => this.feedback.error()
+        error: err => this.feedback.error(err)
       });
   }
 
@@ -256,7 +256,7 @@ export class Finance {
       .pipe(switchMap(() => this.financeService.removeDebt(debt.id)))
       .subscribe({
         next: () => this.feedback.success('finance.feedback.deleted'),
-        error: () => this.feedback.error()
+        error: err => this.feedback.error(err)
       });
   }
 

@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
@@ -12,15 +12,22 @@ import { DoctorsService } from '../../../doctors/services/doctors.service';
 import { formatMoney } from '../../../payments/services/payments.service';
 import { VisitService } from '../../../schedule/models/appointment-form.model';
 import { SERVICE_FORM_DIALOG_CONFIG, ServiceFormData, ServiceFormDialog } from '../../components/service-form-dialog/service-form-dialog';
+import { TOOTH_STATE_FORM_DIALOG_CONFIG, ToothStateFormData, ToothStateFormDialog } from '../../components/tooth-state-form-dialog/tooth-state-form-dialog';
+import { HEALTHY_STATE_ID, TOOTH_COLOR_CLASSES, ToothStateDraft, ToothStateItem, ToothStatesService } from '../../../../shared/services/tooth-states.service';
 import { Theme, ThemeService } from '../../../../core/theme/theme.service';
 import { FeedbackService } from '../../../../shared/services/feedback.service';
 import { ClinicSettings } from '../../models/settings.model';
 import { SettingsService } from '../../services/settings.service';
 import { DashboardPrefsService } from '../../../dashboard/services/dashboard-prefs.service';
+import { UsersService } from '../../services/users.service';
+import { USER_FORM_DIALOG_CONFIG, UserFormData, UserFormDialog, UserFormResult } from '../../components/user-form-dialog/user-form-dialog';
+import { UserCreate } from '../../services/users.service';
+import { User } from '../../../../core/models/auth.model';
+import { Validators } from '@angular/forms';
 
 type ThemeChoice = Theme | 'system';
 
-type SettingsTab = 'clinic' | 'appearance' | 'notifications' | 'services' | 'workMode';
+type SettingsTab = 'clinic' | 'appearance' | 'notifications' | 'services' | 'dictionaries' | 'workMode' | 'users' | 'account';
 
 const LOCALES: Record<string, string> = { ru: 'ru-RU', uz: 'uz-Latn-UZ' };
 
@@ -51,6 +58,7 @@ export class Settings {
   private readonly clinicServices = inject(ClinicServicesService);
   private readonly doctorsService = inject(DoctorsService);
   protected readonly dashboardPrefs = inject(DashboardPrefsService);
+  private readonly toothStatesService = inject(ToothStatesService);
 
   private readonly langValue = toSignal(this.transloco.langChanges$, { initialValue: this.transloco.getActiveLang() });
   private readonly locale = computed(() => LOCALES[this.langValue()] ?? 'ru-RU');
@@ -65,17 +73,21 @@ export class Settings {
     { id: 'appearance' as SettingsTab, key: 'settings.sections.appearance', icon: 'palette' },
     { id: 'notifications' as SettingsTab, key: 'settings.sections.notifications', icon: 'notifications' },
     { id: 'services' as SettingsTab, key: 'settings.sections.services', icon: 'medical_services' },
-    ...(this.isDoctor() ? [{ id: 'workMode' as SettingsTab, key: 'settings.sections.workMode', icon: 'schedule' }] : [])
+    { id: 'dictionaries' as SettingsTab, key: 'settings.sections.dictionaries', icon: 'menu_book' },
+    ...(this.isDoctor() ? [{ id: 'workMode' as SettingsTab, key: 'settings.sections.workMode', icon: 'schedule' }] : []),
+    ...(this.auth.user()?.role === 'owner' ? [{ id: 'users' as SettingsTab, key: 'settings.sections.users', icon: 'manage_accounts' }] : []),
+    { id: 'account' as SettingsTab, key: 'settings.sections.account', icon: 'lock' }
   ]);
 
   protected readonly tab = signal<SettingsTab>('clinic');
 
   protected setTab(tab: SettingsTab): void {
     this.tab.set(tab);
+    if (tab === 'users') this.usersService.reload();
   }
 
   // Кнопки «Сохранить / Отменить» общей формы — только на вкладках клиники и уведомлений
-  protected readonly showFormActions = computed(() => this.tab() === 'clinic' || this.tab() === 'notifications');
+  protected readonly showFormActions = computed(() => this.isOwner() && (this.tab() === 'clinic' || this.tab() === 'notifications'));
 
   protected readonly form = this.fb.nonNullable.group({
     name: [''],
@@ -113,9 +125,23 @@ export class Settings {
     { value: 'system', key: 'settings.appearance.system' }
   ];
 
+  // Клинику, услуги и справочники меняет только владелец (остальным — просмотр)
+  protected readonly isOwner = computed(() => this.auth.user()?.role === 'owner');
+
   constructor() {
-    this.form.reset(this.settingsService.settings());
-    this.resetWorkMode();
+    // Настройки и график врача приходят с API — подставляем в формы, когда загрузятся
+    effect(() => {
+      const settings = this.settingsService.settings();
+      untracked(() => {
+        if (!this.form.dirty) this.form.reset(settings);
+      });
+    });
+    effect(() => {
+      this.currentDoctor();
+      untracked(() => {
+        if (!this.workForm.dirty) this.resetWorkMode();
+      });
+    });
   }
 
   protected setLang(lang: 'ru' | 'uz'): void {
@@ -145,7 +171,7 @@ export class Settings {
           this.form.markAsPristine();
           this.feedback.success('feedback.settingsSaved');
         },
-        error: () => this.feedback.error()
+        error: err => this.feedback.error(err)
       });
   }
 
@@ -168,7 +194,7 @@ export class Settings {
       )
       .subscribe({
         next: () => this.feedback.success(service ? 'feedback.updated' : 'settings.services.created'),
-        error: () => this.feedback.error()
+        error: err => this.feedback.error(err)
       });
   }
 
@@ -192,7 +218,62 @@ export class Settings {
       )
       .subscribe({
         next: () => this.feedback.success('settings.services.deleted'),
-        error: () => this.feedback.error()
+        error: err => this.feedback.error(err)
+      });
+  }
+
+  // ---- Справочники: состояния зубов (для зубной формулы пациента) ----
+
+  protected readonly toothStates = computed(() =>
+    this.toothStatesService.states().map(item => ({
+      ...item,
+      key: `dentalChart.states.${item.id}`,
+      classes: TOOTH_COLOR_CLASSES[item.color],
+      // «Здоров» — базовое состояние (зуб без отметки), удалить нельзя
+      isBase: item.id === HEALTHY_STATE_ID
+    }))
+  );
+
+  private toothStateName(state: ToothStateItem): string {
+    return state.name || this.transloco.translate(`dentalChart.states.${state.id}`);
+  }
+
+  protected openToothState(state?: ToothStateItem): void {
+    this.dialog
+      .open<ToothStateFormDialog, ToothStateFormData, ToothStateDraft>(ToothStateFormDialog, { ...TOOTH_STATE_FORM_DIALOG_CONFIG, data: { state } })
+      .afterClosed()
+      .pipe(
+        filter((draft): draft is ToothStateDraft => !!draft),
+        switchMap((draft): Observable<unknown> => state ? this.toothStatesService.update(state.id, draft) : this.toothStatesService.add(draft))
+      )
+      .subscribe({
+        next: () => this.feedback.success(state ? 'feedback.updated' : 'settings.dictionaries.created'),
+        error: err => this.feedback.error(err)
+      });
+  }
+
+  protected removeToothState(state: ToothStateItem): void {
+    if (state.id === HEALTHY_STATE_ID) return;
+    this.dialog
+      .open<ConfirmDialog, ConfirmDialogData, boolean>(ConfirmDialog, {
+        ...CONFIRM_DIALOG_CONFIG,
+        data: {
+          titleKey: 'settings.dictionaries.deleteTitle',
+          messageKey: 'settings.dictionaries.deleteMessage',
+          messageParams: { name: this.toothStateName(state) },
+          confirmKey: 'finance.delete',
+          cancelKey: 'common.cancel',
+          danger: true
+        }
+      })
+      .afterClosed()
+      .pipe(
+        filter(Boolean),
+        switchMap(() => this.toothStatesService.remove(state.id))
+      )
+      .subscribe({
+        next: () => this.feedback.success('settings.dictionaries.deleted'),
+        error: err => this.feedback.error(err)
       });
   }
 
@@ -241,7 +322,7 @@ export class Settings {
       : { workDays: [1, 2, 3, 4, 5], workStart: '09:00', workEnd: '18:00' });
   }
 
-  // TODO: на API — PATCH /doctors/:id (график врача)
+  // PATCH /doctors/:id (график врача)
   protected saveWorkMode(): void {
     const doctorId = this.auth.user()?.doctorId;
     if (!doctorId || this.workForm.invalid) {
@@ -256,7 +337,66 @@ export class Settings {
           this.workForm.markAsPristine();
           this.feedback.success('feedback.settingsSaved');
         },
-        error: () => this.feedback.error()
+        error: err => this.feedback.error(err)
+      });
+  }
+
+  // ---- Пользователи (только владелец) ----
+
+  private readonly usersService = inject(UsersService);
+
+  protected readonly users = computed(() =>
+    [...this.usersService.users()]
+      .sort((a, b) => a.fullName.localeCompare(b.fullName, 'ru'))
+      .map(user => ({ ...user, roleKey: `roles.${user.role}`, isSelf: user.id === this.auth.user()?.id }))
+  );
+
+  protected openUser(user?: User): void {
+    this.dialog
+      .open<UserFormDialog, UserFormData, UserFormResult>(UserFormDialog, { ...USER_FORM_DIALOG_CONFIG, data: { user } })
+      .afterClosed()
+      .pipe(
+        filter((result): result is UserFormResult => !!result),
+        switchMap((result): Observable<unknown> => user ? this.usersService.update(user.id, result) : this.usersService.create(result as UserCreate))
+      )
+      .subscribe({
+        next: () => this.feedback.success(user ? 'feedback.updated' : 'settings.users.created'),
+        error: err => this.feedback.error(err)
+      });
+  }
+
+  // Блокировка сразу запрещает вход (refresh-токены пользователя аннулируются)
+  protected toggleActive(user: User): void {
+    this.usersService.update(user.id, { active: user.active === false }).subscribe({
+      next: updated => this.feedback.success(updated.active === false ? 'settings.users.blocked' : 'settings.users.unblocked'),
+      error: err => this.feedback.error(err)
+    });
+  }
+
+  // ---- Учётная запись: смена своего пароля ----
+
+  protected readonly passwordForm = this.fb.nonNullable.group({
+    oldPassword: ['', Validators.required],
+    newPassword: ['', [Validators.required, Validators.minLength(6)]]
+  });
+
+  protected readonly passwordSaving = signal(false);
+
+  protected changePassword(): void {
+    if (this.passwordForm.invalid) {
+      this.passwordForm.markAllAsTouched();
+      return;
+    }
+    const { oldPassword, newPassword } = this.passwordForm.getRawValue();
+    this.passwordSaving.set(true);
+    this.auth.changePassword(oldPassword, newPassword)
+      .pipe(finalize(() => this.passwordSaving.set(false)))
+      .subscribe({
+        next: () => {
+          this.passwordForm.reset();
+          this.feedback.success('settings.account.changed');
+        },
+        error: err => this.feedback.error(err)
       });
   }
 }

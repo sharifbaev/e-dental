@@ -1,20 +1,34 @@
-import { Injectable, inject, signal, untracked } from '@angular/core';
-import { Observable, delay, of, tap } from 'rxjs';
-import { ScheduleService, toDateKey } from '../../schedule/services/schedule.service';
-import { SERVICE_PRICES } from '../../payments/models/payment.model';
-import { TreatmentPlan, TreatmentPlanDraft } from '../models/treatment-plan.model';
+import { HttpClient } from '@angular/common/http';
+import { Injectable, effect, inject, signal, untracked } from '@angular/core';
+import { Observable, map, tap } from 'rxjs';
+import { ScheduleService } from '../../schedule/services/schedule.service';
+import { AppointmentDto, fromAppointmentDto } from '../../schedule/models/schedule.model';
+import { NextVisitDraft, TreatmentPlan, TreatmentPlanDraft } from '../models/treatment-plan.model';
+import { AuthService } from '../../../core/auth/auth.service';
+import { api } from '../../../core/api/api';
 
-// Имитация задержки ответа сервера
-const MOCK_DELAY_MS = 300;
+interface TreatmentPlanResult {
+  plan: TreatmentPlan;
+  appointments: AppointmentDto[];   // созданные визиты серии + исходный приём со статусом «В лечении»
+}
 
+// Планы лечения (GET/POST /patients/:id/treatment-plans)
 @Injectable({ providedIn: 'root' })
 export class TreatmentPlansService {
+  private readonly http = inject(HttpClient);
+  private readonly auth = inject(AuthService);
   private readonly scheduleService = inject(ScheduleService);
 
-  // TODO: заменить на загрузку с API: GET /patients/:id/treatment-plans
-  private readonly _plans = signal<TreatmentPlan[]>(untracked(() => this.buildMock()));
+  private readonly _plans = signal<TreatmentPlan[]>([]);
 
   readonly plans = this._plans.asReadonly();
+
+  constructor() {
+    effect(() => {
+      this.auth.user();
+      untracked(() => this._plans.set([]));
+    });
+  }
 
   // Планы пациента, новые сверху
   forPatient(patientId: number): TreatmentPlan[] {
@@ -23,34 +37,30 @@ export class TreatmentPlansService {
       .sort((a, b) => b.createdAt.localeCompare(a.createdAt) || b.id - a.id);
   }
 
-  // TODO: на API — POST /patients/:id/treatment-plans
-  add(draft: TreatmentPlanDraft, nextAppointmentId?: number, appointmentIds?: number[]): Observable<TreatmentPlan> {
-    const plan: TreatmentPlan = { ...draft, id: Date.now(), createdAt: toDateKey(new Date()), nextAppointmentId, appointmentIds };
-    return of(plan).pipe(
-      delay(MOCK_DELAY_MS),
-      tap(created => this._plans.update(list => [...list, created]))
-    );
+  loadForPatient(patientId: number): void {
+    this.http.get<TreatmentPlan[]>(api(`/patients/${patientId}/treatment-plans`)).subscribe({
+      next: list => this._plans.update(current => [...current.filter(p => p.patientId !== patientId), ...list]),
+      error: () => undefined
+    });
   }
 
-  // Mock: у пациентов «в лечении» на сегодня уже есть план
-  private buildMock(): TreatmentPlan[] {
-    const todayKey = toDateKey(new Date());
-    const seen = new Set<number>();
-
-    return this.scheduleService.appointments()
-      .filter(a => a.date === todayKey && a.status === 'inTreatment')
-      .filter(a => !seen.has(a.patientId) && !!seen.add(a.patientId))
-      .map((a, index) => ({
-        id: index + 1,
-        patientId: a.patientId,
-        patientName: a.patientName,
-        doctorId: a.doctorId,
-        doctorName: a.doctorName,
-        procedures: [a.service, 'Контрольный осмотр'],
-        visits: 3,
-        cost: (SERVICE_PRICES[a.serviceId] ?? 100_000) * 2 + 100_000,
-        notes: 'Контрольный снимок после завершения лечения.',
-        createdAt: todayKey
-      }));
+  // План + серия визитов одной транзакцией. Исходный приём сервер переводит в «В лечении».
+  // Конфликт любого визита — 409 slotTaken, ничего не создаётся
+  create(appointmentId: number, draft: TreatmentPlanDraft, series: NextVisitDraft[]): Observable<TreatmentPlan> {
+    const body = {
+      appointmentId,
+      procedures: draft.procedures,
+      visits: draft.visits,
+      cost: draft.cost,
+      notes: draft.notes,
+      series: series.map(visit => ({ date: visit.date, time: visit.time, durationMinutes: visit.durationMinutes, serviceId: visit.serviceId }))
+    };
+    return this.http.post<TreatmentPlanResult>(api(`/patients/${draft.patientId}/treatment-plans`), body).pipe(
+      tap(result => {
+        this._plans.update(list => [...list.filter(p => p.id !== result.plan.id), result.plan]);
+        this.scheduleService.upsert(...result.appointments.map(fromAppointmentDto));
+      }),
+      map(result => result.plan)
+    );
   }
 }

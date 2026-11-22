@@ -62,7 +62,7 @@ export class MainLayout {
       .join('');
   });
 
-  protected readonly roleKey = computed(() => `roles.${this.user()?.role ?? 'admin'}`);
+  protected readonly roleKey = computed(() => `roles.${this.user()?.role ?? 'owner'}`);
 
   // Число непрочитанных уведомлений — из общего сервиса, обновляется сразу при прочтении
   protected readonly notificationsCount = this.notificationsService.unreadCount;

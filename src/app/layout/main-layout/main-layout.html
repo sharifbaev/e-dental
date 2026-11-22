@@ -32,7 +32,7 @@
       @if (!sidebarCollapsed()) {
         <div class="min-w-0">
           <div class="text-sm font-semibold text-content truncate">{{ user()?.fullName }}</div>
-          <div class="text-xs text-muted truncate">{{ roleKey() | transloco }}</div>
+          <div class="text-xs text-muted truncate">{{ roleKey() | transloco }}@if (user()?.clinicName) { · {{ user()?.clinicName }}}</div>
         </div>
       }
     </div>

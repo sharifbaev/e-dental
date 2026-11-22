@@ -1,40 +1,24 @@
+import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { Observable, delay, of } from 'rxjs';
+import { toObservable } from '@angular/core/rxjs-interop';
+import { Observable } from 'rxjs';
 import { PatientShort, VisitService } from '../models/appointment-form.model';
 import { ClinicServicesService } from '../../../shared/services/clinic-services.service';
-
-// Mock-база пациентов
-const PATIENTS: PatientShort[] = [
-  { id: 1, fullName: 'Ковалёв Максим Дмитриевич', phone: '+998 93 555-12-34', birthDate: '1990-04-12' },
-  { id: 2, fullName: 'Смирнов Артур Павлович', phone: '+998 90 123-45-67', birthDate: '1985-11-03' },
-  { id: 3, fullName: 'Михайлова Дарья Игоревна', phone: '+998 97 700-11-22', birthDate: '1998-02-27' },
-  { id: 4, fullName: 'Абдуллаева Нилуфар Рустамовна', phone: '+998 99 321-65-87', birthDate: '1992-06-14' },
-  { id: 5, fullName: 'Турсунов Жасур Алишерович', phone: '+998 91 444-78-90', birthDate: '1979-09-30' },
-  { id: 6, fullName: 'Петров Сергей Олегович', phone: '+998 94 222-33-44', birthDate: '2001-01-08' }
-];
+import { api, params } from '../../../core/api/api';
 
 @Injectable({ providedIn: 'root' })
 export class AppointmentFormService {
-  // TODO: заменить на реальный запрос, когда будет API:
-  // return this.http.get<PatientShort[]>(`${apiUrl}/patients/search`, { params: { q: query } });
+  private readonly http = inject(HttpClient);
+  private readonly clinicServices = inject(ClinicServicesService);
+  private readonly services$ = toObservable(this.clinicServices.services);
+
+  // Поиск пациента для формы записи: от 2 символов, до 10 результатов
   searchPatients(query: string): Observable<PatientShort[]> {
-    const text = query.trim().toLowerCase();
-    const digits = query.replace(/\D/g, '');
-
-    const result = PATIENTS.filter(patient =>
-      patient.fullName.toLowerCase().includes(text) ||
-      (digits.length >= 2 && patient.phone.replace(/\D/g, '').includes(digits))
-    );
-
-    return of(result).pipe(delay(300));
+    return this.http.get<PatientShort[]>(api('/patients/search'), { params: params({ q: query.trim() }) });
   }
 
-  private readonly clinicServices = inject(ClinicServicesService);
-
-  // Услуги — из справочника «Настройки → Услуги»
-  // TODO: заменить на реальный запрос, когда будет API:
-  // return this.http.get<VisitService[]>(`${apiUrl}/services`);
+  // Услуги — из справочника «Настройки → Услуги» (GET /services); обновляется, когда справочник загрузится
   getVisitServices(): Observable<VisitService[]> {
-    return of(this.clinicServices.services()).pipe(delay(300));
+    return this.services$;
   }
 }

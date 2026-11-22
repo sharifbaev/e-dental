@@ -1,50 +1,72 @@
-import { Injectable, signal } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Injectable, effect, inject, signal, untracked } from '@angular/core';
+import { TranslocoService } from '@jsverse/transloco';
+import { AuthService } from '../../../core/auth/auth.service';
+import { ThemeService } from '../../../core/theme/theme.service';
+import { ScheduleService } from '../../schedule/services/schedule.service';
+import { api } from '../../../core/api/api';
 
-// Ключ в localStorage: показывать ли на мобилке карточки «Пациенты сегодня» и «Свободные слоты»
-const STORAGE_KEY = 'e-dental.dashboard.showKpiMobile';
+// Личные настройки пользователя (GET/PUT /me/preferences)
+interface UserPreferences {
+  language: 'ru' | 'uz';
+  theme: 'light' | 'dark' | 'system';
+  showOtherDoctors: boolean;
+  showKpiMobile: boolean;
+}
 
-// Ключ в localStorage: показывать ли врачу других врачей (фильтр «Все врачи»)
-const OTHER_DOCTORS_KEY = 'e-dental.showOtherDoctors';
-
+// Личные настройки: карточки на главной (мобилка) и «Показывать других врачей» (врач).
+// Хранятся на сервере — одинаковые на телефоне и компьютере
 @Injectable({ providedIn: 'root' })
 export class DashboardPrefsService {
+  private readonly http = inject(HttpClient);
+  private readonly auth = inject(AuthService);
+  private readonly transloco = inject(TranslocoService);
+  private readonly theme = inject(ThemeService);
+  private readonly scheduleService = inject(ScheduleService);
+
   // По умолчанию карточки показываются
-  readonly showKpiMobile = signal<boolean>(this.initialShowKpiMobile());
+  readonly showKpiMobile = signal<boolean>(true);
 
   // Врач: показывать других врачей (фильтр по врачам на главной, в записях и календаре). По умолчанию — нет
-  readonly showOtherDoctors = signal<boolean>(this.initialShowOtherDoctors());
+  readonly showOtherDoctors = signal<boolean>(false);
+
+  constructor() {
+    effect(() => {
+      const userId = this.auth.user()?.id;
+      untracked(() => {
+        this.showKpiMobile.set(true);
+        this.showOtherDoctors.set(false);
+        if (!userId) return;
+        this.http.get<UserPreferences>(api('/me/preferences')).subscribe({
+          next: prefs => {
+            this.showKpiMobile.set(prefs.showKpiMobile);
+            this.showOtherDoctors.set(prefs.showOtherDoctors);
+          },
+          error: () => undefined
+        });
+      });
+    });
+  }
 
   setShowOtherDoctors(value: boolean): void {
     this.showOtherDoctors.set(value);
-    try {
-      localStorage.setItem(OTHER_DOCTORS_KEY, String(value));
-    } catch {
-      // localStorage недоступен — настройка просто не запомнится
-    }
+    // Чужие приёмы врачу отдаёт сервер по этой настройке — после сохранения перезагружаем расписание
+    this.save(() => this.scheduleService.reload());
   }
 
   setShowKpiMobile(value: boolean): void {
     this.showKpiMobile.set(value);
-    try {
-      localStorage.setItem(STORAGE_KEY, String(value));
-    } catch {
-      // localStorage недоступен — настройка просто не запомнится
-    }
+    this.save();
   }
 
-  private initialShowKpiMobile(): boolean {
-    try {
-      return localStorage.getItem(STORAGE_KEY) !== 'false';
-    } catch {
-      return true;
-    }
-  }
-
-  private initialShowOtherDoctors(): boolean {
-    try {
-      return localStorage.getItem(OTHER_DOCTORS_KEY) === 'true';
-    } catch {
-      return false;
-    }
+  private save(done?: () => void): void {
+    const lang = this.transloco.getActiveLang();
+    const body: UserPreferences = {
+      language: lang === 'uz' ? 'uz' : 'ru',
+      theme: this.theme.isSystem() ? 'system' : this.theme.theme(),
+      showOtherDoctors: this.showOtherDoctors(),
+      showKpiMobile: this.showKpiMobile()
+    };
+    this.http.put<UserPreferences>(api('/me/preferences'), body).subscribe({ next: () => done?.(), error: () => undefined });
   }
 }

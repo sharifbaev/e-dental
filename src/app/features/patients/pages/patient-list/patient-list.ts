@@ -5,9 +5,8 @@ import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { PATIENT_STATUS_CLASSES, PATIENT_STATUSES, PatientStatus } from '../../../../shared/models/patient-status';
-import { PATIENT_RATING_DOT, mockPatientRating } from '../../../../shared/models/patient-rating';
+import { PATIENT_RATING_DOT } from '../../../../shared/models/patient-rating';
 import { PatientsService } from '../../services/patients.service';
-import { AuthService } from '../../../../core/auth/auth.service';
 import { MatDialog } from '@angular/material/dialog';
 import { PATIENT_DETAILS_DIALOG_CONFIG, PatientDetailsDialog, PatientDetailsDialogData } from '../../components/patient-details-dialog/patient-details-dialog';
 
@@ -52,14 +51,9 @@ export class PatientList {
   private readonly patientsService = inject(PatientsService);
   private readonly transloco = inject(TranslocoService);
   private readonly dialog = inject(MatDialog);
-  private readonly auth = inject(AuthService);
 
-  // Врач видит только своих пациентов (он — лечащий врач)
-  private readonly visiblePatients = computed(() => {
-    const user = this.auth.user();
-    const all = this.patientsService.patients();
-    return user?.role === 'doctor' ? all.filter(p => p.doctorName === user.doctorName) : all;
-  });
+  // Врачу сервер отдаёт только его пациентов
+  private readonly visiblePatients = this.patientsService.patients;
 
   private readonly lang = toSignal(this.transloco.langChanges$, {
     initialValue: this.transloco.getActiveLang()
@@ -150,14 +144,14 @@ export class PatientList {
       .map(patient => ({
         ...patient,
         initials: getInitials(patient.fullName),
-        age: getAge(patient.birthDate),
+        age: patient.birthDate ? getAge(patient.birthDate) : null,
         statusKey: `schedule.status.${patient.status}`,
         statusClass: PATIENT_STATUS_CLASSES[patient.status],
         lastVisitLabel: patient.lastVisit ? dateFormat.format(fromDateKey(patient.lastVisit)) : '',
         nextVisitLabel: patient.nextVisit ? `${dateFormat.format(fromDateKey(patient.nextVisit))}, ${patient.nextVisitTime}` : '',
         nextVisitShort: patient.nextVisit ? shortFormat.format(fromDateKey(patient.nextVisit)) : '',
-        ratingDot: PATIENT_RATING_DOT[patient.rating ?? mockPatientRating(patient.id)],
-        ratingKey: `rating.${patient.rating ?? mockPatientRating(patient.id)}`
+        ratingDot: PATIENT_RATING_DOT[patient.rating ?? 'good'],
+        ratingKey: `rating.${patient.rating ?? 'good'}`
       }));
   });
 

@@ -1,71 +1,56 @@
-import { Injectable, signal } from '@angular/core';
-import { Observable, delay, map, of, tap } from 'rxjs';
+import { HttpClient } from '@angular/common/http';
+import { Injectable, effect, inject, signal, untracked } from '@angular/core';
+import { Observable, map, tap } from 'rxjs';
 import { VisitService } from '../../features/schedule/models/appointment-form.model';
-
-const STORAGE_KEY = 'e-dental.services';
-
-// Имитация задержки ответа сервера
-const MOCK_DELAY_MS = 300;
-
-// Справочник услуг по умолчанию (как было в форме записи)
-const DEFAULT_SERVICES: VisitService[] = [
-  { id: 1, name: 'Лечение кариеса', durationMinutes: 45, price: 350_000 },
-  { id: 2, name: 'Профессиональная гигиена AirFlow', durationMinutes: 60, price: 400_000 },
-  { id: 3, name: 'Консультация и осмотр', durationMinutes: 30, price: 100_000 },
-  { id: 4, name: 'Удаление зуба', durationMinutes: 40, price: 250_000 },
-  { id: 5, name: 'Острая боль', durationMinutes: 30, urgent: true, price: 150_000 }
-];
+import { AuthService } from '../../core/auth/auth.service';
+import { api } from '../../core/api/api';
 
 export type VisitServiceDraft = Omit<VisitService, 'id'>;
 
-// Справочник услуг клиники: CRUD в «Настройки → Услуги», список — в форме записи и форме врача
-// TODO: на API — GET/POST/PATCH/DELETE /services. Пока храним в браузере
+// Справочник услуг клиники (GET/POST/PATCH/DELETE /services): «Настройки → Услуги», форма записи и форма врача.
+// «Другое» (id 0) сервер не отдаёт — его добавляют формы сами
 @Injectable({ providedIn: 'root' })
 export class ClinicServicesService {
-  private readonly _services = signal<VisitService[]>(this.read());
+  private readonly http = inject(HttpClient);
+  private readonly auth = inject(AuthService);
+
+  private readonly _services = signal<VisitService[]>([]);
 
   readonly services = this._services.asReadonly();
 
+  constructor() {
+    effect(() => {
+      const userId = this.auth.user()?.id;
+      untracked(() => {
+        this._services.set([]);
+        if (userId) this.reload();
+      });
+    });
+  }
+
+  reload(): void {
+    this.http.get<VisitService[]>(api('/services')).subscribe({
+      next: list => this._services.set(list),
+      error: () => undefined
+    });
+  }
+
   add(draft: VisitServiceDraft): Observable<VisitService> {
-    const service: VisitService = { ...draft, id: Date.now() };
-    return of(service).pipe(
-      delay(MOCK_DELAY_MS),
-      tap(created => this.write([...this._services(), created]))
+    return this.http.post<VisitService>(api('/services'), draft).pipe(
+      tap(created => this._services.update(list => [...list, created].sort((a, b) => a.name.localeCompare(b.name, 'ru'))))
     );
   }
 
   update(id: number, changes: VisitServiceDraft): Observable<void> {
-    return of(undefined).pipe(
-      delay(MOCK_DELAY_MS),
-      tap(() => this.write(this._services().map(s => (s.id === id ? { ...changes, id } : s)))),
+    return this.http.patch<VisitService>(api(`/services/${id}`), changes).pipe(
+      tap(updated => this._services.update(list => list.map(s => (s.id === id ? updated : s)))),
       map(() => undefined)
     );
   }
 
   remove(id: number): Observable<void> {
-    return of(undefined).pipe(
-      delay(MOCK_DELAY_MS),
-      tap(() => this.write(this._services().filter(s => s.id !== id))),
-      map(() => undefined)
+    return this.http.delete<void>(api(`/services/${id}`)).pipe(
+      tap(() => this._services.update(list => list.filter(s => s.id !== id)))
     );
-  }
-
-  private write(list: VisitService[]): void {
-    this._services.set(list);
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
-    } catch {
-      // localStorage недоступен — список действует до перезагрузки
-    }
-  }
-
-  private read(): VisitService[] {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) return JSON.parse(raw) as VisitService[];
-    } catch {
-      // повреждённые данные — берём список по умолчанию
-    }
-    return DEFAULT_SERVICES;
   }
 }

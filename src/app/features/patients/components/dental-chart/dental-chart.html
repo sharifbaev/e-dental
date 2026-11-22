@@ -1,61 +1,71 @@
-<div class="flex flex-col gap-4">
-  <!-- Схема: на ПК половины челюсти в одну строку, на телефоне — друг под другом (по 8 зубов) -->
-  <div>
-    <div class="flex flex-col gap-1.5">
-      <div class="flex justify-center sm:justify-between text-[11px] font-medium uppercase tracking-wider text-subtle px-1">
-        <span class="hidden sm:inline">{{ 'dentalChart.right' | transloco }}</span>
-        <span>{{ 'dentalChart.upper' | transloco }}</span>
-        <span class="hidden sm:inline">{{ 'dentalChart.left' | transloco }}</span>
-      </div>
-
-      <ng-container *ngTemplateOutlet="jaw; context: { $implicit: upper() }" />
-      <div class="border-t border-dashed border-line-strong my-1"></div>
-      <ng-container *ngTemplateOutlet="jaw; context: { $implicit: lower() }" />
-
-      <div class="flex justify-center text-[11px] font-medium uppercase tracking-wider text-subtle">{{ 'dentalChart.lower' | transloco }}</div>
-    </div>
+<div class="flex flex-col gap-3">
+  <!-- Взрослые / дети -->
+  <div class="flex w-full sm:w-max p-1 gap-1 rounded-xl bg-page" role="radiogroup">
+    <button type="button" role="radio" class="flex-1 sm:flex-none h-9 px-4 rounded-lg text-sm font-medium transition-colors" [attr.aria-checked]="dentition() === 'adult'" [class.bg-surface]="dentition() === 'adult'" [class.shadow-sm]="dentition() === 'adult'" [class.text-accent]="dentition() === 'adult'" [class.text-muted]="dentition() !== 'adult'" (click)="setDentition('adult')">{{ 'dentalChart.adult' | transloco }}</button>
+    <button type="button" role="radio" class="flex-1 sm:flex-none h-9 px-4 rounded-lg text-sm font-medium transition-colors" [attr.aria-checked]="dentition() === 'child'" [class.bg-surface]="dentition() === 'child'" [class.shadow-sm]="dentition() === 'child'" [class.text-accent]="dentition() === 'child'" [class.text-muted]="dentition() !== 'child'" (click)="setDentition('child')">{{ 'dentalChart.child' | transloco }}</button>
   </div>
 
-  <ng-template #jaw let-halves>
-    <div class="flex flex-col sm:flex-row items-stretch gap-1 sm:gap-2">
-      @for (half of halves; track $index; let last = $last) {
-        <div class="flex-1 grid grid-cols-8 gap-1">
-          @for (tooth of half; track tooth.number) {
-            <button type="button" class="h-11 rounded-lg border text-xs font-semibold flex items-center justify-center transition-shadow" [class]="tooth.classes" [class.ring-2]="selectedTooth() === tooth.number" [class.ring-brand-600]="selectedTooth() === tooth.number" [class.cursor-default]="readonly()" [title]="tooth.number + ' — ' + (tooth.key | transloco)" [attr.aria-pressed]="selectedTooth() === tooth.number" (click)="selectTooth(tooth.number)">{{ tooth.number }}</button>
-          }
-        </div>
-        @if (!last) {
-          <div class="hidden sm:block w-px bg-line-strong"></div>
-        }
-      }
-    </div>
-  </ng-template>
-
-  <!-- Выбор состояния для выбранного зуба -->
-  @if (selectedTooth(); as tooth) {
-    <div class="rounded-2xl border border-line-strong p-3 flex flex-col gap-2">
-      <div class="flex items-center justify-between gap-2">
-        <span class="text-sm font-semibold text-content">{{ 'dentalChart.tooth' | transloco: { number: tooth } }}</span>
-        <button type="button" class="w-8 h-8 rounded-lg flex items-center justify-center text-soft hover:bg-page" [title]="'common.close' | transloco" (click)="selectTooth(tooth)">
-          <mat-icon fontSet="material-symbols-outlined" style="font-size: 18px; width: 18px; height: 18px;">close</mat-icon>
-        </button>
-      </div>
-      <div class="flex flex-wrap gap-2">
-        @for (item of legend; track item.state) {
-          <button type="button" class="flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-sm font-medium" [class]="item.classes" [class.ring-2]="selectedState() === item.state" [class.ring-brand-600]="selectedState() === item.state" (click)="setState(item.state)">{{ item.key | transloco }}</button>
-        }
-      </div>
-    </div>
-  } @else if (!readonly()) {
-    <p class="text-xs text-subtle">{{ 'dentalChart.hint' | transloco }}</p>
-  }
-
-  <!-- Легенда -->
-  <div class="flex flex-wrap gap-x-4 gap-y-2">
-    @for (item of legend; track item.state) {
-      <span class="inline-flex items-center gap-1.5 text-xs text-soft">
-        <span class="w-3.5 h-3.5 rounded border" [class]="item.classes"></span>{{ item.key | transloco }}
-      </span>
+  <!-- Схема: зубы с номерами по дуге верхней и нижней челюсти (как на стоматологической схеме), без подписей -->
+  <div class="relative w-full mx-auto" [class.max-w-[360px]]="dentition() === 'adult'" [class.max-w-[320px]]="dentition() === 'child'" [style.aspect-ratio]="aspect()">
+    @for (tooth of teeth(); track tooth.number) {
+      <button type="button" class="absolute -translate-x-1/2 -translate-y-1/2 aspect-square rounded-full border text-[11px] sm:text-xs font-semibold flex items-center justify-center transition-shadow" [class]="tooth.classes" [style.left.%]="tooth.x" [style.top.%]="tooth.y" [style.width.%]="shape().size" [class.ring-2]="selectedTooth() === tooth.number" [class.ring-brand-600]="selectedTooth() === tooth.number" [title]="tooth.number + ' — ' + (tooth.name || (tooth.key | transloco))" [attr.aria-pressed]="selectedTooth() === tooth.number" (click)="selectTooth(tooth.number)">{{ tooth.number }}</button>
     }
   </div>
 </div>
+
+<!-- Модалка: инфо о выбранном зубе (подсказки и легенды под схемой нет) -->
+<ng-template #toothInfoTpl>
+  @if (toothInfo(); as info) {
+    <div class="p-4 flex flex-col gap-3 bg-surface">
+      <!-- Номер, тип, челюсть и сторона -->
+      <div class="flex items-start gap-3">
+        <span class="w-11 h-11 shrink-0 rounded-full border text-sm font-semibold flex items-center justify-center" [class]="info.state.classes">{{ info.number }}</span>
+        <div class="min-w-0 flex-1">
+          <div class="text-sm font-semibold text-content">
+            @if (info.typeKey) { {{ info.typeKey | transloco }} } @else { {{ 'dentalChart.tooth' | transloco: { number: info.number } }} }
+            @if (info.milk) {
+              <span class="ml-1 px-1.5 py-0.5 rounded bg-page text-[11px] font-medium text-muted">{{ 'dentalChart.milk' | transloco }}</span>
+            }
+          </div>
+          <div class="text-xs text-muted">{{ info.positionKey | transloco }}</div>
+        </div>
+        <button type="button" class="w-8 h-8 -mt-1 -mr-1 shrink-0 rounded-lg flex items-center justify-center text-soft hover:bg-page" [title]="'common.close' | transloco" [attr.aria-label]="'common.close' | transloco" (click)="closeInfo()">
+          <mat-icon fontSet="material-symbols-outlined" style="font-size: 18px; width: 18px; height: 18px;">close</mat-icon>
+        </button>
+      </div>
+
+      <!-- Состояние: выбор (в режиме только чтения — просто показываем) -->
+      <div class="flex flex-col gap-1.5">
+        <span class="text-xs font-medium text-subtle">{{ 'dentalChart.state' | transloco }}</span>
+        @if (readonly()) {
+          <span class="w-max px-3 py-1 rounded-full border text-sm font-medium" [class]="info.state.classes">{{ info.state.name || (info.state.key | transloco) }}</span>
+        } @else {
+          <div class="flex flex-wrap gap-1.5">
+            @for (item of legend(); track item.state) {
+              <button type="button" class="px-2.5 py-1 rounded-full border text-xs sm:text-sm font-medium" [class]="item.classes" [class.ring-2]="selectedState() === item.state" [class.ring-brand-600]="selectedState() === item.state" [attr.aria-pressed]="selectedState() === item.state" (click)="setState(item.state)">{{ item.name || (item.key | transloco) }}</button>
+            }
+          </div>
+        }
+      </div>
+
+      <!-- Диагнозы по этому зубу -->
+      <div class="flex flex-col gap-1.5">
+        <span class="text-xs font-medium text-subtle">{{ 'dentalChart.diagnoses' | transloco }}</span>
+        @for (d of info.diagnoses; track d.id) {
+          <div class="rounded-xl bg-page px-3 py-2 flex flex-col gap-0.5">
+            <div class="flex items-center gap-2">
+              <span class="min-w-0 flex-1 text-sm font-semibold text-content truncate">{{ d.title }}</span>
+              <span class="shrink-0 px-2 py-0.5 rounded-full text-[11px] font-medium" [class]="d.statusClass">{{ d.statusKey | transloco }}</span>
+            </div>
+            <div class="text-xs text-muted">{{ d.dateLabel }} · {{ 'dashboard.doctorPrefix' | transloco }} {{ d.doctorName }}</div>
+            @if (d.description) {
+              <div class="text-xs text-soft line-clamp-2">{{ d.description }}</div>
+            }
+          </div>
+        } @empty {
+          <span class="text-xs text-subtle">{{ 'dentalChart.noDiagnoses' | transloco }}</span>
+        }
+      </div>
+    </div>
+  }
+</ng-template>

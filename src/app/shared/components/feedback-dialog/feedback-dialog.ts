@@ -8,6 +8,7 @@ export interface FeedbackDialogData {
   titleKey: string;
   messageKey?: string;
   messageParams?: Record<string, unknown>;
+  message?: string;            // готовый текст (например, message из ответа сервера)
 }
 
 // Через сколько окно успеха закрывается само

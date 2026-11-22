@@ -1,126 +1,99 @@
-import { Injectable, signal } from '@angular/core';
-import { Observable, delay, map, of, tap } from 'rxjs';
-import { PatientStatus } from '../../../shared/models/patient-status';
-import { Diagnosis, Patient } from '../models/patient.model';
+import { HttpClient } from '@angular/common/http';
+import { Injectable, effect, inject, signal, untracked } from '@angular/core';
+import { Observable, map, tap } from 'rxjs';
+import { Diagnosis, DiagnosisDraft, Patient } from '../models/patient.model';
+import { AuthService } from '../../../core/auth/auth.service';
+import { MAX_PAGE_SIZE, Page, api, params } from '../../../core/api/api';
 
-// ---- Mock-данные: 45 пациентов ----
+// Как часто перезагружать список — статусы пациентов меняются вместе с приёмами
+const RELOAD_MS = 120_000;
 
-const MALE = {
-  last: ['Ковалёв', 'Смирнов', 'Турсунов', 'Петров', 'Иванов', 'Хасанов', 'Кузнецов', 'Рахимов', 'Алиев', 'Соколов', 'Юлдашев', 'Морозов'],
-  first: ['Максим', 'Артур', 'Жасур', 'Сергей', 'Дмитрий', 'Бекзод', 'Артём', 'Шерзод', 'Тимур', 'Андрей', 'Азиз', 'Олег'],
-  middle: ['Дмитриевич', 'Павлович', 'Алишерович', 'Олегович', 'Андреевич', 'Улугбекович', 'Игоревич', 'Рустамович']
-};
-
-const FEMALE = {
-  last: ['Михайлова', 'Абдуллаева', 'Смирнова', 'Юлдашева', 'Сергеева', 'Каримова', 'Иванова', 'Назарова', 'Волкова', 'Ахмедова', 'Орлова'],
-  first: ['Дарья', 'Нилуфар', 'Елена', 'Малика', 'Анна', 'Дильноза', 'Ольга', 'Мадина', 'Ирина', 'Севара', 'Наталья'],
-  middle: ['Игоревна', 'Рустамовна', 'Васильевна', 'Бахтиёровна', 'Викторовна', 'Алишеровна', 'Сергеевна', 'Шухратовна']
-};
-
-export const DOCTORS = ['Сидоров А. П.', 'Каримова Д. Р.', 'Юсупов Б. Т.', 'Савина А. И.', 'Рахимов Ш. К.'];
-
-const STATUSES: PatientStatus[] = ['inTreatment', 'primary', 'completed', 'inTreatment', 'primary', 'completed', 'cancelled'];
-const TIMES = ['09:00', '10:30', '11:30', '14:00', '15:30', '17:00'];
-const PREFIXES = ['90', '91', '93', '94', '95', '97', '99', '33', '88'];
-
-const DIAGNOSES: Omit<Diagnosis, 'id' | 'date' | 'doctorName' | 'status'>[] = [
-  { title: 'Кариес дентина', tooth: 36, description: 'Средний кариес на жевательной поверхности. Проведено препарирование, установлена светоотверждаемая пломба.' },
-  { title: 'Хронический пульпит', tooth: 24, description: 'Боль при накусывании. Проведено эндодонтическое лечение в два посещения, каналы запломбированы, установлена временная пломба.' },
-  { title: 'Гингивит', description: 'Кровоточивость дёсен при чистке. Проведена профессиональная гигиена, назначены полоскания и рекомендации по уходу.' },
-  { title: 'Зубной камень', description: 'Наддесневые отложения в области нижних фронтальных зубов. Проведена ультразвуковая чистка и AirFlow.' },
-  { title: 'Ретинированный зуб мудрости', tooth: 48, description: 'По снимку — неправильное положение зуба. Рекомендовано удаление, пациент записан к хирургу.' },
-  { title: 'Хронический периодонтит', tooth: 46, description: 'На снимке очаг у верхушки корня. Перелечивание каналов, контрольный снимок через 6 месяцев.' },
-  { title: 'Скученность зубов', description: 'Консультация ортодонта. Предложено лечение элайнерами, сделаны слепки.' }
-];
-
-// Пациенты из расписания — те же id, ФИО и телефоны, чтобы в карточке пациента были видны
-// его визиты, оплаты, план лечения и зубная формула
-// TODO: на API пациенты и расписание будут из одной базы — этот список не понадобится
-const SCHEDULE_PATIENTS: Record<number, Pick<Patient, 'fullName' | 'phone' | 'gender'>> = {
-  1: { fullName: 'Ковалёв Максим Дмитриевич', phone: '+998 93 555-12-34', gender: 'male' },
-  2: { fullName: 'Смирнов Артур Павлович', phone: '+998 90 123-45-67', gender: 'male' },
-  3: { fullName: 'Михайлова Дарья Игоревна', phone: '+998 97 700-11-22', gender: 'female' },
-  4: { fullName: 'Абдуллаева Нилуфар Рустамовна', phone: '+998 99 321-65-87', gender: 'female' },
-  5: { fullName: 'Турсунов Жасур Алишерович', phone: '+998 91 444-78-90', gender: 'male' },
-  6: { fullName: 'Петров Сергей Олегович', phone: '+998 94 222-33-44', gender: 'male' },
-  7: { fullName: 'Смирнова Елена Васильевна', phone: '+998 90 111-22-33', gender: 'female' },
-  8: { fullName: 'Кузнецов Артём Игоревич', phone: '+998 95 777-88-99', gender: 'male' },
-  9: { fullName: 'Юлдашева Малика Бахтиёровна', phone: '+998 95 610-20-30', gender: 'female' },
-  10: { fullName: 'Иванов Дмитрий Андреевич', phone: '+998 33 870-45-12', gender: 'male' },
-  11: { fullName: 'Хасанов Бекзод Улугбекович', phone: '+998 88 505-60-70', gender: 'male' },
-  12: { fullName: 'Сергеева Анна Викторовна', phone: '+998 90 909-18-27', gender: 'female' }
-};
-
-function dateKey(daysFromToday: number): string {
-  const date = new Date();
-  date.setDate(date.getDate() + daysFromToday);
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-}
-
-// 0–4 диагноза на пациента, новые сверху
-function buildDiagnoses(index: number, status: PatientStatus): Diagnosis[] {
-  const count = status === 'primary' ? index % 2 : (index % 4) + 1;
-
-  return Array.from({ length: count }, (_, k) => {
-    const template = DIAGNOSES[(index + k * 2) % DIAGNOSES.length];
-    return {
-      ...template,
-      id: index * 10 + k + 1,
-      date: dateKey(-(k * 45 + (index % 30) + 3)),
-      doctorName: DOCTORS[(index + k) % DOCTORS.length],
-      // Самый свежий диагноз у пациента «в лечении» ещё лечится
-      status: k === 0 && status === 'inTreatment' ? 'active' : 'resolved'
-    };
-  });
-}
-
-function buildMock(count: number): Patient[] {
-  return Array.from({ length: count }, (_, i) => {
-    const isMale = i % 2 === 0;
-    const names = isMale ? MALE : FEMALE;
-    const status = STATUSES[i % STATUSES.length];
-    const hasNext = status === 'primary' || status === 'inTreatment';
-    const digits = String(1000000 + ((i * 7919) % 9000000)).slice(-7);
-
-    return {
-      id: i + 1,
-      fullName: `${names.last[i % names.last.length]} ${names.first[(i * 3) % names.first.length]} ${names.middle[(i * 5) % names.middle.length]}`,
-      phone: `+998 ${PREFIXES[i % PREFIXES.length]} ${digits.slice(0, 3)}-${digits.slice(3, 5)}-${digits.slice(5, 7)}`,
-      birthDate: `${1960 + ((i * 7) % 48)}-${String((i % 12) + 1).padStart(2, '0')}-${String((i % 27) + 1).padStart(2, '0')}`,
-      gender: isMale ? 'male' : 'female',
-      status,
-      doctorName: DOCTORS[i % DOCTORS.length],
-      lastVisit: status === 'primary' && i % 3 === 0 ? undefined : dateKey(-((i * 11) % 120) - 1),
-      nextVisit: hasNext ? dateKey((i * 3) % 21 + 1) : undefined,
-      nextVisitTime: hasNext ? TIMES[i % TIMES.length] : undefined,
-      diagnoses: buildDiagnoses(i, status),
-      ...(SCHEDULE_PATIENTS[i + 1] as Partial<Patient> | undefined)
-    };
-  });
-}
-
-// Имитация задержки ответа сервера
-const MOCK_DELAY_MS = 300;
-
+// Пациенты клиники (GET /patients). Список грузится целиком (постранично по 100) —
+// поиск, фильтры и сортировка остаются на экране. Врачу сервер отдаёт только его пациентов
 @Injectable({ providedIn: 'root' })
 export class PatientsService {
-  // TODO: заменить на загрузку с API (с поиском и постраничным выводом на сервере):
-  // this.http.get<Page<Patient>>(`${apiUrl}/patients`, { params: { q, statuses, page, size } })
-  private readonly _patients = signal<Patient[]>(buildMock(45));
+  private readonly http = inject(HttpClient);
+  private readonly auth = inject(AuthService);
+
+  private readonly _patients = signal<Patient[]>([]);
 
   readonly patients = this._patients.asReadonly();
+  readonly loading = signal(false);
 
-  // TODO: заменить на список врачей с API
-  readonly doctors = DOCTORS;
+  constructor() {
+    effect(() => {
+      const userId = this.auth.user()?.id;
+      untracked(() => {
+        this._patients.set([]);
+        if (userId) this.reload();
+      });
+    });
+    setInterval(() => this.reload(), RELOAD_MS);
+  }
 
-  // TODO: на API — PATCH /patients/:id
+  reload(): void {
+    if (!this.auth.isAuthenticated()) return;
+    this.loading.set(true);
+    const all: Patient[] = [];
+    const loadPage = (page: number): void => {
+      this.http.get<Page<Patient>>(api('/patients'), { params: params({ page, size: MAX_PAGE_SIZE }) }).subscribe({
+        next: result => {
+          all.push(...result.items);
+          if (page * result.size < result.total && result.items.length) {
+            loadPage(page + 1);
+            return;
+          }
+          // Диагнозы уже открытых карточек не теряем
+          const details = new Map(this._patients().filter(p => p.diagnoses).map(p => [p.id, p.diagnoses]));
+          this._patients.set(all.map(p => (details.has(p.id) ? { ...p, diagnoses: details.get(p.id) } : p)));
+          this.loading.set(false);
+        },
+        error: () => this.loading.set(false)
+      });
+    };
+    loadPage(1);
+  }
+
+  // Карточка пациента — с диагнозами
+  load(id: number): Observable<Patient> {
+    return this.http.get<Patient>(api(`/patients/${id}`)).pipe(tap(patient => this.upsert(patient)));
+  }
+
   update(id: number, changes: Partial<Patient>): Observable<void> {
-    return of(undefined).pipe(
-      delay(MOCK_DELAY_MS),
-      tap(() => this._patients.update(list =>
-        list.map(p => (p.id === id ? { ...p, ...changes } : p))
-      )),
+    return this.http.patch<Patient>(api(`/patients/${id}`), changes).pipe(
+      tap(updated => this.upsert(updated)),
       map(() => undefined)
     );
+  }
+
+  remove(id: number): Observable<void> {
+    return this.http.delete<void>(api(`/patients/${id}`)).pipe(
+      tap(() => this._patients.update(list => list.filter(p => p.id !== id)))
+    );
+  }
+
+  addDiagnosis(patientId: number, draft: DiagnosisDraft): Observable<Diagnosis> {
+    return this.http.post<Diagnosis>(api(`/patients/${patientId}/diagnoses`), draft).pipe(
+      tap(created => this.patchDiagnoses(patientId, list => [created, ...list]))
+    );
+  }
+
+  updateDiagnosis(patientId: number, diagnosisId: number, draft: DiagnosisDraft): Observable<Diagnosis> {
+    return this.http.patch<Diagnosis>(api(`/patients/${patientId}/diagnoses/${diagnosisId}`), draft).pipe(
+      tap(updated => this.patchDiagnoses(patientId, list => list.map(d => (d.id === diagnosisId ? updated : d))))
+    );
+  }
+
+  private patchDiagnoses(patientId: number, change: (list: Diagnosis[]) => Diagnosis[]): void {
+    this._patients.update(list => list.map(p => (p.id === patientId ? { ...p, diagnoses: change(p.diagnoses ?? []) } : p)));
+  }
+
+  // Ответ сервера → в список; диагнозы сохраняем, если в ответе их нет
+  private upsert(patient: Patient): void {
+    this._patients.update(list => {
+      const current = list.find(p => p.id === patient.id);
+      const merged = { ...patient, diagnoses: patient.diagnoses ?? current?.diagnoses };
+      return current ? list.map(p => (p.id === patient.id ? merged : p)) : [merged, ...list];
+    });
   }
 }

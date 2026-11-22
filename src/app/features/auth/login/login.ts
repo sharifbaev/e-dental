@@ -9,6 +9,15 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { finalize } from 'rxjs';
 import { AuthService } from '../../../core/auth/auth.service';
+import { errorCode } from '../../../core/api/api';
+
+const LOGIN_ERRORS: Record<string, string> = {
+  invalidCredentials: 'login.errors.invalid',
+  validationFailed: 'login.errors.invalid',
+  userBlocked: 'login.errors.blocked',
+  tooManyAttempts: 'login.errors.tooManyAttempts',
+  network: 'login.errors.network'
+};
 
 @Component({
   selector: 'app-login',
@@ -46,7 +55,8 @@ export class Login {
   });
 
   protected readonly loading = signal(false);
-  protected readonly invalidCredentials = signal(false);
+  // Текст ошибки входа: неверный логин/пароль, заблокирован, слишком много попыток, нет связи
+  protected readonly errorKey = signal('');
   protected readonly hidePassword = signal(true);
 
   protected submit(): void {
@@ -56,13 +66,13 @@ export class Login {
     }
 
     this.loading.set(true);
-    this.invalidCredentials.set(false);
+    this.errorKey.set('');
 
     this.auth.login(this.form.getRawValue())
       .pipe(finalize(() => this.loading.set(false)))
       .subscribe({
         next: () => this.router.navigate(['/dashboard']),
-        error: () => this.invalidCredentials.set(true)
+        error: err => this.errorKey.set(LOGIN_ERRORS[errorCode(err)] ?? 'login.errors.failed')
       });
   }
 

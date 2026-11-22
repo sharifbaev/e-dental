@@ -1,10 +1,10 @@
 import { NgTemplateOutlet } from '@angular/common';
-import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
+import { Component, DestroyRef, computed, effect, inject, signal, untracked } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
-import { filter, switchMap } from 'rxjs';
+import { filter, map, switchMap } from 'rxjs';
 import { CONFIRM_DIALOG_CONFIG, ConfirmDialog, ConfirmDialogData } from '../../shared/components/confirm-dialog/confirm-dialog';
 import { FeedbackService } from '../../shared/services/feedback.service';
 import { APPOINTMENT_STATUSES, PATIENT_STATUS_CLASSES } from '../../shared/models/patient-status';
@@ -13,10 +13,12 @@ import { APPOINTMENT_DETAILS_DIALOG_CONFIG, AppointmentDetailsAction, Appointmen
 import { APPOINTMENT_FORM_DIALOG_CONFIG, AppointmentFormData, AppointmentFormDialog, AppointmentFormResult } from './components/appointment-form-dialog/appointment-form-dialog';
 import { CALENDAR_RANGE_DIALOG_CONFIG, CalendarRangeDialog, CalendarRangeDialogData, CalendarRangeResult } from './components/calendar-range-dialog/calendar-range-dialog';
 import { PatientStatus, ScheduleAppointment } from './models/schedule.model';
-import { ScheduleService, addMinutes, isStatusOverdue, toDateKey } from './services/schedule.service';
+import { ScheduleService, isStatusOverdue, toDateKey } from './services/schedule.service';
 import { StatusChangeService } from './services/status-change.service';
 import { PaymentsService } from '../payments/services/payments.service';
-import { PaymentDraft, SERVICE_PRICES } from '../payments/models/payment.model';
+import { PaymentDraft } from '../payments/models/payment.model';
+import { DoctorsService } from '../doctors/services/doctors.service';
+import { shortName } from '../../shared/utils/names';
 import { PAYMENT_DIALOG_CONFIG, PaymentDialog, PaymentDialogData } from '../payments/components/payment-dialog/payment-dialog';
 import { DashboardPrefsService } from '../dashboard/services/dashboard-prefs.service';
 import { AuthService } from '../../core/auth/auth.service';
@@ -62,6 +64,7 @@ export class Schedule {
   private readonly paymentsService = inject(PaymentsService);
   private readonly auth = inject(AuthService);
   private readonly clinicServices = inject(ClinicServicesService);
+  private readonly scheduleDoctors = inject(DoctorsService);
 
   // Врач видит только своё расписание — выбор врача скрыт
   protected readonly isDoctor = computed(() => this.auth.user()?.role === 'doctor');
@@ -75,6 +78,20 @@ export class Schedule {
   constructor() {
     const timer = setInterval(() => this.now.set(new Date()), 60_000);
     inject(DestroyRef).onDestroy(() => clearInterval(timer));
+
+    // Приёмы выбранного периода — с API (загруженные месяцы повторно не запрашиваются)
+    effect(() => {
+      const [from, to] = this.visibleRange();
+      untracked(() => this.scheduleService.ensureRange(from, to));
+    });
+  }
+
+  // Даты, которые сейчас видны на экране: день, неделя или выбранный интервал
+  protected visibleRange(): [string, string] {
+    if (this.isRange()) return [this.rangeStart()!, this.rangeEnd()!];
+    const week = this.weekDays();
+    const day = this.selectedDate();
+    return [day < week[0].key ? day : week[0].key, day > week[6].key ? day : week[6].key];
   }
 
   private readonly lang = toSignal(this.transloco.langChanges$, {
@@ -184,11 +201,12 @@ export class Schedule {
   // У врача — сразу он сам, менять нельзя
   protected readonly selectedDoctor = signal<string>(this.auth.user()?.role === 'doctor' && this.auth.user()?.doctorId ? String(this.auth.user()!.doctorId) : 'all');
 
-  // Все врачи из расписания, по алфавиту
+  // Все врачи (справочник + те, что есть в расписании), по алфавиту
   private readonly doctors = computed(() => {
     const map = new Map<number, string>();
+    for (const doctor of this.scheduleDoctors.doctors()) map.set(doctor.id, shortName(doctor.fullName));
     for (const appointment of this.scheduleService.appointments()) {
-      map.set(appointment.doctorId, appointment.doctorName);
+      if (!map.has(appointment.doctorId)) map.set(appointment.doctorId, appointment.doctorName);
     }
     return [...map.entries()]
       .map(([id, name]) => ({ id: String(id), name }))
@@ -323,7 +341,6 @@ export class Schedule {
     const showDate = this.isRange() && !this.rangeDay() && this.rangeStart() !== this.rangeEnd();
     const dateFormat = new Intl.DateTimeFormat(this.locale(), { weekday: 'short', day: 'numeric', month: 'short' });
     const now = this.now();
-    const payments = this.paymentsService.byAppointment();
 
     return this.periodAppointments()
       .filter(appointment => statuses.length === 0 || statuses.includes(appointment.status))
@@ -335,10 +352,7 @@ export class Schedule {
         statusOverdue: isStatusOverdue(appointment, now),
         confirmationKey: appointment.confirmation ? `schedule.confirmation.${appointment.confirmation}` : '',
         // Оплата: 'paid' — оплачено полностью, 'debt' — есть долг, '' — не оплачено
-        paymentState: (() => {
-          const payment = payments.get(appointment.id);
-          return payment ? (payment.amount > payment.paid ? 'debt' : 'paid') : '';
-        })(),
+        paymentState: appointment.paymentState,
         statusKey: `schedule.status.${appointment.status}`,
         statusClass: STATUS_CLASSES[appointment.status],
         doctorInitials: getInitials(appointment.doctorName),
@@ -375,7 +389,7 @@ export class Schedule {
             time: created.start
           });
         },
-        error: () => this.feedback.error()
+        error: err => this.feedback.error(err)
       });
   }
 
@@ -417,23 +431,19 @@ export class Schedule {
       .afterClosed()
       .pipe(
         filter((result): result is AppointmentFormResult => !!result),
+        // Пациента в записи сменить нельзя — меняются врач, дата, время, длительность и услуги
         switchMap(result => this.scheduleService.update(appointment.id, {
-          // TODO: новый пациент получит id с API; пока временный
-          patientId: result.patientId ?? Date.now(),
-          patientName: result.patientName,
-          phone: result.phone,
-          serviceId: result.serviceId,
-          service: result.serviceName,
+          doctorId: result.doctorId,
           date: result.date,
           start: result.time,
-          ...(result.doctorId ? { doctorId: result.doctorId, doctorName: this.doctors().find(d => d.id === String(result.doctorId))?.name ?? appointment.doctorName } : {}),
-          // Время окончания — по длительности выбранной услуги
-          end: addMinutes(result.time, result.durationMinutes)
+          durationMinutes: result.durationMinutes,
+          serviceIds: result.serviceIds?.length ? result.serviceIds : [result.serviceId],
+          otherReason: result.otherReason
         }))
       )
       .subscribe({
         next: () => this.feedback.success('feedback.updated'),
-        error: () => this.feedback.error()
+        error: err => this.feedback.error(err)
       });
   }
 
@@ -444,7 +454,10 @@ export class Schedule {
 
   // Оплата приёма: стоимость по услуге, можно оплатить частично — остаток уйдёт в долг
   protected openPayment(appointment: ScheduleAppointment): void {
-    this.dialog
+    // Уже есть оплата приёма — повторная оплата заменит её суммы
+    this.paymentsService.loadForAppointment(appointment.id).pipe(
+      map(existing => existing?.amount ?? this.servicesPrice(appointment)),
+      switchMap(suggestedAmount => this.dialog
       .open<PaymentDialog, PaymentDialogData, PaymentDraft>(PaymentDialog, {
         ...PAYMENT_DIALOG_CONFIG,
         data: {
@@ -454,19 +467,24 @@ export class Schedule {
           appointmentId: appointment.id,
           date: appointment.date,
           service: appointment.service,
-          // Цена — из справочника услуг («Настройки → Услуги»)
-          suggestedAmount: this.clinicServices.services().find(s => s.id === appointment.serviceId)?.price ?? SERVICE_PRICES[appointment.serviceId] ?? 100_000
+          suggestedAmount
         }
       })
-      .afterClosed()
-      .pipe(
-        filter((draft): draft is PaymentDraft => !!draft),
-        switchMap(draft => this.paymentsService.add(draft))
-      )
+      .afterClosed()),
+      filter((draft): draft is PaymentDraft => !!draft),
+      switchMap(draft => this.paymentsService.add(draft))
+    )
       .subscribe({
         next: () => this.feedback.success('feedback.paymentSaved'),
-        error: () => this.feedback.error()
+        error: err => this.feedback.error(err)
       });
+  }
+
+  // Цена приёма — сумма цен его услуг из справочника («Настройки → Услуги»)
+  private servicesPrice(appointment: ScheduleAppointment): number {
+    const ids = appointment.serviceIds?.length ? appointment.serviceIds : [appointment.serviceId];
+    const services = this.clinicServices.services();
+    return ids.reduce((sum, id) => sum + (services.find(s => s.id === id)?.price ?? 0), 0);
   }
 
   protected cancel(appointment: ScheduleAppointment): void {
@@ -489,7 +507,7 @@ export class Schedule {
       )
       .subscribe({
         next: () => this.feedback.success('feedback.cancelled'),
-        error: () => this.feedback.error()
+        error: err => this.feedback.error(err)
       });
   }
 }

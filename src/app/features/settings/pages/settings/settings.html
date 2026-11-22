@@ -17,7 +17,7 @@
     </nav>
 
     <div class="flex-1 min-w-0 flex flex-col gap-2 md:gap-4">
-    <form [formGroup]="form" (ngSubmit)="save()" class="flex flex-col gap-2 md:gap-4" [class.hidden]="tab() === 'services' || tab() === 'workMode'">
+    <form [formGroup]="form" (ngSubmit)="save()" class="flex flex-col gap-2 md:gap-4" [class.hidden]="tab() === 'services' || tab() === 'dictionaries' || tab() === 'workMode'">
       <!-- Клиника -->
       @if (tab() === 'clinic') {
       <section id="clinic" class="scroll-mt-20 md:scroll-mt-4 bg-surface border border-line-strong rounded-[20px] p-3 md:p-6 flex flex-col gap-3 md:gap-5">
@@ -178,7 +178,7 @@
             <h2 class="font-display text-lg font-bold text-content">{{ 'settings.sections.services' | transloco }}</h2>
             <p class="text-[13px] text-muted">{{ 'settings.services.hint' | transloco }}</p>
           </div>
-          <button type="button" class="shrink-0 flex items-center gap-1 h-10 px-3 md:px-4 rounded-xl bg-brand-700 text-white text-sm font-semibold hover:bg-brand-800" (click)="openService()">
+          <button type="button" [class.hidden]="!isOwner()" class="shrink-0 flex items-center gap-1 h-10 px-3 md:px-4 rounded-xl bg-brand-700 text-white text-sm font-semibold hover:bg-brand-800" (click)="openService()">
             <mat-icon fontSet="material-symbols-outlined" style="font-size: 20px; width: 20px; height: 20px;">add</mat-icon>
             <span class="hidden sm:inline">{{ 'settings.services.add' | transloco }}</span>
           </button>
@@ -211,10 +211,10 @@
                     <td class="px-4 py-3 text-right text-content whitespace-nowrap">{{ 'payments.money' | transloco: { amount: service.priceLabel } }}</td>
                     <td class="px-4 py-3">
                       <div class="flex items-center justify-end gap-1">
-                        <button type="button" class="w-8 h-8 flex items-center justify-center rounded-lg text-muted hover:text-accent hover:bg-brand-50" [title]="'finance.edit' | transloco" (click)="openService(service)">
+                        <button type="button" [class.hidden]="!isOwner()" class="w-8 h-8 flex items-center justify-center rounded-lg text-muted hover:text-accent hover:bg-brand-50" [title]="'finance.edit' | transloco" (click)="openService(service)">
                           <mat-icon fontSet="material-symbols-outlined" style="font-size: 20px; width: 20px; height: 20px;">edit</mat-icon>
                         </button>
-                        <button type="button" class="w-8 h-8 flex items-center justify-center rounded-lg text-muted hover:text-red-600 hover:bg-red-50 dark:hover:text-red-400 dark:hover:bg-red-500/10" [title]="'finance.delete' | transloco" (click)="removeService(service)">
+                        <button type="button" [class.hidden]="!isOwner()" class="w-8 h-8 flex items-center justify-center rounded-lg text-muted hover:text-red-600 hover:bg-red-50 dark:hover:text-red-400 dark:hover:bg-red-500/10" [title]="'finance.delete' | transloco" (click)="removeService(service)">
                           <mat-icon fontSet="material-symbols-outlined" style="font-size: 20px; width: 20px; height: 20px;">delete</mat-icon>
                         </button>
                       </div>
@@ -238,16 +238,129 @@
                   </div>
                   <div class="text-[13px] text-muted">{{ 'appointmentForm.service.minutes' | transloco: { count: service.durationMinutes } }} · {{ 'payments.money' | transloco: { amount: service.priceLabel } }}</div>
                 </div>
-                <button type="button" class="w-9 h-9 shrink-0 flex items-center justify-center rounded-lg bg-page text-soft" [title]="'finance.edit' | transloco" (click)="openService(service)">
+                <button type="button" [class.hidden]="!isOwner()" class="w-9 h-9 shrink-0 flex items-center justify-center rounded-lg bg-page text-soft" [title]="'finance.edit' | transloco" (click)="openService(service)">
                   <mat-icon fontSet="material-symbols-outlined" style="font-size: 20px; width: 20px; height: 20px;">edit</mat-icon>
                 </button>
-                <button type="button" class="w-9 h-9 shrink-0 flex items-center justify-center rounded-lg bg-page text-red-600 dark:text-red-400" [title]="'finance.delete' | transloco" (click)="removeService(service)">
+                <button type="button" [class.hidden]="!isOwner()" class="w-9 h-9 shrink-0 flex items-center justify-center rounded-lg bg-page text-red-600 dark:text-red-400" [title]="'finance.delete' | transloco" (click)="removeService(service)">
                   <mat-icon fontSet="material-symbols-outlined" style="font-size: 20px; width: 20px; height: 20px;">delete</mat-icon>
                 </button>
               </div>
             }
           </div>
         }
+      </section>
+    }
+
+    <!-- Справочники: списки значений для карточек пациентов -->
+    <!-- Пользователи: логины и роли (только владелец) -->
+    @if (tab() === 'users') {
+      <section class="bg-surface border border-line-strong rounded-[20px] p-3 md:p-6 flex flex-col gap-3 md:gap-4">
+        <div class="flex items-center justify-between gap-3">
+          <div class="min-w-0">
+            <h2 class="font-display text-lg font-bold text-content">{{ 'settings.sections.users' | transloco }}</h2>
+            <p class="text-[13px] text-muted">{{ 'settings.users.hint' | transloco }}</p>
+          </div>
+          <button type="button" class="shrink-0 flex items-center gap-1 h-10 px-3 md:px-4 rounded-xl bg-brand-700 text-white text-sm font-semibold hover:bg-brand-800" (click)="openUser()">
+            <mat-icon fontSet="material-symbols-outlined" style="font-size: 20px; width: 20px; height: 20px;">person_add</mat-icon>
+            <span class="hidden sm:inline">{{ 'settings.users.add' | transloco }}</span>
+          </button>
+        </div>
+
+        <div class="flex flex-col divide-y divide-line">
+          @for (user of users(); track user.id) {
+            <div class="flex items-center gap-3 py-2.5">
+              <div class="min-w-0 flex-1">
+                <div class="text-sm font-semibold text-content truncate" [class.line-through]="user.active === false" [class.text-muted]="user.active === false">{{ user.fullName }}</div>
+                <div class="text-xs text-subtle truncate">{{ user.username }} · {{ user.roleKey | transloco }}@if (user.active === false) { · {{ 'settings.users.inactive' | transloco }}}</div>
+              </div>
+              <button type="button" class="w-9 h-9 shrink-0 flex items-center justify-center rounded-lg text-muted hover:text-accent hover:bg-brand-50" [title]="'finance.edit' | transloco" [attr.aria-label]="'finance.edit' | transloco" (click)="openUser(user)">
+                <mat-icon fontSet="material-symbols-outlined" style="font-size: 20px; width: 20px; height: 20px;">edit</mat-icon>
+              </button>
+              @if (!user.isSelf && user.role !== 'owner') {
+                <button type="button" class="w-9 h-9 shrink-0 flex items-center justify-center rounded-lg text-muted hover:bg-page" [class.hover:text-red-600]="user.active !== false" [class.hover:text-accent]="user.active === false" [title]="(user.active === false ? 'settings.users.unblock' : 'settings.users.block') | transloco" [attr.aria-label]="(user.active === false ? 'settings.users.unblock' : 'settings.users.block') | transloco" (click)="toggleActive(user)">
+                  <mat-icon fontSet="material-symbols-outlined" style="font-size: 20px; width: 20px; height: 20px;">{{ user.active === false ? 'lock_open' : 'block' }}</mat-icon>
+                </button>
+              } @else {
+                <span class="w-9 h-9 shrink-0"></span>
+              }
+            </div>
+          } @empty {
+            <p class="py-6 text-center text-sm text-muted">{{ 'settings.users.empty' | transloco }}</p>
+          }
+        </div>
+      </section>
+    }
+
+    <!-- Учётная запись: смена своего пароля -->
+    @if (tab() === 'account') {
+      <section class="bg-surface border border-line-strong rounded-[20px] p-3 md:p-6 flex flex-col gap-4">
+        <div class="min-w-0">
+          <h2 class="font-display text-lg font-bold text-content">{{ 'settings.account.title' | transloco }}</h2>
+          <p class="text-[13px] text-muted">{{ 'settings.account.hint' | transloco }}</p>
+        </div>
+        <form [formGroup]="passwordForm" class="grid grid-cols-1 sm:grid-cols-2 gap-3" (ngSubmit)="changePassword()">
+          <label class="flex flex-col gap-1 min-w-0">
+            <span class="text-xs font-medium text-soft">{{ 'settings.account.oldPassword' | transloco }}</span>
+            <input type="password" formControlName="oldPassword" autocomplete="current-password" class="w-full h-11 px-3 rounded-xl bg-page border border-transparent text-sm text-content outline-none focus:border-brand-300 focus:bg-surface">
+          </label>
+          <label class="flex flex-col gap-1 min-w-0">
+            <span class="text-xs font-medium text-soft">{{ 'settings.account.newPassword' | transloco }}</span>
+            <input type="password" formControlName="newPassword" autocomplete="new-password" class="w-full h-11 px-3 rounded-xl bg-page border text-sm text-content outline-none focus:border-brand-300 focus:bg-surface" [class.border-transparent]="!(passwordForm.controls.newPassword.invalid && passwordForm.controls.newPassword.touched)" [class.border-red-300]="passwordForm.controls.newPassword.invalid && passwordForm.controls.newPassword.touched">
+            @if (passwordForm.controls.newPassword.invalid && passwordForm.controls.newPassword.touched) {
+              <span class="text-xs text-red-600">{{ 'doctors.form.errors.password' | transloco }}</span>
+            }
+          </label>
+          <div class="sm:col-span-2 flex sm:justify-end">
+            <button type="submit" class="w-full sm:w-auto h-11 px-6 rounded-xl bg-brand-700 text-white text-sm font-semibold hover:bg-brand-800" [disabled]="passwordSaving()">{{ 'settings.account.submit' | transloco }}</button>
+          </div>
+        </form>
+      </section>
+    }
+
+    @if (tab() === 'dictionaries') {
+      <section class="bg-surface border border-line-strong rounded-[20px] p-3 md:p-6 flex flex-col gap-3 md:gap-4">
+        <div class="min-w-0">
+          <h2 class="font-display text-lg font-bold text-content">{{ 'settings.sections.dictionaries' | transloco }}</h2>
+          <p class="text-[13px] text-muted">{{ 'settings.dictionaries.hint' | transloco }}</p>
+        </div>
+
+        <!-- Состояния зубов — для вкладки «Зубная формула» -->
+        <div class="rounded-2xl border border-line-strong p-3 md:p-4 flex flex-col gap-3">
+          <div class="flex items-center justify-between gap-3">
+            <div class="min-w-0">
+              <h3 class="text-base font-semibold text-content">{{ 'settings.dictionaries.toothStates' | transloco }}</h3>
+              <p class="text-[13px] text-muted">{{ 'settings.dictionaries.toothStatesHint' | transloco }}</p>
+            </div>
+            <button type="button" class="shrink-0 flex items-center gap-1 h-10 px-3 md:px-4 rounded-xl bg-brand-700 text-white text-sm font-semibold hover:bg-brand-800" (click)="openToothState()">
+              <mat-icon fontSet="material-symbols-outlined" style="font-size: 20px; width: 20px; height: 20px;">add</mat-icon>
+              <span class="hidden sm:inline">{{ 'settings.dictionaries.add' | transloco }}</span>
+            </button>
+          </div>
+
+          <div class="flex flex-col divide-y divide-line">
+            @for (state of toothStates(); track state.id) {
+              <div class="flex items-center gap-3 py-2">
+                <span class="w-8 h-8 shrink-0 rounded-lg border" [class]="state.classes"></span>
+                <div class="min-w-0 flex-1">
+                  <div class="text-sm font-semibold text-content truncate">{{ state.name || (state.key | transloco) }}</div>
+                  @if (state.isBase) {
+                    <div class="text-xs text-subtle">{{ 'settings.dictionaries.base' | transloco }}</div>
+                  }
+                </div>
+                <button type="button" class="w-9 h-9 shrink-0 flex items-center justify-center rounded-lg text-muted hover:text-accent hover:bg-brand-50" [title]="'finance.edit' | transloco" [attr.aria-label]="'finance.edit' | transloco" (click)="openToothState(state)">
+                  <mat-icon fontSet="material-symbols-outlined" style="font-size: 20px; width: 20px; height: 20px;">edit</mat-icon>
+                </button>
+                @if (!state.isBase) {
+                  <button type="button" class="w-9 h-9 shrink-0 flex items-center justify-center rounded-lg text-muted hover:text-red-600 hover:bg-red-50 dark:hover:text-red-400 dark:hover:bg-red-500/10" [title]="'finance.delete' | transloco" [attr.aria-label]="'finance.delete' | transloco" (click)="removeToothState(state)">
+                    <mat-icon fontSet="material-symbols-outlined" style="font-size: 20px; width: 20px; height: 20px;">delete</mat-icon>
+                  </button>
+                } @else {
+                  <span class="w-9 h-9 shrink-0"></span>
+                }
+              </div>
+            }
+          </div>
+        </div>
       </section>
     }
 

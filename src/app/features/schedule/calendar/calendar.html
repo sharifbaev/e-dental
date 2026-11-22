@@ -1,15 +1,94 @@
-<!-- Фильтр по врачу — общий для ПК (в шапке) и мобилки (в модалке фильтров) -->
+<!-- Фильтр по врачам — общий для ПК (в шапке) и мобилки (в модалке фильтров).
+     Можно выбрать до 3 врачей: при 2–3 шкала делится на колонки по врачам -->
 <ng-template #doctorFilter>
-  <label class="w-full md:w-72 flex items-center gap-2 h-11 pl-3 pr-1 rounded-xl bg-surface border border-line-strong text-muted focus-within:border-brand-300">
-    <mat-icon fontSet="material-symbols-outlined" class="shrink-0" style="font-size: 18px; width: 18px; height: 18px;">stethoscope</mat-icon>
-    <span class="sr-only">{{ 'schedule.doctor' | transloco }}</span>
-    <select class="flex-1 min-w-0 h-full bg-transparent text-sm font-semibold text-content outline-none cursor-pointer" (change)="onDoctorChange($any($event.target).value)">
-      <option value="all" [selected]="selectedDoctor() === 'all'">{{ 'dashboard.kpi.allDoctors' | transloco }}</option>
-      @for (doctor of doctorOptions(); track doctor.id) {
-        <option [value]="doctor.id" [selected]="doctor.id === selectedDoctor()">{{ 'dashboard.doctorPrefix' | transloco }} {{ doctor.name }}</option>
+  <div class="relative w-full md:w-72">
+    <!-- Кнопка выбора врачей и рядом — «Очистить» (только когда врачи выбраны) -->
+    <div class="flex items-center gap-2">
+    <button type="button" class="flex-1 min-w-0 flex items-center gap-2 h-11 pl-3 pr-2 rounded-xl bg-surface border text-muted" [class.border-brand-300]="doctorMenuOpen()" [class.border-line-strong]="!doctorMenuOpen()" [attr.aria-expanded]="doctorMenuOpen()" [attr.aria-label]="'schedule.doctor' | transloco" (click)="doctorMenuOpen.set(!doctorMenuOpen())">
+      <mat-icon fontSet="material-symbols-outlined" class="shrink-0" style="font-size: 18px; width: 18px; height: 18px;">stethoscope</mat-icon>
+      <span class="flex-1 min-w-0 truncate text-left text-sm font-semibold text-content">
+        @switch (selectedDoctorIds().length) {
+          @case (0) { {{ 'dashboard.kpi.allDoctors' | transloco }} }
+          @case (1) { {{ 'dashboard.doctorPrefix' | transloco }} {{ singleDoctorName() }} }
+          @default { {{ 'calendar.doctorsSelected' | transloco: { count: selectedDoctorIds().length } }} }
+        }
+      </span>
+      <mat-icon fontSet="material-symbols-outlined" class="shrink-0" style="font-size: 20px; width: 20px; height: 20px;">{{ doctorMenuOpen() ? 'expand_less' : 'expand_more' }}</mat-icon>
+    </button>
+    @if (selectedDoctorIds().length > 0) {
+      <button type="button" class="shrink-0 w-11 h-11 flex items-center justify-center rounded-xl bg-surface border border-line-strong text-soft hover:text-accent hover:border-brand-300" [title]="'calendar.clearDoctors' | transloco" [attr.aria-label]="'calendar.clearDoctors' | transloco" (click)="clearDoctors(); doctorMenuOpen.set(false)">
+        <mat-icon fontSet="material-symbols-outlined" style="font-size: 20px; width: 20px; height: 20px;">filter_alt_off</mat-icon>
+      </button>
+    }
+    </div>
+
+    @if (doctorMenuOpen()) {
+      <!-- ПК: клик мимо списка закрывает его -->
+      <div class="max-md:hidden fixed inset-0 z-40" (click)="doctorMenuOpen.set(false)"></div>
+      <!-- ПК — выпадающий список под кнопкой; мобилка — список прямо в модалке фильтров -->
+      <div class="md:absolute md:right-0 md:top-full md:mt-1 z-50 w-full max-md:mt-2 max-h-72 overflow-y-auto p-1 rounded-xl bg-surface border border-line-strong md:shadow-lg" role="listbox" aria-multiselectable="true" [attr.aria-label]="'schedule.doctor' | transloco">
+        <button type="button" class="w-full flex items-center gap-2 h-10 px-2 rounded-lg text-sm text-left hover:bg-page" (click)="clearDoctors()">
+          <mat-icon fontSet="material-symbols-outlined" class="shrink-0" [class.text-accent]="selectedDoctorIds().length === 0" [class.text-subtle]="selectedDoctorIds().length > 0" style="font-size: 20px; width: 20px; height: 20px;">{{ selectedDoctorIds().length === 0 ? 'radio_button_checked' : 'radio_button_unchecked' }}</mat-icon>
+          <span class="truncate font-medium text-content">{{ 'dashboard.kpi.allDoctors' | transloco }}</span>
+        </button>
+        @for (doctor of doctorOptions(); track doctor.id) {
+          <button type="button" role="option" class="w-full flex items-center gap-2 h-10 px-2 rounded-lg text-sm text-left hover:bg-page disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent" [attr.aria-selected]="isDoctorSelected(doctor.id)" [disabled]="!isDoctorSelected(doctor.id) && selectedDoctorIds().length >= maxDoctors" (click)="toggleDoctor(doctor.id)">
+            <mat-icon fontSet="material-symbols-outlined" class="shrink-0" [class.text-accent]="isDoctorSelected(doctor.id)" [class.text-subtle]="!isDoctorSelected(doctor.id)" style="font-size: 20px; width: 20px; height: 20px;">{{ isDoctorSelected(doctor.id) ? 'check_box' : 'check_box_outline_blank' }}</mat-icon>
+            <span class="truncate text-content">{{ 'dashboard.doctorPrefix' | transloco }} {{ doctor.name }}</span>
+          </button>
+        }
+        <div class="px-2 pt-1 pb-1.5 text-xs text-subtle">{{ 'calendar.maxDoctors' | transloco: { count: maxDoctors } }}</div>
+      </div>
+    }
+  </div>
+</ng-template>
+
+<!-- Блок приёма на шкале — общий для одной колонки и для колонок по врачам -->
+<ng-template #eventBlock let-event>
+  <div class="absolute p-px" [style.top.px]="event.top" [style.height.px]="event.height" [style.left.%]="event.left" [style.width.%]="event.width">
+    <div role="button" tabindex="0"
+         class="h-full rounded-md md:rounded-lg px-1.5 md:px-2 overflow-hidden cursor-pointer transition-shadow hover:shadow-md focus-visible:outline-2 focus-visible:outline-brand-300"
+         [class]="event.statusClass"
+         [class.opacity-50]="event.isCancelled"
+         [class.py-1]="!event.compact"
+         [class.md:py-0.5]="event.compact"
+         [title]="event.start + '–' + event.end + ' · ' + event.patientName + ' · ' + event.service"
+         (click)="$event.stopPropagation(); openDetails(event)" (keydown.enter)="$event.stopPropagation(); openDetails(event)">
+      @if (event.compact) {
+        <!-- Мобилка: только имя пациента -->
+        <div class="h-full md:h-auto flex items-center gap-1.5 text-[11px] md:text-xs leading-none md:leading-tight min-w-0">
+          <span class="max-md:hidden w-2 h-2 shrink-0 rounded-[2px]" [class]="event.ratingDot"></span>
+          <span class="font-semibold truncate" [class.line-through]="event.isCancelled">{{ event.patientName }}</span>
+          <span class="max-md:hidden shrink-0 opacity-80 tabular-nums">{{ event.start }}</span>
+          @if (event.overdue) {
+            <mat-icon fontSet="material-symbols-outlined" class="max-md:hidden! shrink-0 ml-auto text-amber-600 dark:text-amber-300" [title]="'schedule.actions.statusOverdue' | transloco" style="font-size: 14px; width: 14px; height: 14px;">warning</mat-icon>
+          }
+        </div>
+      } @else {
+        <div class="flex items-center gap-1.5 min-w-0">
+          <span class="w-2 h-2 shrink-0 rounded-[2px]" [class]="event.ratingDot"></span>
+          <span class="text-sm font-semibold truncate" [class.line-through]="event.isCancelled">{{ event.patientName }}</span>
+          @if (event.overdue) {
+            <mat-icon fontSet="material-symbols-outlined" class="shrink-0 ml-auto text-amber-600 dark:text-amber-300" [title]="'schedule.actions.statusOverdue' | transloco" style="font-size: 16px; width: 16px; height: 16px;">warning</mat-icon>
+          }
+        </div>
+        <div class="text-xs opacity-80 truncate tabular-nums">{{ event.start }}–{{ event.end }} · {{ 'schedule.cabinet' | transloco: { number: event.cabinet } }}@if (event.visitTotal) { · {{ 'schedule.visitOf' | transloco: { index: event.visitIndex, total: event.visitTotal } }}}</div>
+        @if (!event.medium) {
+        <div class="text-xs opacity-80 truncate">{{ event.service }} · {{ 'dashboard.doctorPrefix' | transloco }} {{ event.doctorName }}</div>
+        }
       }
-    </select>
-  </label>
+    </div>
+  </div>
+</ng-template>
+
+<!-- Красная линия «сейчас» -->
+<ng-template #nowMarker>
+@if (nowLine(); as now) {
+  <div class="absolute inset-x-0 z-10 h-0 flex items-center pointer-events-none" [style.top.px]="now.top">
+    <span class="w-2.5 h-2.5 -ml-1.5 rounded-full bg-red-500"></span>
+    <span class="flex-1 border-t-2 border-red-500"></span>
+  </div>
+}
 </ng-template>
 
 <!-- Мобилка: раздел ровно на экран (минус шапка 75px, нижнее меню 62px и отступы по 8px) — страница не скроллится,
@@ -119,7 +198,17 @@
     </div>
 
     <!-- Мобилка: шкала растягивается на всю высоту секции (час = высота / число часов); снизу место под кнопки «Сегодня» и действия; свайп влево/вправо — следующий/предыдущий день -->
-    <div #timeline (touchstart)="onSwipeStart($event, 'timeline')" (touchmove)="onSwipeMove($event)" (touchend)="onSwipeEnd()" (touchcancel)="onSwipeEnd()" class="flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-contain px-1 md:px-4 pt-2 pb-14 md:py-3">
+    @if (lanes().length) {
+      <div class="shrink-0 overflow-y-hidden px-1 md:px-4 border-b border-line" style="scrollbar-gutter: stable;">
+        <div class="ml-12 md:ml-14 grid" [style.grid-template-columns]="'repeat(' + lanes().length + ', minmax(0, 1fr))'">
+          @for (lane of lanes(); track lane.id) {
+            <div class="min-w-0 px-1 md:px-2 py-1.5 md:py-2 border-line text-center text-xs md:text-sm font-semibold text-content truncate" [class.border-l]="!$first" [title]="('dashboard.doctorPrefix' | transloco) + ' ' + lane.name">{{ lane.name }}</div>
+          }
+        </div>
+      </div>
+    }
+
+    <div #timeline [style.scrollbar-gutter]="lanes().length ? 'stable' : null" (touchstart)="onSwipeStart($event, 'timeline')" (touchmove)="onSwipeMove($event)" (touchend)="onSwipeEnd()" (touchcancel)="onSwipeEnd()" class="flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-contain px-1 md:px-4 pt-2 pb-14 md:py-3">
       <div #timelineContent class="relative" [style.height.px]="timelineHeight()">
         <!-- Подписи часов и линии -->
         @for (hour of hours(); track hour.label) {
@@ -130,6 +219,23 @@
           </div>
         }
 
+        @if (lanes().length) {
+          <!-- Выбрано 2–3 врача: шкала делится по вертикали на колонки — время приёмов врачей видно рядом -->
+          <div class="absolute top-0 bottom-0 left-12 md:left-14 right-0 grid" [style.grid-template-columns]="'repeat(' + lanes().length + ', minmax(0, 1fr))'">
+            @for (lane of lanes(); track lane.id) {
+              <div class="relative h-full min-w-0 border-line cursor-pointer" [class.border-l]="!$first" [title]="'calendar.clickToAdd' | transloco" (click)="addAtPosition($event, lane.id)">
+                <!-- Нерабочее время врача -->
+                @for (block of lane.offHours; track $index) {
+                  <div class="absolute inset-x-0 bg-page/70 pointer-events-none" [style.top.px]="block.top" [style.height.px]="block.height"></div>
+                }
+                @for (event of lane.events; track event.id) {
+                  <ng-container [ngTemplateOutlet]="eventBlock" [ngTemplateOutletContext]="{ $implicit: event }" />
+                }
+              </div>
+            }
+            <ng-container [ngTemplateOutlet]="nowMarker" />
+          </div>
+        } @else {
         <!-- Область приёмов (правее подписей часов) -->
         <div class="absolute top-0 bottom-0 left-12 md:left-14 right-0 cursor-pointer" [title]="'calendar.clickToAdd' | transloco" (click)="addAtPosition($event)">
           <!-- Нерабочее время -->
@@ -138,50 +244,13 @@
           }
 
           @for (event of events(); track event.id) {
-            <div class="absolute p-px" [style.top.px]="event.top" [style.height.px]="event.height" [style.left.%]="event.left" [style.width.%]="event.width">
-              <div role="button" tabindex="0"
-                   class="h-full rounded-md md:rounded-lg px-1.5 md:px-2 overflow-hidden cursor-pointer transition-shadow hover:shadow-md focus-visible:outline-2 focus-visible:outline-brand-300"
-                   [class]="event.statusClass"
-                   [class.opacity-50]="event.isCancelled"
-                   [class.py-1]="!event.compact"
-                   [class.md:py-0.5]="event.compact"
-                   [title]="event.start + '–' + event.end + ' · ' + event.patientName + ' · ' + event.service"
-                   (click)="$event.stopPropagation(); openDetails(event)" (keydown.enter)="$event.stopPropagation(); openDetails(event)">
-                @if (event.compact) {
-                  <!-- Мобилка: только имя пациента -->
-                  <div class="h-full md:h-auto flex items-center gap-1.5 text-[11px] md:text-xs leading-none md:leading-tight min-w-0">
-                    <span class="max-md:hidden w-2 h-2 shrink-0 rounded-[2px]" [class]="event.ratingDot"></span>
-                    <span class="font-semibold truncate" [class.line-through]="event.isCancelled">{{ event.patientName }}</span>
-                    <span class="max-md:hidden shrink-0 opacity-80 tabular-nums">{{ event.start }}</span>
-                    @if (event.overdue) {
-                      <mat-icon fontSet="material-symbols-outlined" class="max-md:hidden! shrink-0 ml-auto text-amber-600 dark:text-amber-300" [title]="'schedule.actions.statusOverdue' | transloco" style="font-size: 14px; width: 14px; height: 14px;">warning</mat-icon>
-                    }
-                  </div>
-                } @else {
-                  <div class="flex items-center gap-1.5 min-w-0">
-                    <span class="w-2 h-2 shrink-0 rounded-[2px]" [class]="event.ratingDot"></span>
-                    <span class="text-sm font-semibold truncate" [class.line-through]="event.isCancelled">{{ event.patientName }}</span>
-                    @if (event.overdue) {
-                      <mat-icon fontSet="material-symbols-outlined" class="shrink-0 ml-auto text-amber-600 dark:text-amber-300" [title]="'schedule.actions.statusOverdue' | transloco" style="font-size: 16px; width: 16px; height: 16px;">warning</mat-icon>
-                    }
-                  </div>
-                  <div class="text-xs opacity-80 truncate tabular-nums">{{ event.start }}–{{ event.end }} · {{ 'schedule.cabinet' | transloco: { number: event.cabinet } }}@if (event.visitTotal) { · {{ 'schedule.visitOf' | transloco: { index: event.visitIndex, total: event.visitTotal } }}}</div>
-                  @if (!event.medium) {
-                  <div class="text-xs opacity-80 truncate">{{ event.service }} · {{ 'dashboard.doctorPrefix' | transloco }} {{ event.doctorName }}</div>
-                  }
-                }
-              </div>
-            </div>
+            <ng-container [ngTemplateOutlet]="eventBlock" [ngTemplateOutletContext]="{ $implicit: event }" />
           }
 
           <!-- Текущее время -->
-          @if (nowLine(); as now) {
-            <div class="absolute inset-x-0 z-10 h-0 flex items-center pointer-events-none" [style.top.px]="now.top">
-              <span class="w-2.5 h-2.5 -ml-1.5 rounded-full bg-red-500"></span>
-              <span class="flex-1 border-t-2 border-red-500"></span>
-            </div>
-          }
+          <ng-container [ngTemplateOutlet]="nowMarker" />
         </div>
+        }
 
         <!-- Время «сейчас» поверх подписей часов -->
         @if (nowLine(); as now) {
@@ -207,9 +276,9 @@
     }
     @if (showDoctorFilter()) {
       <!-- Фильтры: врач — в модалке; точка — если врач выбран -->
-      <button type="button" class="relative w-10 h-10 rounded-full flex items-center justify-center" [class.text-accent]="filtersActive()" [class.text-content]="!filtersActive()" [title]="'schedule.filters' | transloco" [attr.aria-label]="'schedule.filters' | transloco" (click)="filtersOpen.set(true)">
+      <button type="button" class="relative w-10 h-10 rounded-full flex items-center justify-center" [class.text-accent]="filtersActive() || selectedDoctorIds().length > 1" [class.text-content]="!filtersActive() && selectedDoctorIds().length <= 1" [title]="'schedule.filters' | transloco" [attr.aria-label]="'schedule.filters' | transloco" (click)="filtersOpen.set(true)">
         <mat-icon fontSet="material-symbols-outlined" style="font-size: 22px; width: 22px; height: 22px;">filter_list</mat-icon>
-        @if (filtersActive()) {
+        @if (filtersActive() || selectedDoctorIds().length > 1) {
           <span class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-brand-700"></span>
         }
       </button>

@@ -1,9 +1,9 @@
 export interface TreatmentPlan {
   id: number;
   patientId: number;
-  patientName: string;
+  patientName?: string;
   doctorId: number;
-  doctorName: string;
+  doctorName?: string;
   procedures: string[];        // названия процедур
   visits: number;              // сколько визитов понадобится
   cost: number;                // примерная стоимость, сум

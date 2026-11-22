@@ -42,13 +42,14 @@ export interface Debt {
   counterparty: string;        // кто должен / кому должны
   phone: string;
   date: string;                // 'YYYY-MM-DD' — когда возник долг
-  dueDate: string;             // 'YYYY-MM-DD' — срок погашения, может быть пустым
+  dueDate?: string;            // 'YYYY-MM-DD' — срок погашения, может быть пустым
   amount: number;              // сумма долга, сум
   paid: number;                // уже погашено, сум
   note: string;
+  status?: DebtStatus;         // считает сервер
 }
 
-export type DebtDraft = Omit<Debt, 'id'>;
+export type DebtDraft = Omit<Debt, 'id' | 'status'>;
 
 export function debtStatus(debt: Debt, today: string): DebtStatus {
   if (debt.paid >= debt.amount) return 'closed';

@@ -1,46 +1,80 @@
+import { HttpClient } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
-import { Observable, delay, of, switchMap, tap, throwError, timer } from 'rxjs';
-import { LoginRequest, LoginResponse, User } from '../models/auth.model';
+import { Observable, finalize, map, of, shareReplay, tap } from 'rxjs';
+import { LoginRequest, LoginResponse, TokenPair, User } from '../models/auth.model';
+import { api } from '../api/api';
 
 const TOKEN_KEY = 'e-dental.token';
+const REFRESH_KEY = 'e-dental.refreshToken';
 const USER_KEY = 'e-dental.user';
-
-// Демо-доступ до подключения API: администратор и врач
-const DEMO_USERS: { username: string; password: string; user: User }[] = [
-  { username: 'admin', password: 'admin123', user: { id: 1, fullName: 'Administrator', username: 'admin', role: 'admin' } },
-  {
-    username: 'doctor',
-    password: 'doctor123',
-    user: { id: 2, fullName: 'Сидоров Алексей Петрович', username: 'doctor', role: 'doctor', doctorId: 1, doctorName: 'Сидоров А. П.' }
-  }
-];
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly router = inject(Router);
+  private readonly http = inject(HttpClient);
 
   private readonly _user = signal<User | null>(this.readUser());
-  private readonly _token = signal<string | null>(this.readToken());
+  // Сессия из демо-версии (mock-токен без refresh-токена) — недействительна
+  private readonly _token = signal<string | null>(read(REFRESH_KEY) ? read(TOKEN_KEY) : null);
+  private refreshToken: string | null = read(REFRESH_KEY);
 
   readonly user = this._user.asReadonly();
   readonly isAuthenticated = computed(() => !!this._token());
 
+  // Один запрос обновления на все запросы, получившие 401 одновременно
+  private refresh$: Observable<string> | null = null;
+
   login(credentials: LoginRequest): Observable<LoginResponse> {
-    return this.loginRequest(credentials).pipe(
-      tap(response => this.saveSession(response))
+    const body: LoginRequest = { username: credentials.username.trim(), password: credentials.password };
+    return this.http.post<LoginResponse>(api('/auth/login'), body).pipe(
+      tap(response => {
+        this.saveTokens(response);
+        this.setUser(response.user);
+      })
     );
   }
 
-  logout(): void {
-    try {
-      localStorage.removeItem(TOKEN_KEY);
-      localStorage.removeItem(USER_KEY);
-    } catch {
-      // localStorage недоступен — сессия очистится только в памяти
+  // После перезагрузки страницы — свежие данные пользователя (роль, блокировка)
+  loadMe(): Observable<User | null> {
+    if (!this._token()) return of(null);
+    return this.http.get<User>(api('/auth/me')).pipe(tap(user => this.setUser(user)));
+  }
+
+  // Новый access-токен по refresh-токену (старый refresh сразу недействителен)
+  refresh(): Observable<string> {
+    if (!this.refreshToken) throw new Error('NO_REFRESH_TOKEN');
+    if (!this.refresh$) {
+      this.refresh$ = this.http.post<TokenPair>(api('/auth/refresh'), { refreshToken: this.refreshToken }).pipe(
+        tap(pair => this.saveTokens(pair)),
+        map(pair => pair.token),
+        finalize(() => (this.refresh$ = null)),
+        shareReplay(1)
+      );
     }
-    this._token.set(null);
-    this._user.set(null);
+    return this.refresh$;
+  }
+
+  hasRefreshToken(): boolean {
+    return !!this.refreshToken;
+  }
+
+  changePassword(oldPassword: string, newPassword: string): Observable<void> {
+    return this.http.post<void>(api('/auth/change-password'), { oldPassword, newPassword });
+  }
+
+  logout(): void {
+    // Сообщаем серверу, чтобы аннулировать refresh-токен; ответ не ждём
+    if (this.refreshToken && this._token()) {
+      this.http.post(api('/auth/logout'), { refreshToken: this.refreshToken }).subscribe({ error: () => undefined });
+    }
+    this.clearSession();
+    this.router.navigate(['/login']);
+  }
+
+  // Сессия закончилась (refresh не прошёл) — только очистка, без запроса на сервер
+  expire(): void {
+    this.clearSession();
     this.router.navigate(['/login']);
   }
 
@@ -48,45 +82,57 @@ export class AuthService {
     return this._token();
   }
 
-  // TODO: заменить на реальный запрос, когда будет API:
-  // return this.http.post<LoginResponse>(`${apiUrl}/auth/login`, credentials);
-  private loginRequest(credentials: LoginRequest): Observable<LoginResponse> {
-    const username = credentials.username.trim();
-
-    const demo = DEMO_USERS.find(u => u.username === username && u.password === credentials.password);
-    if (demo) {
-      return of<LoginResponse>({ token: 'mock-token', user: demo.user }).pipe(delay(500));
-    }
-    return timer(500).pipe(
-      switchMap(() => throwError(() => new Error('INVALID_CREDENTIALS')))
-    );
+  private clearSession(): void {
+    for (const key of [TOKEN_KEY, REFRESH_KEY, USER_KEY]) remove(key);
+    this.refreshToken = null;
+    this._token.set(null);
+    this._user.set(null);
   }
 
-  private saveSession(response: LoginResponse): void {
-    try {
-      localStorage.setItem(TOKEN_KEY, response.token);
-      localStorage.setItem(USER_KEY, JSON.stringify(response.user));
-    } catch {
-      // localStorage недоступен (например, приватный режим) — вход действует до перезагрузки
-    }
-    this._token.set(response.token);
-    this._user.set(response.user);
+  private saveTokens(pair: TokenPair): void {
+    write(TOKEN_KEY, pair.token);
+    write(REFRESH_KEY, pair.refreshToken);
+    this.refreshToken = pair.refreshToken;
+    this._token.set(pair.token);
   }
 
-  private readToken(): string | null {
-    try {
-      return localStorage.getItem(TOKEN_KEY);
-    } catch {
-      return null;
-    }
+  private setUser(user: User): void {
+    write(USER_KEY, JSON.stringify(user));
+    this._user.set(user);
   }
 
   private readUser(): User | null {
     try {
-      const raw = localStorage.getItem(USER_KEY);
-      return raw ? (JSON.parse(raw) as User) : null;
+      const raw = read(USER_KEY);
+      const user = raw ? (JSON.parse(raw) as User) : null;
+      // Сессия из демо-версии (роли admin/receptionist, mock-токен) — недействительна
+      return user && read(REFRESH_KEY) ? user : null;
     } catch {
       return null;
     }
+  }
+}
+
+function read(key: string): string | null {
+  try {
+    return localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+function write(key: string, value: string): void {
+  try {
+    localStorage.setItem(key, value);
+  } catch {
+    // localStorage недоступен (например, приватный режим) — вход действует до перезагрузки
+  }
+}
+
+function remove(key: string): void {
+  try {
+    localStorage.removeItem(key);
+  } catch {
+    // localStorage недоступен
   }
 }

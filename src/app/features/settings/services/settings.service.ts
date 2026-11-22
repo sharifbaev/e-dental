@@ -1,44 +1,41 @@
-import { Injectable, signal } from '@angular/core';
-import { Observable, delay, of, tap } from 'rxjs';
+import { HttpClient } from '@angular/common/http';
+import { Injectable, effect, inject, signal, untracked } from '@angular/core';
+import { Observable, tap } from 'rxjs';
 import { ClinicSettings, DEFAULT_CLINIC_SETTINGS } from '../models/settings.model';
+import { AuthService } from '../../../core/auth/auth.service';
+import { api } from '../../../core/api/api';
 
-const STORAGE_KEY = 'e-dental.settings';
-
+// Настройки клиники (GET /settings — всем, PUT /settings — только владелец)
 @Injectable({ providedIn: 'root' })
 export class SettingsService {
-  private readonly _settings = signal<ClinicSettings>(this.read());
+  private readonly http = inject(HttpClient);
+  private readonly auth = inject(AuthService);
+
+  private readonly _settings = signal<ClinicSettings>(DEFAULT_CLINIC_SETTINGS);
 
   readonly settings = this._settings.asReadonly();
+  readonly loaded = signal(false);
 
-  // TODO: на API — PUT /settings. Пока сохраняем в браузере
-  save(settings: ClinicSettings): Observable<ClinicSettings> {
-    return of(settings).pipe(
-      delay(300),
-      tap(saved => {
-        this._settings.set(saved);
-        try {
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(saved));
-        } catch {
-          // localStorage недоступен — настройки действуют до перезагрузки
+  constructor() {
+    effect(() => {
+      const userId = this.auth.user()?.id;
+      untracked(() => {
+        this._settings.set(DEFAULT_CLINIC_SETTINGS);
+        this.loaded.set(false);
+        if (userId) {
+          this.http.get<ClinicSettings>(api('/settings')).subscribe({
+            next: settings => {
+              this._settings.set({ ...DEFAULT_CLINIC_SETTINGS, ...settings, notifications: { ...DEFAULT_CLINIC_SETTINGS.notifications, ...settings.notifications } });
+              this.loaded.set(true);
+            },
+            error: () => undefined
+          });
         }
-      })
-    );
+      });
+    });
   }
 
-  private read(): ClinicSettings {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) {
-        const saved = JSON.parse(raw) as Partial<ClinicSettings>;
-        return {
-          ...DEFAULT_CLINIC_SETTINGS,
-          ...saved,
-          notifications: { ...DEFAULT_CLINIC_SETTINGS.notifications, ...saved.notifications }
-        };
-      }
-    } catch {
-      // повреждённые данные — берём значения по умолчанию
-    }
-    return DEFAULT_CLINIC_SETTINGS;
+  save(settings: ClinicSettings): Observable<ClinicSettings> {
+    return this.http.put<ClinicSettings>(api('/settings'), settings).pipe(tap(saved => this._settings.set(saved)));
   }
 }

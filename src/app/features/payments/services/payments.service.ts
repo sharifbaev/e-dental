@@ -1,27 +1,35 @@
-import { Injectable, computed, inject, signal, untracked } from '@angular/core';
-import { Observable, delay, map, of, tap } from 'rxjs';
-import { ScheduleService, toDateKey } from '../../schedule/services/schedule.service';
-import { PATIENT_STATUSES, PatientStatus } from '../../../shared/models/patient-status';
-import { PAYMENT_METHODS, Payment, PaymentDraft, SERVICE_PRICES } from '../models/payment.model';
-
-// Имитация задержки ответа сервера
-const MOCK_DELAY_MS = 300;
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { Injectable, computed, effect, inject, signal, untracked } from '@angular/core';
+import { Observable, catchError, map, of, tap, throwError } from 'rxjs';
+import { ScheduleService } from '../../schedule/services/schedule.service';
+import { Payment, PaymentDraft } from '../models/payment.model';
+import { AuthService } from '../../../core/auth/auth.service';
+import { api, params } from '../../../core/api/api';
 
 // Сумма в сумах для показа: 350000 → «350 000»
 export function formatMoney(value: number, locale: string): string {
   return new Intl.NumberFormat(locale, { maximumFractionDigits: 0 }).format(value);
 }
 
+// Оплаты пациентов (GET /payments, POST /payments). Загружаются по пациенту (карточка) и по приёму
 @Injectable({ providedIn: 'root' })
 export class PaymentsService {
+  private readonly http = inject(HttpClient);
+  private readonly auth = inject(AuthService);
   private readonly scheduleService = inject(ScheduleService);
 
-  // TODO: заменить на загрузку с API: GET /payments?patientId=… и GET /appointments/:id/payment
-  private readonly _payments = signal<Payment[]>(untracked(() => this.buildMock()));
+  private readonly _payments = signal<Payment[]>([]);
 
   readonly payments = this._payments.asReadonly();
 
-  // Оплата по приёму: appointmentId → оплата
+  constructor() {
+    effect(() => {
+      this.auth.user();
+      untracked(() => this._payments.set([]));
+    });
+  }
+
+  // Оплата по приёму: appointmentId → оплата (из уже загруженных)
   readonly byAppointment = computed(() => {
     const result = new Map<number, Payment>();
     for (const payment of this._payments()) {
@@ -30,7 +38,7 @@ export class PaymentsService {
     return result;
   });
 
-  // Долг пациента: начислено минус оплачено (с учётом погашений)
+  // Долг пациента: начислено минус оплачено (с учётом погашений) — по загруженным оплатам пациента
   readonly debtByPatient = computed(() => {
     const result = new Map<number, number>();
     for (const p of this._payments()) {
@@ -49,38 +57,41 @@ export class PaymentsService {
     return Math.max(0, this.debtByPatient().get(patientId) ?? 0);
   }
 
-  // TODO: на API — POST /payments
+  // Все оплаты пациента — для карточки
+  loadForPatient(patientId: number): void {
+    this.http.get<Payment[]>(api('/payments'), { params: params({ patientId }) }).subscribe({
+      next: list => this._payments.update(current => [...current.filter(p => p.patientId !== patientId), ...list]),
+      error: () => undefined
+    });
+  }
+
+  // Оплата приёма; нет оплаты — null (сервер отвечает 404)
+  loadForAppointment(appointmentId: number): Observable<Payment | null> {
+    return this.http.get<Payment>(api(`/appointments/${appointmentId}/payment`)).pipe(
+      tap(payment => this.upsert(payment)),
+      catchError((error: unknown) => (error instanceof HttpErrorResponse && error.status === 404 ? of(null) : throwError(() => error)))
+    );
+  }
+
+  // POST /payments. Повторная оплата того же приёма заменяет суммы существующей
   add(draft: PaymentDraft): Observable<Payment> {
-    const payment: Payment = { ...draft, id: Date.now() };
-    return of(payment).pipe(
-      delay(MOCK_DELAY_MS),
-      tap(created => this._payments.update(list => [...list, created])),
+    return this.http.post<Payment>(api('/payments'), draft).pipe(
+      tap(created => {
+        this.upsert(created);
+        // Плашка «Оплачено / Долг» у приёма — сразу, не дожидаясь перезагрузки расписания
+        if (created.kind === 'visit' && created.appointmentId) {
+          const appointment = this.scheduleService.appointments().find(a => a.id === created.appointmentId);
+          if (appointment) this.scheduleService.upsert({ ...appointment, paymentState: created.paid >= created.amount ? 'paid' : 'debt' });
+        }
+      }),
       map(created => created)
     );
   }
 
-  // Mock: оплачены прошедшие и сегодняшние приёмы, по которым пациент был у врача; у каждого
-  // пятого — оплачена половина (долг)
-  private buildMock(): Payment[] {
-    const todayKey = toDateKey(new Date());
-    const visited: PatientStatus[] = PATIENT_STATUSES.filter(s => s !== 'primary' && s !== 'cancelled');
-
-    return this.scheduleService.appointments()
-      .filter(a => a.date <= todayKey && visited.includes(a.status))
-      .map((a, index) => {
-        const amount = SERVICE_PRICES[a.serviceId] ?? 100_000;
-        return {
-          id: index + 1,
-          kind: 'visit' as const,
-          patientId: a.patientId,
-          patientName: a.patientName,
-          appointmentId: a.id,
-          date: a.date,
-          service: a.service,
-          amount,
-          paid: index % 5 === 2 ? amount / 2 : amount,
-          method: PAYMENT_METHODS[index % PAYMENT_METHODS.length]
-        };
-      });
+  private upsert(payment: Payment): void {
+    this._payments.update(list => [
+      ...list.filter(p => p.id !== payment.id && !(payment.kind === 'visit' && p.kind === 'visit' && p.appointmentId === payment.appointmentId)),
+      payment
+    ]);
   }
 }

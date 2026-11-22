@@ -1,3 +1,4 @@
+import { catchError, of } from 'rxjs';
 import { Component, computed, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
@@ -29,7 +30,7 @@ function getInitials(name: string): string {
 export class ShiftDoctorsDialog {
   private readonly dashboardService = inject(DashboardService);
 
-  private readonly doctors = toSignal(this.dashboardService.getShiftDoctors());
+  private readonly doctors = toSignal(this.dashboardService.getShiftDoctors().pipe(catchError(() => of([]))));
 
   protected readonly loading = computed(() => this.doctors() === undefined);
 

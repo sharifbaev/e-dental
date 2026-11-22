@@ -25,7 +25,8 @@ const TYPE_VIEW: Record<NotificationType, { icon: string; classes: string }> = {
   waitingList: { icon: 'hourglass_top', classes: 'bg-amber-50 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300' },
   noShow: { icon: 'person_off', classes: 'bg-orange-50 text-orange-600 dark:bg-orange-500/15 dark:text-orange-300' },
   statusOverdue: { icon: 'published_with_changes', classes: 'bg-amber-50 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300' },
-  pendingDecision: { icon: 'hourglass_top', classes: 'bg-amber-50 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300' }
+  pendingDecision: { icon: 'hourglass_top', classes: 'bg-amber-50 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300' },
+  newAppointment: { icon: 'event_available', classes: 'bg-brand-50 text-brand-700 dark:text-brand-300' }
 };
 
 type Tab = 'all' | 'unread';
@@ -87,7 +88,6 @@ export class NotificationsDialog {
   }
 
   protected open(id: number): void {
-    // TODO: когда будет раздел «Расписание» — переход к приёму
     this.notificationsService.markAsRead(id);
 
     // «Обновите статус» — переходим в расписание и сразу открываем окно смены статуса
@@ -102,16 +102,19 @@ export class NotificationsDialog {
       return;
     }
 
-    if (notification?.type !== 'statusOverdue') return;
-
-    const appointment = this.scheduleService.appointments().find(a => a.id === notification.appointmentId);
-    if (!appointment) return;
+    if (notification?.type !== 'statusOverdue' || !notification.appointmentId) return;
 
     this.dialogRef.close();
-    // Окно смены статуса (с планом лечения и формами) грузится только по нажатию — не утяжеляет старт приложения
-    this.router.navigateByUrl('/schedule')
-      .then(() => import('../../../schedule/services/status-change.service'))
-      .then(m => this.injector.get(m.StatusChangeService).open(appointment));
+    // Приём — из расписания или с API; окно смены статуса (с планом лечения и формами) грузится только по нажатию
+    this.scheduleService.get(notification.appointmentId).subscribe({
+      next: appointment => {
+        if (appointment.status !== 'primary') return;
+        this.router.navigateByUrl('/schedule')
+          .then(() => import('../../../schedule/services/status-change.service'))
+          .then(m => this.injector.get(m.StatusChangeService).open(appointment));
+      },
+      error: () => undefined
+    });
   }
 
   protected markAllAsRead(): void {
