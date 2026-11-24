@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, effect, inject, signal, untracked } from '@angular/core';
-import { Observable, map, tap } from 'rxjs';
+import { Observable, forkJoin, map, of, switchMap, tap } from 'rxjs';
 import { Diagnosis, DiagnosisDraft, Patient } from '../models/patient.model';
 import { AuthService } from '../../../core/auth/auth.service';
 import { MAX_PAGE_SIZE, Page, api, params } from '../../../core/api/api';
@@ -34,24 +34,25 @@ export class PatientsService {
   reload(): void {
     if (!this.auth.isAuthenticated()) return;
     this.loading.set(true);
-    const all: Patient[] = [];
-    const loadPage = (page: number): void => {
-      this.http.get<Page<Patient>>(api('/patients'), { params: params({ page, size: MAX_PAGE_SIZE }) }).subscribe({
-        next: result => {
-          all.push(...result.items);
-          if (page * result.size < result.total && result.items.length) {
-            loadPage(page + 1);
-            return;
-          }
-          // Диагнозы уже открытых карточек не теряем
-          const details = new Map(this._patients().filter(p => p.diagnoses).map(p => [p.id, p.diagnoses]));
-          this._patients.set(all.map(p => (details.has(p.id) ? { ...p, diagnoses: details.get(p.id) } : p)));
-          this.loading.set(false);
-        },
-        error: () => this.loading.set(false)
-      });
-    };
-    loadPage(1);
+    const pageRequest = (page: number) =>
+      this.http.get<Page<Patient>>(api('/patients'), { params: params({ page, size: MAX_PAGE_SIZE }) });
+    // Первая страница даёт total, остальные запрашиваем параллельно (раньше — по одной, это долго)
+    pageRequest(1).pipe(
+      switchMap(first => {
+        const pages = first.items.length ? Math.ceil(first.total / first.size) : 1;
+        const rest = Array.from({ length: Math.max(0, pages - 1) }, (_, i) => pageRequest(i + 2));
+        return rest.length ? forkJoin(rest).pipe(map(others => [first, ...others])) : of([first]);
+      })
+    ).subscribe({
+      next: results => {
+        const all = results.flatMap(result => result.items);
+        // Диагнозы уже открытых карточек не теряем
+        const details = new Map(this._patients().filter(p => p.diagnoses).map(p => [p.id, p.diagnoses]));
+        this._patients.set(all.map(p => (details.has(p.id) ? { ...p, diagnoses: details.get(p.id) } : p)));
+        this.loading.set(false);
+      },
+      error: () => this.loading.set(false)
+    });
   }
 
   // Карточка пациента — с диагнозами
