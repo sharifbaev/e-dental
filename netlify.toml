@@ -1,0 +1,14 @@
+# Превью на Netlify: /api проксируется на бэкенд (на стороне Netlify, без CORS),
+# остальные пути отдают index.html (роутинг SPA). На Docker/nginx-деплой не влияет.
+
+[[redirects]]
+  from = "/api/*"
+  to = "https://e-dental.3-26-35-169.sslip.io/api/:splat"
+  status = 200
+  force = true
+  headers = { Origin = "https://e-dental.3-26-35-169.sslip.io" }
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
