@@ -2,126 +2,174 @@
   <!-- Заголовок -->
   <section class="md:px-1 md:pt-1">
     <h1 class="font-display text-xl leading-tight md:text-[30px] md:leading-normal font-extrabold tracking-tight text-content">{{ 'settings.title' | transloco }}</h1>
-    <p class="md:mt-1 text-sm text-muted">{{ 'settings.subtitle' | transloco }}</p>
   </section>
 
   <div class="flex flex-col md:flex-row gap-2 md:gap-6 md:items-start">
- <!-- Вкладки: на ПК — слева столбиком, на мобилке — лента сверху -->
-    <nav class="sticky top-0 z-20 shadow-sm md:shadow-none flex md:flex-col md:top-4 md:w-60 shrink-0 gap-1 p-1.5 md:p-2 rounded-[20px] bg-surface border border-line-strong overflow-x-auto" role="tablist" [attr.aria-label]="'settings.title' | transloco">
+ <!-- Вкладки: на ПК — слева столбиком, на мобилке — лента сверху. Все разделы на одной странице:
+         при прокрутке выбранная вкладка меняется сама, нажатие на вкладку прокручивает к разделу -->
+    <!-- Мобилка: под лентой — сплошная полоса цвета фона, чтобы прокручиваемый текст не просвечивал по краям -->
+    <!-- Отступ сверху 12px — только когда лента прилипла и страницу листают вниз (вверх — 8px): top не сдвигает страницу,
+         а полосу над лентой закрашивает тень цвета фона -->
+    <div #tabsBand class="sticky top-0 z-20 shrink-0 md:top-4 md:w-60 max-md:-mx-2 max-md:px-2 max-md:pb-2 max-md:-mb-2 max-md:bg-page max-md:transition-[top,box-shadow] max-md:duration-200" [style.top.px]="tabsMobile() ? tabsGap() : null" [style.box-shadow]="tabsStuck() ? '0 -' + tabsGap() + 'px 0 0 var(--app-page)' : null">
+    <nav #tabsNav class="shadow-md md:shadow-none flex md:flex-col gap-1 p-1.5 md:p-2 rounded-[20px] bg-surface border border-line-strong overflow-x-auto" role="tablist" [attr.aria-label]="'settings.title' | transloco">
       @for (t of tabs(); track t.id) {
-        <button type="button" role="tab" [attr.aria-selected]="tab() === t.id" class="shrink-0 flex items-center gap-2 md:gap-3 min-h-10 md:min-h-11 px-3 rounded-xl text-sm font-medium text-left whitespace-nowrap transition-colors" [class.bg-brand-100]="tab() === t.id" [class.text-accent]="tab() === t.id" [class.font-semibold]="tab() === t.id" [class.text-soft]="tab() !== t.id" [class.hover:bg-page]="tab() !== t.id" (click)="setTab(t.id)">
+        <button type="button" role="tab" [attr.data-tab]="t.id" [attr.aria-selected]="tab() === t.id" class="shrink-0 flex items-center gap-2 md:gap-3 min-h-10 md:min-h-11 px-3 rounded-xl text-sm font-medium text-left whitespace-nowrap transition-colors" [class.bg-brand-100]="tab() === t.id" [class.text-accent]="tab() === t.id" [class.font-semibold]="tab() === t.id" [class.text-soft]="tab() !== t.id" [class.hover:bg-page]="tab() !== t.id" (click)="setTab(t.id)">
           <mat-icon fontSet="material-symbols-outlined" style="font-size: 20px; width: 20px; height: 20px;">{{ t.icon }}</mat-icon>
           {{ t.key | transloco }}
         </button>
       }
     </nav>
+    </div>
 
     <div class="flex-1 min-w-0 flex flex-col gap-2 md:gap-4">
-    <form [formGroup]="form" (ngSubmit)="save()" class="flex flex-col gap-2 md:gap-4" [class.hidden]="tab() === 'services' || tab() === 'dictionaries' || tab() === 'workMode'">
+    <form [formGroup]="form" (ngSubmit)="save()" class="order-1 flex flex-col gap-2 md:gap-4">
       <!-- Клиника -->
-      @if (tab() === 'clinic') {
-      <section id="clinic" class="scroll-mt-20 md:scroll-mt-4 bg-surface border border-line-strong rounded-[20px] p-3 md:p-6 flex flex-col gap-3 md:gap-5">
+      <section id="clinic" class="scroll-mt-28 md:scroll-mt-4 bg-surface border border-line-strong rounded-[20px] p-3 md:p-5 flex flex-col gap-3">
         <h2 class="font-display text-lg font-bold text-content">{{ 'settings.sections.clinic' | transloco }}</h2>
 
-        <div class="flex items-center gap-4">
-          <span class="w-16 h-16 shrink-0 rounded-2xl bg-brand-700 flex items-center justify-center">
-            <img src="favicon.svg" alt="" class="w-8 h-8 brightness-0 invert">
-          </span>
-          <div class="min-w-0 flex-1">
-            <div class="text-sm font-semibold text-content">{{ 'settings.clinic.logo' | transloco }}</div>
-            <div class="text-[13px] text-muted">{{ 'settings.clinic.logoHint' | transloco }}</div>
-          </div>
-        </div>
+        <!-- Логотип: свой (загружает владелец) или стандартный.
+             Новый сначала показывается рядом с нынешним и сохраняется только по кнопке -->
+        <ng-template #currentLogo>
+          @if (logoUrl(); as logo) {
+            <img [src]="logo" alt="" class="w-14 h-14 shrink-0 rounded-2xl object-cover bg-page border border-line">
+          } @else {
+            <span class="w-14 h-14 shrink-0 rounded-2xl bg-brand-700 flex items-center justify-center">
+              <img src="favicon.svg" alt="" class="w-7 h-7 brightness-0 invert">
+            </span>
+          }
+        </ng-template>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <label class="flex flex-col gap-1.5">
-            <span class="text-[13px] font-semibold text-soft">{{ 'settings.clinic.name' | transloco }}</span>
-            <input type="text" formControlName="name" class="w-full h-11 px-3 rounded-xl bg-field border border-line-strong text-sm text-content outline-none focus:border-brand-300 focus:bg-surface">
-          </label>
-          <label class="flex flex-col gap-1.5">
-            <span class="text-[13px] font-semibold text-soft">{{ 'settings.clinic.phone' | transloco }}</span>
-            <!-- +998 подставлен заранее — вводятся только 9 цифр номера -->
-            <div class="flex items-center h-11 rounded-xl bg-field border border-line-strong focus-within:border-brand-300 focus-within:bg-surface">
-              <span class="pl-3 pr-1.5 text-sm font-medium text-soft select-none">+998</span>
-              <input appUzPhone formControlName="phone" placeholder="90 123-45-67" autocomplete="off" class="flex-1 min-w-0 h-full pr-3 bg-transparent text-sm text-content placeholder:text-subtle outline-none">
+        @if (pendingLogo(); as pending) {
+          <div class="flex flex-col gap-2.5 p-2.5 rounded-xl bg-page">
+            <div class="text-sm font-semibold text-content">{{ 'settings.clinic.logo' | transloco }}</div>
+            <div class="flex items-center gap-3">
+              <div class="flex flex-col items-center gap-1">
+                <ng-container [ngTemplateOutlet]="currentLogo" />
+                <span class="text-xs text-muted">{{ 'settings.clinic.logoCurrent' | transloco }}</span>
+              </div>
+              <mat-icon fontSet="material-symbols-outlined" class="text-subtle -mt-5">arrow_forward</mat-icon>
+              <div class="flex flex-col items-center gap-1">
+                <img [src]="pending.url" alt="" class="w-14 h-14 shrink-0 rounded-2xl object-cover bg-surface border-2 border-brand-300">
+                <span class="text-xs font-semibold text-accent">{{ 'settings.clinic.logoNew' | transloco }}</span>
+              </div>
             </div>
-          </label>
-          <label class="flex flex-col gap-1.5 sm:col-span-2">
-            <span class="text-[13px] font-semibold text-soft">{{ 'settings.clinic.address' | transloco }}</span>
-            <input type="text" formControlName="address" class="w-full h-11 px-3 rounded-xl bg-field border border-line-strong text-sm text-content outline-none focus:border-brand-300 focus:bg-surface">
-          </label>
-          <div class="flex flex-col gap-1.5">
-            <span class="text-[13px] font-semibold text-soft">{{ 'settings.clinic.hours' | transloco }}</span>
-            <div class="flex items-center gap-2">
-              <input type="time" formControlName="openTime" [attr.aria-label]="'settings.clinic.open' | transloco" class="flex-1 min-w-0 h-11 px-3 rounded-xl bg-field border border-line-strong text-sm text-content outline-none focus:border-brand-300 focus:bg-surface">
-              <span class="text-muted">—</span>
-              <input type="time" formControlName="closeTime" [attr.aria-label]="'settings.clinic.close' | transloco" class="flex-1 min-w-0 h-11 px-3 rounded-xl bg-field border border-line-strong text-sm text-content outline-none focus:border-brand-300 focus:bg-surface">
+            <div class="flex gap-2">
+              <button type="button" class="flex-1 sm:flex-none h-9 px-4 rounded-lg border border-line-strong text-[13px] font-semibold text-content hover:bg-surface" [disabled]="logoUploading()" (click)="clearPendingLogo()">{{ 'common.cancel' | transloco }}</button>
+              <button type="button" class="flex-1 sm:flex-none h-9 px-4 rounded-lg bg-brand-700 text-[13px] font-semibold text-white hover:bg-brand-800 disabled:opacity-60" [disabled]="logoUploading()" (click)="saveLogo()">{{ 'settings.save' | transloco }}</button>
             </div>
           </div>
-          <div class="grid grid-cols-2 gap-3">
-            <label class="flex flex-col gap-1.5 min-w-0">
-              <span class="text-[13px] font-semibold text-soft">{{ 'settings.clinic.timezone' | transloco }}</span>
-              <select formControlName="timezone" class="w-full h-11 px-2 rounded-xl bg-field border border-line-strong text-sm text-content outline-none focus:border-brand-300 focus:bg-surface">
-                <option value="Asia/Tashkent">{{ 'settings.clinic.tashkent' | transloco }}</option>
-              </select>
+        } @else {
+          <div class="flex items-center gap-3">
+            <ng-container [ngTemplateOutlet]="currentLogo" />
+            <div class="min-w-0 flex-1 flex flex-col gap-1">
+              <div class="text-sm font-semibold text-content">{{ 'settings.clinic.logo' | transloco }}</div>
+              @if (isOwner()) {
+                <div class="flex flex-wrap items-center gap-1.5">
+                  <label class="inline-flex items-center gap-1 h-8 px-3 rounded-lg border border-line-strong text-[13px] font-semibold text-accent cursor-pointer hover:bg-brand-50" [class.opacity-60]="logoUploading()" [class.pointer-events-none]="logoUploading()">
+                    <mat-icon fontSet="material-symbols-outlined" style="font-size: 18px; width: 18px; height: 18px;">upload</mat-icon>
+                    {{ (logoUrl() ? 'settings.clinic.logoChange' : 'settings.clinic.logoUpload') | transloco }}
+                    <input type="file" accept="image/png,image/jpeg,image/svg+xml,image/webp" class="sr-only" (change)="onLogoSelected($event)">
+                  </label>
+                  @if (logoUrl()) {
+                    <button type="button" class="inline-flex items-center gap-1 h-8 px-3 rounded-lg text-[13px] font-semibold text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-500/10" [disabled]="logoUploading()" (click)="removeLogo()">
+                      <mat-icon fontSet="material-symbols-outlined" style="font-size: 18px; width: 18px; height: 18px;">delete</mat-icon>
+                      {{ 'settings.clinic.logoDelete' | transloco }}
+                    </button>
+                  }
+                </div>
+                <div class="text-xs text-muted">{{ 'settings.clinic.logoRules' | transloco }}</div>
+              }
+            </div>
+          </div>
+        }
+
+        <!-- Часовой пояс, валюта и адрес скрыты (значения остаются прежними и уходят на сервер как есть) -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
+          <label class="flex flex-col gap-1 min-w-0 sm:col-span-2">
+            <span class="text-[13px] font-semibold text-soft">{{ 'settings.clinic.name' | transloco }}</span>
+            <input type="text" formControlName="name" class="w-full h-10 md:h-11 px-3 rounded-xl bg-field border border-line-strong text-sm text-content outline-none focus:border-brand-300 focus:bg-surface">
+          </label>
+          <!-- Телефон и часы работы — в один ряд (и на мобилке) -->
+          <div class="grid grid-cols-2 gap-2 sm:gap-3 min-w-0 sm:col-span-2">
+            <label class="flex flex-col gap-1 min-w-0">
+              <span class="text-[13px] font-semibold text-soft">{{ 'settings.clinic.phone' | transloco }}</span>
+              <!-- +998 подставлен заранее — вводятся только 9 цифр номера -->
+              <div class="flex items-center h-10 md:h-11 rounded-xl bg-field border border-line-strong focus-within:border-brand-300 focus-within:bg-surface">
+                <span class="pl-3 pr-1.5 text-sm font-medium text-soft select-none">+998</span>
+                <input appUzPhone formControlName="phone" placeholder="90 123-45-67" autocomplete="off" class="flex-1 min-w-0 h-[38px] md:h-[42px] py-0 pr-3 bg-transparent text-sm leading-normal text-content placeholder:text-subtle outline-none">
+              </div>
             </label>
-            <label class="flex flex-col gap-1.5 min-w-0">
-              <span class="text-[13px] font-semibold text-soft">{{ 'settings.clinic.currency' | transloco }}</span>
-              <select formControlName="currency" class="w-full h-11 px-2 rounded-xl bg-field border border-line-strong text-sm text-content outline-none focus:border-brand-300 focus:bg-surface">
-                <option value="UZS">{{ 'settings.clinic.uzs' | transloco }}</option>
-                <option value="USD">{{ 'settings.clinic.usd' | transloco }}</option>
-              </select>
-            </label>
+            <div class="flex flex-col gap-1 min-w-0">
+              <span class="text-[13px] font-semibold text-soft">{{ 'settings.clinic.hours' | transloco }}</span>
+              <div class="flex items-center gap-1 sm:gap-2 min-w-0">
+                <input type="time" formControlName="openTime" [attr.aria-label]="'settings.clinic.open' | transloco" class="flex-1 min-w-0 h-10 md:h-11 px-1 sm:px-3 max-sm:text-center max-sm:[&::-webkit-calendar-picker-indicator]:hidden rounded-xl bg-field border border-line-strong text-sm text-content outline-none focus:border-brand-300 focus:bg-surface">
+                <span class="text-muted shrink-0">—</span>
+                <input type="time" formControlName="closeTime" [attr.aria-label]="'settings.clinic.close' | transloco" class="flex-1 min-w-0 h-10 md:h-11 px-1 sm:px-3 max-sm:text-center max-sm:[&::-webkit-calendar-picker-indicator]:hidden rounded-xl bg-field border border-line-strong text-sm text-content outline-none focus:border-brand-300 focus:bg-surface">
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
-      }
 
-      <!-- Внешний вид -->
-      @if (tab() === 'appearance') {
-      <section id="appearance" class="scroll-mt-20 md:scroll-mt-4 bg-surface border border-line-strong rounded-[20px] p-3 md:p-6 flex flex-col gap-3 md:gap-5">
-        <h2 class="font-display text-lg font-bold text-content">{{ 'settings.sections.appearance' | transloco }}</h2>
+      <!-- Внешний вид: всё применяется сразу и хранится в личных настройках -->
+      <section id="appearance" class="scroll-mt-28 md:scroll-mt-4 bg-surface border border-line-strong rounded-[20px] p-3 md:p-5 flex flex-col">
+        <h2 class="font-display text-lg font-bold text-content mb-1">{{ 'settings.sections.appearance' | transloco }}</h2>
 
-        <div class="flex flex-col gap-2">
-          <span class="text-[13px] font-semibold text-soft">{{ 'settings.appearance.language' | transloco }}</span>
-          <div class="flex w-full sm:w-max p-1 gap-1 rounded-xl bg-page" role="radiogroup" [attr.aria-label]="'settings.appearance.language' | transloco">
-            <button type="button" role="radio" [attr.aria-checked]="lang() === 'ru'" class="flex-1 sm:flex-none h-10 px-5 rounded-[10px] text-sm font-semibold transition-colors" [class.bg-surface]="lang() === 'ru'" [class.shadow-sm]="lang() === 'ru'" [class.text-content]="lang() === 'ru'" [class.text-muted]="lang() !== 'ru'" (click)="setLang('ru')">Русский</button>
-            <button type="button" role="radio" [attr.aria-checked]="lang() === 'uz'" class="flex-1 sm:flex-none h-10 px-5 rounded-[10px] text-sm font-semibold transition-colors" [class.bg-surface]="lang() === 'uz'" [class.shadow-sm]="lang() === 'uz'" [class.text-content]="lang() === 'uz'" [class.text-muted]="lang() !== 'uz'" (click)="setLang('uz')">Oʻzbekcha</button>
+        <!-- Язык — в одну строку с подписью -->
+        <div class="flex items-center justify-between gap-3 py-2.5">
+          <span class="text-sm font-semibold text-content">{{ 'settings.appearance.language' | transloco }}</span>
+          <div class="flex shrink-0 p-0.5 gap-0.5 rounded-xl bg-page" role="radiogroup" [attr.aria-label]="'settings.appearance.language' | transloco">
+            <button type="button" role="radio" [attr.aria-checked]="lang() === 'ru'" class="h-9 px-3 rounded-[10px] text-[13px] font-semibold transition-colors" [class.bg-surface]="lang() === 'ru'" [class.shadow-sm]="lang() === 'ru'" [class.text-content]="lang() === 'ru'" [class.text-muted]="lang() !== 'ru'" (click)="setLang('ru')">Русский</button>
+            <button type="button" role="radio" [attr.aria-checked]="lang() === 'uz'" class="h-9 px-3 rounded-[10px] text-[13px] font-semibold transition-colors" [class.bg-surface]="lang() === 'uz'" [class.shadow-sm]="lang() === 'uz'" [class.text-content]="lang() === 'uz'" [class.text-muted]="lang() !== 'uz'" (click)="setLang('uz')">Oʻzbekcha</button>
           </div>
         </div>
 
-        <div class="flex flex-col gap-2">
-          <span class="text-[13px] font-semibold text-soft">{{ 'settings.appearance.theme' | transloco }}</span>
-          <div class="grid grid-cols-3 gap-2 sm:gap-3" role="radiogroup" [attr.aria-label]="'settings.appearance.theme' | transloco">
+        <!-- Тема — только названия -->
+        <div class="flex items-center justify-between gap-3 py-2.5 border-t border-line">
+          <span class="text-sm font-semibold text-content">{{ 'settings.appearance.theme' | transloco }}</span>
+          <div class="flex shrink-0 p-0.5 gap-0.5 rounded-xl bg-page" role="radiogroup" [attr.aria-label]="'settings.appearance.theme' | transloco">
             @for (theme of themes; track theme.value) {
-              <button type="button" role="radio" [attr.aria-checked]="themeChoice() === theme.value" class="flex flex-col gap-2 p-2 rounded-2xl text-left transition-colors" [class.border-2]="themeChoice() === theme.value" [class.border-brand-700]="themeChoice() === theme.value" [class.border]="themeChoice() !== theme.value" [class.border-line-strong]="themeChoice() !== theme.value" (click)="setTheme(theme.value)">
-                <!-- Мини-превью темы -->
-                @switch (theme.value) {
-                  @case ('light') {
-                    <span aria-hidden="true" class="h-16 rounded-xl border border-[#e3e8e6] bg-[#f4f6f5] flex overflow-hidden">
-                      <span class="w-[28%] bg-white border-r border-[#e3e8e6]"></span>
-                      <span class="flex-1 p-2 flex flex-col gap-1.5"><span class="h-1.5 w-3/5 rounded bg-[#10201c]"></span><span class="h-4 rounded bg-white border border-[#e3e8e6]"></span><span class="h-1.5 w-2/5 rounded bg-[#0b7a68]"></span></span>
-                    </span>
-                  }
-                  @case ('dark') {
-                    <span aria-hidden="true" class="h-16 rounded-xl border border-[#273833] bg-[#0b1513] flex overflow-hidden">
-                      <span class="w-[28%] bg-[#13211e] border-r border-[#273833]"></span>
-                      <span class="flex-1 p-2 flex flex-col gap-1.5"><span class="h-1.5 w-3/5 rounded bg-[#e6eeeb]"></span><span class="h-4 rounded bg-[#13211e] border border-[#273833]"></span><span class="h-1.5 w-2/5 rounded bg-[#5ee0c3]"></span></span>
-                    </span>
-                  }
-                  @default {
-                    <span aria-hidden="true" class="h-16 rounded-xl border border-[#e3e8e6] flex overflow-hidden"><span class="flex-1 bg-[#f4f6f5]"></span><span class="flex-1 bg-[#0b1513]"></span></span>
-                  }
-                }
-                <span class="px-1 text-[13px] sm:text-sm font-semibold text-content">{{ theme.key | transloco }}</span>
-              </button>
+              <button type="button" role="radio" [attr.aria-checked]="activeTheme() === theme.value" class="h-9 px-3 rounded-[10px] text-[13px] font-semibold transition-colors" [class.bg-surface]="activeTheme() === theme.value" [class.shadow-sm]="activeTheme() === theme.value" [class.text-content]="activeTheme() === theme.value" [class.text-muted]="activeTheme() !== theme.value" (click)="setTheme(theme.value)">{{ theme.key | transloco }}</button>
             }
           </div>
         </div>
 
-        <!-- Главная на мобилке: карточки «Пациенты сегодня» и «Свободные слоты» — применяется сразу -->
-        <label class="flex items-center gap-4 pt-4 border-t border-line cursor-pointer">
+        <!-- Масштаб интерфейса -->
+        <div class="flex items-center justify-between gap-3 py-2.5 border-t border-line">
+          <span class="text-sm font-semibold text-content">{{ 'settings.appearance.scale.title' | transloco }}</span>
+          <div class="flex shrink-0 p-0.5 gap-0.5 rounded-xl bg-page" role="radiogroup" [attr.aria-label]="'settings.appearance.scale.title' | transloco">
+            @for (scale of uiScales; track scale.value) {
+              <button type="button" role="radio" [attr.aria-checked]="dashboardPrefs.uiScale() === scale.value" class="h-9 px-2.5 sm:px-3 rounded-[10px] text-[13px] font-semibold transition-colors" [class.bg-surface]="dashboardPrefs.uiScale() === scale.value" [class.shadow-sm]="dashboardPrefs.uiScale() === scale.value" [class.text-content]="dashboardPrefs.uiScale() === scale.value" [class.text-muted]="dashboardPrefs.uiScale() !== scale.value" (click)="dashboardPrefs.setUiScale(scale.value)">{{ scale.key | transloco }}</button>
+            }
+          </div>
+        </div>
+
+        <!-- Стартовая страница после входа -->
+        <label class="flex items-center justify-between gap-3 py-2.5 border-t border-line">
+          <span class="text-sm font-semibold text-content">{{ 'settings.appearance.startPage' | transloco }}</span>
+          <select class="shrink-0 max-w-[55%] h-9 pl-3 pr-8 rounded-xl bg-field border border-line-strong text-[13px] font-semibold text-content outline-none focus:border-brand-300" [value]="dashboardPrefs.startPage()" (change)="dashboardPrefs.setStartPage($any($event.target).value)">
+            @for (page of startPages(); track page.path) {
+              <option [value]="page.path" [selected]="page.path === dashboardPrefs.startPage()">{{ page.key | transloco }}</option>
+            }
+          </select>
+        </label>
+
+        <!-- Пункты меню: какие показывать -->
+        <div class="flex flex-col pt-2.5 border-t border-line">
+          <span class="text-sm font-semibold text-content mb-1">{{ 'settings.appearance.menu' | transloco }}</span>
+          @for (item of menuItems(); track item.path) {
+            <label class="flex items-center gap-3 py-2 cursor-pointer">
+              <mat-icon fontSet="material-symbols-outlined" class="text-soft" style="font-size: 20px; width: 20px; height: 20px;">{{ item.icon }}</mat-icon>
+              <span class="flex-1 min-w-0 text-sm text-content">{{ item.key | transloco }}</span>
+              <input type="checkbox" role="switch" class="peer sr-only" [checked]="isMenuVisible(item.path)" (change)="dashboardPrefs.setMenuVisible(item.path, $any($event.target).checked)">
+              <span aria-hidden="true" class="relative w-11 h-6 shrink-0 rounded-full bg-line-strong transition-colors peer-checked:bg-brand-700 peer-focus-visible:outline-2 peer-focus-visible:outline-brand-300 after:absolute after:top-0.5 after:left-0.5 after:w-5 after:h-5 after:rounded-full after:bg-white after:shadow-sm after:transition-transform peer-checked:after:translate-x-5"></span>
+            </label>
+          }
+        </div>
+
+        <!-- Главная на мобилке: карточки «Пациенты сегодня» и «Свободные слоты» -->
+        <label class="flex items-center gap-4 py-2.5 border-t border-line cursor-pointer">
           <span class="flex-1 min-w-0 flex flex-col">
             <span class="text-sm font-semibold text-content">{{ 'settings.appearance.dashboardKpi.title' | transloco }}</span>
             <span class="text-[13px] text-muted">{{ 'settings.appearance.dashboardKpi.hint' | transloco }}</span>
@@ -131,9 +179,9 @@
           <span aria-hidden="true" class="relative w-11 h-6 shrink-0 rounded-full bg-line-strong transition-colors peer-checked:bg-brand-700 peer-focus-visible:outline-2 peer-focus-visible:outline-brand-300 after:absolute after:top-0.5 after:left-0.5 after:w-5 after:h-5 after:rounded-full after:bg-white after:shadow-sm after:transition-transform peer-checked:after:translate-x-5"></span>
         </label>
 
-        <!-- Только для врача: показывать других врачей (фильтр «Все врачи») — применяется сразу -->
+        <!-- Только для врача: показывать других врачей (фильтр «Все врачи») -->
         @if (isDoctor()) {
-          <label class="flex items-center gap-4 pt-4 border-t border-line cursor-pointer">
+          <label class="flex items-center gap-4 py-2.5 border-t border-line cursor-pointer">
             <span class="flex-1 min-w-0 flex flex-col">
               <span class="text-sm font-semibold text-content">{{ 'settings.appearance.otherDoctors.title' | transloco }}</span>
               <span class="text-[13px] text-muted">{{ 'settings.appearance.otherDoctors.hint' | transloco }}</span>
@@ -145,38 +193,162 @@
         }
       </section>
 
-      }
+
+      <!-- Статус проверки текста SMS у провайдера: «На проверке / Одобрен / Отклонён» (+ причина) или «Изменён» -->
+      <ng-template #moderationTpl let-m>
+        @if (m) {
+          <div class="flex flex-wrap items-center gap-1.5">
+            <span class="px-2 py-0.5 rounded-full text-[11px] font-semibold" [class]="m.classes">{{ m.key | transloco }}</span>
+            @if (m.comment) {
+              <span class="text-xs text-red-600 dark:text-red-400">{{ m.comment }}</span>
+            }
+          </div>
+        }
+      </ng-template>
 
       <!-- Уведомления -->
-      @if (tab() === 'notifications') {
-      <section id="notifications" formGroupName="notifications" class="scroll-mt-20 md:scroll-mt-4 bg-surface border border-line-strong rounded-[20px] p-3 md:p-6 flex flex-col">
-        <h2 class="font-display text-lg font-bold text-content mb-2">{{ 'settings.sections.notifications' | transloco }}</h2>
-        @for (item of notificationItems; track item.control) {
-          <label class="flex items-center gap-4 py-3 border-t border-line cursor-pointer">
-            <span class="flex-1 min-w-0 flex flex-col">
-              <span class="text-sm font-semibold text-content">{{ item.key + '.title' | transloco }}</span>
-              <span class="text-[13px] text-muted">{{ item.key + '.hint' | transloco }}</span>
-            </span>
-            <!-- Переключатель -->
-            <input type="checkbox" role="switch" class="peer sr-only" [formControlName]="item.control">
-            <span aria-hidden="true" class="relative w-11 h-6 shrink-0 rounded-full bg-line-strong transition-colors peer-checked:bg-brand-700 peer-focus-visible:outline-2 peer-focus-visible:outline-brand-300 after:absolute after:top-0.5 after:left-0.5 after:w-5 after:h-5 after:rounded-full after:bg-white after:shadow-sm after:transition-transform peer-checked:after:translate-x-5"></span>
-          </label>
+      <section id="notifications" formGroupName="notifications" class="scroll-mt-28 md:scroll-mt-4 bg-surface border border-line-strong rounded-[20px] p-3 md:p-5 flex flex-col">
+        <div class="flex items-center justify-between gap-2 mb-1">
+          <h2 class="font-display text-lg font-bold text-content">{{ 'settings.sections.notifications' | transloco }}</h2>
+          <!-- Журнал отправленных SMS (владелец и администратор); на мобилке это единственный вход в раздел -->
+          @if (!isDoctor()) {
+            <a routerLink="/sms" class="shrink-0 inline-flex items-center gap-1 h-8 px-3 rounded-lg border border-line-strong text-[13px] font-semibold text-accent hover:bg-brand-50">
+              <mat-icon fontSet="material-symbols-outlined" style="font-size: 18px; width: 18px; height: 18px;">sms</mat-icon>
+              {{ 'settings.notifications.smsLog' | transloco }}
+            </a>
+          }
+        </div>
+
+        <!-- SMS пациентам — настройки клиники, меняет владелец -->
+        @if (isOwner()) {
+          @if (smsNeedsSave()) {
+            <div class="flex items-start gap-2 mb-1 p-2.5 rounded-xl bg-amber-50 text-[13px] text-amber-800 dark:bg-amber-500/15 dark:text-amber-300" role="status">
+              <mat-icon fontSet="material-symbols-outlined" class="shrink-0" style="font-size: 18px; width: 18px; height: 18px;">warning</mat-icon>
+              <span>{{ 'settings.notifications.needsSave' | transloco }}</span>
+            </div>
+          }
+          <!-- Язык SMS -->
+          <div class="flex items-center justify-between gap-3 py-2.5">
+            <span class="text-sm font-semibold text-content">{{ 'settings.notifications.smsLanguage' | transloco }}</span>
+            <div class="flex shrink-0 p-0.5 gap-0.5 rounded-xl bg-page" role="radiogroup" [attr.aria-label]="'settings.notifications.smsLanguage' | transloco">
+              <button type="button" role="radio" [attr.aria-checked]="notifications.smsLanguage.value === 'ru'" class="h-9 px-3 rounded-[10px] text-[13px] font-semibold transition-colors" [class.bg-surface]="notifications.smsLanguage.value === 'ru'" [class.shadow-sm]="notifications.smsLanguage.value === 'ru'" [class.text-content]="notifications.smsLanguage.value === 'ru'" [class.text-muted]="notifications.smsLanguage.value !== 'ru'" (click)="setSmsLanguage('ru')">Русский</button>
+              <button type="button" role="radio" [attr.aria-checked]="notifications.smsLanguage.value === 'uz'" class="h-9 px-3 rounded-[10px] text-[13px] font-semibold transition-colors" [class.bg-surface]="notifications.smsLanguage.value === 'uz'" [class.shadow-sm]="notifications.smsLanguage.value === 'uz'" [class.text-content]="notifications.smsLanguage.value === 'uz'" [class.text-muted]="notifications.smsLanguage.value !== 'uz'" (click)="setSmsLanguage('uz')">Oʻzbekcha</button>
+            </div>
+          </div>
+
+          <!-- SMS пациенту перед визитом: можно несколько напоминаний -->
+          <div formGroupName="patientSms" class="flex flex-col gap-2.5 py-2.5 border-t border-line">
+            <label class="flex items-center gap-4 cursor-pointer">
+              <span class="flex-1 min-w-0 text-sm font-semibold text-content">{{ 'settings.notifications.patientSms' | transloco }}</span>
+              <input type="checkbox" role="switch" class="peer sr-only" formControlName="enabled">
+              <span aria-hidden="true" class="relative w-11 h-6 shrink-0 rounded-full bg-line-strong transition-colors peer-checked:bg-brand-700 peer-focus-visible:outline-2 peer-focus-visible:outline-brand-300 after:absolute after:top-0.5 after:left-0.5 after:w-5 after:h-5 after:rounded-full after:bg-white after:shadow-sm after:transition-transform peer-checked:after:translate-x-5"></span>
+            </label>
+
+            @if (notifications.patientSms.controls.enabled.value) {
+              <div formArrayName="reminders" class="flex flex-col gap-2.5">
+                @for (group of reminders.controls; track group; let i = $index) {
+                  <div [formGroupName]="i" class="flex flex-col gap-2 p-2.5 rounded-xl bg-page">
+                    <div class="flex items-center gap-2 text-sm text-soft">
+                      <span>{{ 'settings.notifications.before' | transloco }}</span>
+                      <input type="number" inputmode="numeric" min="1" formControlName="value" class="w-16 h-9 px-2 rounded-lg bg-surface border text-sm text-content text-center outline-none focus:border-brand-300" [class.border-line-strong]="group.controls.value.valid && !group.hasError('max')" [class.border-red-300]="group.controls.value.invalid || group.hasError('max')" [attr.aria-label]="'settings.notifications.before' | transloco">
+                      <select formControlName="unit" class="h-9 pl-2 pr-7 rounded-lg bg-surface border border-line-strong text-sm text-content outline-none focus:border-brand-300">
+                        @for (unit of offsetUnits; track unit.value) {
+                          <option [value]="unit.value">{{ unit.key | transloco }}</option>
+                        }
+                      </select>
+                      <span class="min-w-0 truncate">{{ 'settings.notifications.beforeVisit' | transloco }}</span>
+                      @if (reminders.length > 1) {
+                        <button type="button" class="ml-auto shrink-0 w-9 h-9 flex items-center justify-center rounded-lg text-soft hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10" [title]="'settings.notifications.removeReminder' | transloco" [attr.aria-label]="'settings.notifications.removeReminder' | transloco" (click)="removeReminder(i)">
+                          <mat-icon fontSet="material-symbols-outlined" style="font-size: 20px; width: 20px; height: 20px;">close</mat-icon>
+                        </button>
+                      }
+                    </div>
+                    <textarea rows="3" formControlName="text" [attr.maxlength]="smsTextMax" class="w-full px-3 py-2 rounded-lg bg-surface border text-sm text-content outline-none resize-y focus:border-brand-300" [class.border-line-strong]="group.controls.text.valid" [class.border-red-300]="group.controls.text.invalid && group.controls.text.touched" [attr.aria-label]="'settings.notifications.smsText' | transloco"></textarea>
+                    <ng-container [ngTemplateOutlet]="moderationTpl" [ngTemplateOutletContext]="{ $implicit: moderationOf(group.controls.text.value, savedReminders()) }" />
+                    <div class="flex items-center justify-between gap-2">
+                      <span class="text-xs text-muted">{{ 'settings.notifications.tokens' | transloco }}</span>
+                      <button type="button" class="shrink-0 text-xs font-semibold text-accent hover:underline" (click)="restoreReminderText(i)">{{ 'settings.notifications.restoreText' | transloco }}</button>
+                    </div>
+                  </div>
+                }
+              </div>
+              @if (reminders.length < maxReminders) {
+                <button type="button" class="self-start inline-flex items-center gap-1 h-9 px-3 rounded-lg border border-line-strong text-[13px] font-semibold text-accent hover:bg-brand-50" (click)="addReminder()">
+                  <mat-icon fontSet="material-symbols-outlined" style="font-size: 18px; width: 18px; height: 18px;">add</mat-icon>
+                  {{ 'settings.notifications.addReminder' | transloco }}
+                </button>
+              }
+            }
+          </div>
+
+          <!-- SMS-провайдер проверяет каждый новый текст -->
+          @if (notifications.patientSms.controls.enabled.value || notifications.birthdaySms.controls.enabled.value) {
+            <div class="flex items-start gap-2 pb-2.5 text-xs text-muted">
+              <mat-icon fontSet="material-symbols-outlined" class="shrink-0" style="font-size: 16px; width: 16px; height: 16px;">info</mat-icon>
+              <span>{{ 'settings.notifications.moderationNote' | transloco }}</span>
+            </div>
+          }
+
+          <!-- SMS-поздравление с днём рождения -->
+          <div formGroupName="birthdaySms" class="flex flex-col gap-2.5 py-2.5 border-t border-line">
+            <label class="flex items-center gap-4 cursor-pointer">
+              <span class="flex-1 min-w-0 text-sm font-semibold text-content">{{ 'settings.notifications.birthdaySms' | transloco }}</span>
+              <input type="checkbox" role="switch" class="peer sr-only" formControlName="enabled">
+              <span aria-hidden="true" class="relative w-11 h-6 shrink-0 rounded-full bg-line-strong transition-colors peer-checked:bg-brand-700 peer-focus-visible:outline-2 peer-focus-visible:outline-brand-300 after:absolute after:top-0.5 after:left-0.5 after:w-5 after:h-5 after:rounded-full after:bg-white after:shadow-sm after:transition-transform peer-checked:after:translate-x-5"></span>
+            </label>
+
+            @if (notifications.birthdaySms.controls.enabled.value) {
+              <div class="flex flex-col gap-2 p-2.5 rounded-xl bg-page">
+                <label class="flex items-center gap-2 text-sm text-soft">
+                  <span>{{ 'settings.notifications.sendAt' | transloco }}</span>
+                  <input type="time" formControlName="time" class="w-28 h-9 px-2 rounded-lg bg-surface border border-line-strong text-sm text-content outline-none focus:border-brand-300">
+                </label>
+                <textarea rows="3" formControlName="text" [attr.maxlength]="smsTextMax" class="w-full px-3 py-2 rounded-lg bg-surface border text-sm text-content outline-none resize-y focus:border-brand-300" [class.border-line-strong]="!(notifications.birthdaySms.controls.text.invalid && notifications.birthdaySms.controls.text.touched)" [class.border-red-300]="notifications.birthdaySms.controls.text.invalid && notifications.birthdaySms.controls.text.touched" [attr.aria-label]="'settings.notifications.smsText' | transloco"></textarea>
+                <ng-container [ngTemplateOutlet]="moderationTpl" [ngTemplateOutletContext]="{ $implicit: moderationOf(notifications.birthdaySms.controls.text.value, savedBirthday()) }" />
+                <div class="flex items-center justify-between gap-2">
+                  <span class="text-xs text-muted">{{ 'settings.notifications.tokensBirthday' | transloco }}</span>
+                  <button type="button" class="shrink-0 text-xs font-semibold text-accent hover:underline" (click)="restoreBirthdayText()">{{ 'settings.notifications.restoreText' | transloco }}</button>
+                </div>
+              </div>
+            }
+          </div>
+        }
+
+        <!-- Врачу: напомнить обновить статус приёма — личная настройка, сохраняется сразу -->
+        @for (item of statusReminderItems; track item.key) {
+          @let reminder = dashboardPrefs.statusReminders()[item.key];
+          <div class="flex flex-col gap-2.5 py-2.5 border-t border-line" [class.border-t-0]="!isOwner() && $first">
+            <label class="flex items-center gap-4 cursor-pointer">
+              <span class="flex-1 min-w-0 text-sm font-semibold text-content">{{ item.title | transloco }}</span>
+              <input type="checkbox" role="switch" class="peer sr-only" [checked]="reminder.enabled" (change)="setStatusReminder(item.key, { enabled: $any($event.target).checked })">
+              <span aria-hidden="true" class="relative w-11 h-6 shrink-0 rounded-full bg-line-strong transition-colors peer-checked:bg-brand-700 peer-focus-visible:outline-2 peer-focus-visible:outline-brand-300 after:absolute after:top-0.5 after:left-0.5 after:w-5 after:h-5 after:rounded-full after:bg-white after:shadow-sm after:transition-transform peer-checked:after:translate-x-5"></span>
+            </label>
+            @if (reminder.enabled) {
+              <div class="flex items-center gap-2 p-2.5 rounded-xl bg-page text-sm text-soft">
+                <span>{{ 'settings.notifications.after' | transloco }}</span>
+                <input type="number" inputmode="numeric" min="1" class="w-16 h-9 px-2 rounded-lg bg-surface border border-line-strong text-sm text-content text-center outline-none focus:border-brand-300" [value]="reminder.value" [attr.aria-label]="'settings.notifications.after' | transloco" (change)="setStatusReminder(item.key, { value: +$any($event.target).value })">
+                <select class="h-9 pl-2 pr-7 rounded-lg bg-surface border border-line-strong text-sm text-content outline-none focus:border-brand-300" (change)="setStatusReminder(item.key, { unit: $any($event.target).value })">
+                  @for (unit of offsetUnits; track unit.value) {
+                    <option [value]="unit.value" [selected]="unit.value === reminder.unit">{{ unit.key | transloco }}</option>
+                  }
+                </select>
+                <span class="min-w-0 truncate">{{ 'settings.notifications.afterVisit' | transloco }}</span>
+              </div>
+            }
+          </div>
         }
       </section>
 
-      }
-
       @if (showFormActions()) {
-      <div class="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 pb-2">
-        <button type="button" class="h-11 px-5 rounded-xl text-sm font-semibold text-content hover:bg-surface" [disabled]="form.pristine" [class.opacity-50]="form.pristine" (click)="reset()">{{ 'settings.reset' | transloco }}</button>
-        <button type="submit" class="h-11 px-6 rounded-xl bg-brand-700 text-white text-sm font-semibold hover:bg-brand-800" [disabled]="saving()">{{ 'settings.save' | transloco }}</button>
+      <div class="flex flex-row justify-end gap-2 pb-2">
+        <button type="button" class="flex-1 sm:flex-none min-w-0 h-11 px-4 sm:px-5 rounded-xl border border-line-strong sm:border-transparent text-sm font-semibold text-content hover:bg-surface truncate" [disabled]="form.pristine" [class.opacity-50]="form.pristine" (click)="reset()">{{ 'settings.reset' | transloco }}</button>
+        <button type="submit" class="flex-1 sm:flex-none min-w-0 h-11 px-4 sm:px-6 rounded-xl bg-brand-700 text-white text-sm font-semibold hover:bg-brand-800 truncate" [disabled]="saving()">{{ 'settings.save' | transloco }}</button>
       </div>
       }
     </form>
 
     <!-- Услуги: справочник для формы записи и формы врача -->
-    @if (tab() === 'services') {
-      <section class="bg-surface border border-line-strong rounded-[20px] p-3 md:p-6 flex flex-col gap-3 md:gap-4">
+      <section id="services" class="order-2 scroll-mt-28 md:scroll-mt-4 bg-surface border border-line-strong rounded-[20px] p-3 md:p-6 flex flex-col gap-3 md:gap-4">
         <div class="flex items-center justify-between gap-3">
           <div class="min-w-0">
             <h2 class="font-display text-lg font-bold text-content">{{ 'settings.sections.services' | transloco }}</h2>
@@ -253,12 +425,11 @@
           </div>
         }
       </section>
-    }
 
     <!-- Справочники: списки значений для карточек пациентов -->
     <!-- Пользователи: логины и роли (только владелец) -->
-    @if (tab() === 'users') {
-      <section class="bg-surface border border-line-strong rounded-[20px] p-3 md:p-6 flex flex-col gap-3 md:gap-4">
+    @if (isOwner()) {
+      <section id="users" class="order-5 scroll-mt-28 md:scroll-mt-4 bg-surface border border-line-strong rounded-[20px] p-3 md:p-6 flex flex-col gap-3 md:gap-4">
         <div class="flex items-center justify-between gap-3">
           <div class="min-w-0">
             <h2 class="font-display text-lg font-bold text-content">{{ 'settings.sections.users' | transloco }}</h2>
@@ -296,8 +467,7 @@
     }
 
     <!-- Учётная запись: смена своего пароля -->
-    @if (tab() === 'account') {
-      <section class="bg-surface border border-line-strong rounded-[20px] p-3 md:p-6 flex flex-col gap-4">
+      <section id="account" class="order-6 scroll-mt-28 md:scroll-mt-4 bg-surface border border-line-strong rounded-[20px] p-3 md:p-6 flex flex-col gap-4">
         <div class="min-w-0">
           <h2 class="font-display text-lg font-bold text-content">{{ 'settings.account.title' | transloco }}</h2>
           <p class="text-[13px] text-muted">{{ 'settings.account.hint' | transloco }}</p>
@@ -319,10 +489,8 @@
           </div>
         </form>
       </section>
-    }
 
-    @if (tab() === 'dictionaries') {
-      <section class="bg-surface border border-line-strong rounded-[20px] p-3 md:p-6 flex flex-col gap-3 md:gap-4">
+      <section id="dictionaries" class="order-3 scroll-mt-28 md:scroll-mt-4 bg-surface border border-line-strong rounded-[20px] p-3 md:p-6 flex flex-col gap-3 md:gap-4">
         <div class="min-w-0">
           <h2 class="font-display text-lg font-bold text-content">{{ 'settings.sections.dictionaries' | transloco }}</h2>
           <p class="text-[13px] text-muted">{{ 'settings.dictionaries.hint' | transloco }}</p>
@@ -366,11 +534,10 @@
           </div>
         </div>
       </section>
-    }
 
     <!-- Режим работы — только у врача -->
-    @if (tab() === 'workMode' && isDoctor()) {
-      <form [formGroup]="workForm" (ngSubmit)="saveWorkMode()" class="flex flex-col gap-2 md:gap-4">
+    @if (isDoctor()) {
+      <form id="workMode" [formGroup]="workForm" (ngSubmit)="saveWorkMode()" class="order-4 scroll-mt-28 md:scroll-mt-4 flex flex-col gap-2 md:gap-4">
         <section class="bg-surface border border-line-strong rounded-[20px] p-3 md:p-6 flex flex-col gap-3 md:gap-5">
           <div>
             <h2 class="font-display text-lg font-bold text-content">{{ 'settings.sections.workMode' | transloco }}</h2>
@@ -402,9 +569,9 @@
           </div>
         </section>
 
-        <div class="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 pb-2">
-          <button type="button" class="h-11 px-5 rounded-xl text-sm font-semibold text-content hover:bg-surface" [disabled]="workForm.pristine" [class.opacity-50]="workForm.pristine" (click)="resetWorkMode()">{{ 'settings.reset' | transloco }}</button>
-          <button type="submit" class="h-11 px-6 rounded-xl bg-brand-700 text-white text-sm font-semibold hover:bg-brand-800 disabled:opacity-60" [disabled]="workSaving() || workForm.invalid">{{ 'settings.save' | transloco }}</button>
+        <div class="flex flex-row justify-end gap-2 pb-2">
+          <button type="button" class="flex-1 sm:flex-none min-w-0 h-11 px-4 sm:px-5 rounded-xl border border-line-strong sm:border-transparent text-sm font-semibold text-content hover:bg-surface truncate" [disabled]="workForm.pristine" [class.opacity-50]="workForm.pristine" (click)="resetWorkMode()">{{ 'settings.reset' | transloco }}</button>
+          <button type="submit" class="flex-1 sm:flex-none min-w-0 h-11 px-4 sm:px-6 rounded-xl bg-brand-700 text-white text-sm font-semibold hover:bg-brand-800 truncate disabled:opacity-60" [disabled]="workSaving() || workForm.invalid">{{ 'settings.save' | transloco }}</button>
         </div>
       </form>
     }

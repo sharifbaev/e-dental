@@ -3,9 +3,13 @@
   <!-- Свёрнутая панель (кнопка в шапке): только иконки, название — во всплывающей подсказке -->
   <aside class="hidden md:flex shrink-0 border-r border-line bg-surface p-4 flex-col gap-1 transition-[width] duration-200" [class.w-60]="!sidebarCollapsed()" [class.w-20]="sidebarCollapsed()">
     <div class="flex items-center gap-3 mb-7" [class.px-2]="!sidebarCollapsed()" [class.justify-center]="sidebarCollapsed()">
-      <span class="w-10 h-10 shrink-0 rounded-xl bg-brand-700 flex items-center justify-center">
-        <img src="favicon.svg" alt="" class="w-6 h-6 brightness-0 invert">
-      </span>
+      @if (logoUrl(); as logo) {
+        <img [src]="logo" alt="" class="w-10 h-10 shrink-0 rounded-xl object-cover bg-surface border border-line">
+      } @else {
+        <span class="w-10 h-10 shrink-0 rounded-xl bg-brand-700 flex items-center justify-center">
+          <img src="favicon.svg" alt="" class="w-6 h-6 brightness-0 invert">
+        </span>
+      }
       @if (!sidebarCollapsed()) {
         <span class="font-display text-xl font-extrabold tracking-tight text-content whitespace-nowrap">{{ 'app.title' | transloco }}</span>
       }
@@ -42,9 +46,13 @@
     <header class="bg-surface border-b border-line px-3 py-4 md:p-4 flex items-center justify-between gap-2 md:gap-3">
       <!-- Логотип в шапке — только мобилка -->
       <div class="flex items-center gap-2 md:hidden">
-        <span class="w-9 h-9 shrink-0 rounded-xl bg-brand-700 flex items-center justify-center">
-          <img src="favicon.svg" alt="" class="w-5 h-5 brightness-0 invert">
-        </span>
+        @if (logoUrl(); as logo) {
+          <img [src]="logo" alt="" class="w-9 h-9 shrink-0 rounded-xl object-cover bg-surface border border-line">
+        } @else {
+          <span class="w-9 h-9 shrink-0 rounded-xl bg-brand-700 flex items-center justify-center">
+            <img src="favicon.svg" alt="" class="w-5 h-5 brightness-0 invert">
+          </span>
+        }
         <span class="font-display text-lg font-extrabold tracking-tight text-content whitespace-nowrap">{{ 'app.title' | transloco }}</span>
       </div>
 
@@ -90,7 +98,7 @@
 
   <!-- Нижнее меню — только мобилка -->
   <nav class="md:hidden fixed bottom-0 inset-x-0 z-50 bg-surface border-t border-line flex pb-[env(safe-area-inset-bottom)]">
-    @for (item of menu(); track item.path) {
+    @for (item of mobileMenu(); track item.path) {
       <a [routerLink]="item.path" routerLinkActive #rla="routerLinkActive" class="flex-1 flex flex-col items-center justify-center gap-0.5 py-2 min-w-0" [class.text-accent]="rla.isActive" [class.text-muted]="!rla.isActive">
         <span class="flex items-center justify-center w-full max-w-14 h-8 rounded-full transition-colors" [class.bg-brand-100]="rla.isActive">
           <mat-icon fontSet="material-symbols-outlined">{{ item.icon }}</mat-icon>

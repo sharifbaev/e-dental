@@ -1,4 +1,6 @@
+import { inject } from '@angular/core';
 import { Routes } from '@angular/router';
+import { DashboardPrefsService } from './features/dashboard/services/dashboard-prefs.service';
 import { authGuard, guestGuard } from './core/auth/auth.guard';
 import { roleGuard } from './core/auth/role.guard';
 import { MainLayout } from './layout/main-layout/main-layout';
@@ -18,7 +20,8 @@ export const routes: Routes = [
     component: MainLayout,
     canActivate: [authGuard],
     children: [
-      { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+      // Стартовая страница — из «Настройки → Внешний вид» (по умолчанию «Главное»)
+      { path: '', redirectTo: () => inject(DashboardPrefsService).startPage().replace(/^\//, '') || 'dashboard', pathMatch: 'full' },
       { path: 'dashboard', loadComponent: () => import('./features/dashboard/dashboard').then(m => m.Dashboard) },
       { path: 'schedule', loadComponent: () => import('./features/schedule/schedule').then(m => m.Schedule) },
       { path: 'calendar', loadComponent: () => import('./features/schedule/calendar/calendar').then(m => m.ScheduleCalendar) },
@@ -26,6 +29,8 @@ export const routes: Routes = [
       // «Врачи» и «Финансы» — только владелец и администратор
       { path: 'doctors', canActivate: [roleGuard(['admin', 'owner'])], loadComponent: () => import('./features/doctors/pages/doctor-list/doctor-list').then(m => m.DoctorList) },
       { path: 'finance', canActivate: [roleGuard(['admin', 'owner'])], loadComponent: () => import('./features/finance/finance').then(m => m.Finance) },
+      // «SMS» — журнал отправленных SMS, только владелец и администратор
+      { path: 'sms', canActivate: [roleGuard(['admin', 'owner'])], loadComponent: () => import('./features/sms/pages/sms-list/sms-list').then(m => m.SmsList) },
       // «Настройки» — всем; у врача дополнительно вкладка «Режим работы»
       { path: 'settings', loadChildren: () => import('./features/settings/settings.routes').then(m => m.SETTINGS_ROUTES) }
     ]

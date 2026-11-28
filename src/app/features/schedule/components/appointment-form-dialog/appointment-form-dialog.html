@@ -7,7 +7,7 @@
 
 <!-- Форма — прокручивается внутри окна -->
 <!-- Мобилка: меньше отступы, чтобы форма помещалась на экран без прокрутки -->
-<mat-dialog-content class="max-sm:!px-3 max-sm:!py-3" style="flex: 1 1 auto; max-height: none;">
+<mat-dialog-content (focusin)="onFieldFocus($event)" class="max-sm:!px-3 max-sm:!py-3" style="flex: 1 1 auto; max-height: none;">
   <div class="flex flex-col gap-3 sm:gap-4 py-1 sm:py-2">
 
     <!-- Блок: Пациент -->
@@ -48,7 +48,7 @@
                 }
                 {{ patient.fullName }}
               </div>
-              <div class="text-xs text-muted">{{ patient.phone }}@if (selectedBirthDate()) { • {{ 'appointmentForm.patient.born' | transloco: { date: selectedBirthDate() } }} }</div>
+              <div class="text-xs text-muted">{{ patient.phone }}</div>
             </div>
             <button type="button" class="shrink-0 px-3 py-1.5 rounded-lg bg-surface text-sm font-medium text-brand-700 hover:bg-brand-100" (click)="clearPatient()">{{ 'appointmentForm.patient.change' | transloco }}</button>
           </div>
@@ -103,10 +103,11 @@
           <div class="grid grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)] gap-2 sm:gap-3">
             <label class="flex flex-col gap-1 min-w-0">
               <span class="text-xs font-medium text-soft">{{ 'appointmentForm.patient.phone' | transloco }} <span class="text-red-500">*</span></span>
-              <!-- +998 подставлен заранее — вводятся только 9 цифр номера -->
+              <!-- +998 подставлен заранее — вводятся только 9 цифр номера.
+                   Высота поля задана явно (как у остальных полей), а не h-full: иначе iOS Safari ставит курсор внизу -->
               <div class="flex items-center h-10 sm:h-11 rounded-xl bg-field border focus-within:border-brand-300 focus-within:bg-surface" [class.border-transparent]="!isInvalid(newPatient.phone)" [class.border-red-300]="isInvalid(newPatient.phone)">
                 <span class="pl-2.5 sm:pl-3 pr-1 sm:pr-1.5 text-sm font-medium text-soft select-none">{{ phonePrefix }}</span>
-                <input type="tel" inputmode="numeric" maxlength="12" class="flex-1 min-w-0 h-full pr-2 sm:pr-3 bg-transparent text-sm text-content placeholder:text-subtle outline-none" [value]="newPatient.phone.value" (input)="onPhoneInput($event)" (blur)="newPatient.phone.markAsTouched()" placeholder="90 123-45-67" autocomplete="off">
+                <input type="tel" inputmode="numeric" maxlength="12" class="flex-1 min-w-0 h-[38px] sm:h-[42px] py-0 pr-2 sm:pr-3 bg-transparent text-sm leading-normal text-content placeholder:text-subtle outline-none" [value]="newPatient.phone.value" (input)="onPhoneInput($event)" (blur)="newPatient.phone.markAsTouched()" placeholder="90 123-45-67" autocomplete="off">
               </div>
               @if (isInvalid(newPatient.phone)) {
                 <span class="text-xs text-red-600">{{ (newPatient.phone.hasError('required') ? 'appointmentForm.errors.required' : 'appointmentForm.errors.phoneLocal') | transloco }}</span>
@@ -130,7 +131,11 @@
           <!-- Дата рождения: отдельной строкой под телефоном и рейтингом, не позже сегодняшнего дня -->
           <label class="flex flex-col gap-1">
             <span class="text-xs font-medium text-soft">{{ 'appointmentForm.patient.birthDate' | transloco }}</span>
-            <input type="date" class="w-full h-10 sm:h-11 px-3 rounded-xl bg-field border border-transparent text-sm text-content outline-none focus:border-brand-300 focus:bg-surface" [formControl]="newPatient.birthDate" [max]="today">
+            <!-- Как у даты визита: системный текст скрыт, поверх — «27 нояб. 2026» -->
+            <div class="relative">
+              <input type="date" class="w-full h-10 sm:h-11 px-3 rounded-xl bg-field border border-transparent text-sm text-transparent outline-none focus:border-brand-300 focus:bg-surface" [formControl]="newPatient.birthDate" [max]="today">
+              <span class="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none text-sm" [class.text-content]="birthDateLabel()" [class.text-subtle]="!birthDateLabel()">{{ birthDateLabel() || ('appointmentForm.patient.birthDatePlaceholder' | transloco) }}</span>
+            </div>
           </label>
         </div>
       }
@@ -151,33 +156,39 @@
       @if (services(); as list) {
         <!-- Выбор услуг: можно несколько, «Другое» — первым пунктом -->
         <div class="flex flex-col gap-2">
-          <div class="flex flex-wrap items-center gap-1.5 min-h-11 px-2 py-1.5 rounded-xl bg-field border" [class.border-brand-300]="servicesOpen()" [class.border-red-300]="!servicesOpen() && isInvalid(form.controls.serviceId)" [class.border-transparent]="!servicesOpen() && !isInvalid(form.controls.serviceId)">
+          <div class="relative">
+          <div class="flex flex-wrap items-center gap-1.5 min-h-11 px-2 py-1.5 rounded-xl bg-field border" [class.border-brand-300]="showServiceList()" [class.border-red-300]="!showServiceList() && isInvalid(form.controls.serviceId)" [class.border-transparent]="!showServiceList() && !isInvalid(form.controls.serviceId)">
             @for (chip of selectedServices(); track chip.id) {
-              <span class="inline-flex items-center gap-0.5 h-8 pl-2.5 pr-0.5 rounded-lg bg-brand-100 text-[13px] font-semibold text-accent">
-                {{ chip.id === otherServiceId ? ('appointmentForm.service.other' | transloco) : chip.name }}
+              <span class="inline-flex items-center gap-0.5 min-h-8 max-w-full pl-2.5 pr-0.5 rounded-lg bg-brand-100 text-[13px] font-semibold text-accent">
+                <span class="break-words">{{ chip.id === otherServiceId ? (otherReasonValue() || ('appointmentForm.service.other' | transloco)) : chip.name }}</span>
                 @if (chip.urgent) {
                   <span class="ml-1 px-1.5 rounded bg-red-100 text-[10px] font-bold text-red-700 dark:bg-red-500/15 dark:text-red-300">{{ 'appointmentForm.service.urgent' | transloco }}</span>
                 }
-                <button type="button" class="w-7 h-7 flex items-center justify-center rounded-md hover:bg-brand-50" [attr.aria-label]="('appointmentForm.service.remove' | transloco) + ': ' + (chip.id === otherServiceId ? ('appointmentForm.service.other' | transloco) : chip.name)" (click)="toggleService(chip.id)">
+                <button type="button" class="shrink-0 w-7 h-7 flex items-center justify-center rounded-md hover:bg-brand-50" [attr.aria-label]="('appointmentForm.service.remove' | transloco) + ': ' + (chip.id === otherServiceId ? (otherReasonValue() || ('appointmentForm.service.other' | transloco)) : chip.name)" (click)="toggleService(chip.id)">
                   <mat-icon fontSet="material-symbols-outlined" style="font-size: 16px; width: 16px; height: 16px;">close</mat-icon>
                 </button>
               </span>
             }
-            <button type="button" class="flex-1 min-w-36 h-8 px-1.5 flex items-center justify-between gap-2 text-sm text-subtle" [attr.aria-expanded]="servicesOpen()" (click)="toggleServicesList()">
-              {{ (selectedServices().length ? 'appointmentForm.service.add' : 'appointmentForm.service.placeholder') | transloco }}
-              <mat-icon fontSet="material-symbols-outlined" style="font-size: 20px; width: 20px; height: 20px;">{{ servicesOpen() ? 'expand_less' : 'expand_more' }}</mat-icon>
-            </button>
+            <!-- Ввод: подсказки из справочника по буквам, своё — отправляется как повод визита -->
+            <input
+              type="text"
+              role="combobox"
+              autocomplete="off"
+              class="flex-1 min-w-36 h-8 px-1.5 bg-transparent text-sm text-content placeholder:text-subtle outline-none"
+              [value]="serviceQuery()"
+              [placeholder]="(selectedServices().length ? 'appointmentForm.service.add' : 'appointmentForm.service.searchPlaceholder') | transloco"
+              [attr.aria-expanded]="showServiceList()"
+              (input)="onServiceInput($any($event.target).value)"
+              (blur)="onServiceBlur()"
+              (keydown.enter)="onServiceEnter($event)">
           </div>
 
-          @if (servicesOpen()) {
-            <div class="rounded-xl border border-line-strong p-1 flex flex-col" role="listbox" aria-multiselectable="true">
-              <label class="flex items-center gap-3 min-h-11 px-2.5 rounded-lg cursor-pointer border-b border-line" [class.bg-brand-50]="isServiceSelected(otherServiceId)">
-                <input type="checkbox" class="w-[18px] h-[18px] accent-brand-700" [checked]="isServiceSelected(otherServiceId)" (change)="toggleService(otherServiceId)">
-                <span class="flex-1 text-sm font-medium text-content">{{ 'appointmentForm.service.other' | transloco }}</span>
-              </label>
-              @for (service of list; track service.id) {
+          <!-- Подсказки поверх формы — не сдвигают поля ниже -->
+          @if (showServiceList()) {
+            <div class="absolute left-0 right-0 top-full mt-1 z-20 max-h-60 overflow-y-auto rounded-xl border border-line-strong bg-surface shadow-lg p-1 flex flex-col" role="listbox" aria-multiselectable="true" (mousedown)="$event.preventDefault()">
+              @for (service of filteredServices(); track service.id) {
                 <label class="flex items-center gap-3 min-h-11 px-2.5 rounded-lg cursor-pointer" [class.bg-brand-50]="isServiceSelected(service.id)">
-                  <input type="checkbox" class="w-[18px] h-[18px] accent-brand-700" [checked]="isServiceSelected(service.id)" (change)="toggleService(service.id)">
+                  <input type="checkbox" class="w-[18px] h-[18px] accent-brand-700" [checked]="isServiceSelected(service.id)" (change)="pickService(service.id)">
                   <span class="flex-1 text-sm font-medium text-content">{{ service.name }}</span>
                   @if (service.urgent) {
                     <span class="px-1.5 py-0.5 rounded bg-red-100 text-[11px] font-semibold text-red-700 dark:bg-red-500/15 dark:text-red-300">{{ 'appointmentForm.service.urgent' | transloco }}</span>
@@ -185,23 +196,13 @@
                   <span class="text-xs text-muted whitespace-nowrap">{{ 'appointmentForm.service.minutes' | transloco: { count: service.durationMinutes } }}</span>
                 </label>
               }
-              <button type="button" class="m-1 h-10 rounded-lg bg-brand-700 text-sm font-semibold text-white" (click)="toggleServicesList()">{{ 'appointmentForm.service.done' | transloco }}</button>
             </div>
           }
+          </div>
 
           <span class="hidden sm:block text-xs text-muted">{{ 'appointmentForm.service.durationHint' | transloco: { count: minutes() } }}</span>
         </div>
 
-        <!-- «Другое»: повод визита своими словами -->
-        @if (isOtherService()) {
-          <label class="flex flex-col gap-1">
-            <span class="text-xs font-medium text-soft">{{ 'appointmentForm.service.otherLabel' | transloco }} <span class="text-red-500">*</span></span>
-            <textarea rows="3" class="w-full px-3 py-2.5 rounded-xl bg-field border text-sm text-content placeholder:text-subtle outline-none resize-none focus:border-brand-300 focus:bg-surface" [class.border-transparent]="!isInvalid(form.controls.otherReason)" [class.border-red-300]="isInvalid(form.controls.otherReason)" [formControl]="form.controls.otherReason" [placeholder]="'appointmentForm.service.otherPlaceholder' | transloco"></textarea>
-            @if (isInvalid(form.controls.otherReason)) {
-              <span class="text-xs text-red-600">{{ (form.controls.otherReason.hasError('required') ? 'appointmentForm.errors.required' : 'appointmentForm.errors.minLength') | transloco }}</span>
-            }
-          </label>
-        }
       } @else {
         <div class="h-10 sm:h-11 rounded-xl bg-page animate-pulse"></div>
       }

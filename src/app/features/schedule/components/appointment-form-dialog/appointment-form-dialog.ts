@@ -4,7 +4,7 @@ import { AbstractControl, FormBuilder, FormControl, ReactiveFormsModule, Validat
 import { MatButtonModule } from '@angular/material/button';
 import { MAT_DIALOG_DATA, MatDialogConfig, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
-import { TranslocoPipe } from '@jsverse/transloco';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { debounceTime, distinctUntilChanged, map, of, switchMap } from 'rxjs';
 import { PatientMode, PatientShort } from '../../models/appointment-form.model';
 import { ScheduleAppointment } from '../../models/schedule.model';
@@ -21,6 +21,9 @@ import { FeedbackService } from '../../../../shared/services/feedback.service';
 // «Другое» в списке услуг: повод визита пишется вручную
 export const OTHER_SERVICE_ID = 0;
 const OTHER_SERVICE_MINUTES = 30;
+
+// Локаль для формата даты визита
+const LOCALES: Record<string, string> = { ru: 'ru-RU', uz: 'uz-Latn-UZ' };
 
 // Продолжительность приёма, минуты: 30 мин, 1 ч, 1,5 ч, 2 ч, 3 ч, 4 ч
 export const DURATION_PRESETS = [30, 60, 90, 120, 180, 240];
@@ -339,6 +342,109 @@ export class AppointmentFormDialog {
     this.form.controls.serviceIds.setValue(ids.includes(id) ? ids.filter(x => x !== id) : [...ids, id]);
   }
 
+  // ---- Ввод услуги с подсказками (autocomplete) ----
+
+  // Набранный текст в поле услуги
+  protected readonly serviceQuery = signal('');
+
+  // Повод визита своими словами — показываем в чипе вместо «Другое»
+  protected readonly otherReasonValue = toSignal(this.form.controls.otherReason.valueChanges, {
+    initialValue: this.form.controls.otherReason.value
+  });
+
+  // Услуги из справочника, в названии которых есть набранные буквы
+  protected readonly filteredServices = computed(() => {
+    const query = this.serviceQuery().trim().toLocaleLowerCase();
+    const list = this.services() ?? [];
+    return query ? list.filter(service => service.name.toLocaleLowerCase().includes(query)) : list;
+  });
+
+  // Точное совпадение набранного текста с услугой из справочника
+  private readonly exactService = computed(() => {
+    const query = this.serviceQuery().trim().toLocaleLowerCase();
+    return query ? (this.services() ?? []).find(service => service.name.toLocaleLowerCase() === query) ?? null : null;
+  });
+
+  // Такой услуги нет в справочнике — предлагаем отправить набранный текст как повод визита
+  protected readonly customReason = computed(() => {
+    const text = this.serviceQuery().trim();
+    return text.length >= 3 && !this.exactService() ? text : '';
+  });
+
+  // Подсказки показываем только когда набрана хотя бы одна буква и есть совпадения
+  protected readonly showServiceList = computed(() => !!this.serviceQuery().trim() && this.filteredServices().length > 0);
+
+  protected onServiceInput(value: string): void {
+    this.serviceQuery.set(value);
+  }
+
+  // Ушли из поля: совпадений в справочнике нет — сохраняем набранный текст как повод визита
+  protected onServiceBlur(): void {
+    if (this.serviceQuery().trim() && !this.filteredServices().length) this.addCustomReason();
+  }
+
+  // Мобилка: поле в фокусе — наверх экрана поднимаем предыдущее поле, а это — сразу под ним
+  protected onFieldFocus(event: FocusEvent): void {
+    const target = event.target as HTMLElement | null;
+    if (!target || !window.matchMedia('(max-width: 767px)').matches) return;
+    const isTyping = target.tagName === 'TEXTAREA' || (target.tagName === 'INPUT' && ['text', 'tel', 'search', 'email', 'number'].includes((target as HTMLInputElement).type));
+    if (!isTyping) return;
+    const container = event.currentTarget as HTMLElement;
+    const fields = Array.from(container.querySelectorAll<HTMLElement>('input:not([type="checkbox"]):not([type="radio"]), select, textarea'))
+      .filter(field => field.offsetParent !== null);
+    const previous = fields[fields.indexOf(target) - 1];
+    // Первое поле (ФИО, поиск пациента) — показываем его блок с заголовком, а не прижимаем поле к краю
+    const anchor = previous ? previous.closest('label') ?? previous : target.closest('section') ?? target;
+    setTimeout(() => anchor.scrollIntoView({ block: 'start', behavior: 'smooth' }), 300);
+  }
+
+  // Выбор услуги из подсказок
+  protected pickService(id: number): void {
+    this.toggleService(id);
+    this.serviceQuery.set('');
+  }
+
+  // Свой текст → «Другое» с этим поводом визита (несколько — через запятую)
+  protected addCustomReason(): void {
+    const text = this.customReason();
+    if (!text) return;
+    const other = this.form.controls.otherReason;
+    const hasOther = this.isServiceSelected(OTHER_SERVICE_ID);
+    const current = hasOther ? other.value.trim() : '';
+    if (!hasOther) this.toggleService(OTHER_SERVICE_ID);
+    other.setValue(current ? `${current}, ${text}` : text);
+    other.markAsTouched();
+    this.serviceQuery.set('');
+  }
+
+  // Enter: есть подсказки — берём первую, нет — отправляем свой текст
+  protected onServiceEnter(event: Event): void {
+    event.preventDefault();
+    if (!this.serviceQuery().trim()) return;
+    const exact = this.exactService();
+    const first = this.filteredServices()[0];
+    if (exact) {
+      if (!this.isServiceSelected(exact.id)) this.toggleService(exact.id);
+      this.serviceQuery.set('');
+    } else if (first) {
+      this.pickService(first.id);
+    } else {
+      this.addCustomReason();
+    }
+  }
+
+  // Перед сохранением: набранный, но не добавленный текст тоже уходит в приём
+  private commitServiceQuery(): void {
+    if (!this.serviceQuery().trim()) return;
+    const exact = this.exactService();
+    if (exact) {
+      if (!this.isServiceSelected(exact.id)) this.toggleService(exact.id);
+      this.serviceQuery.set('');
+    } else {
+      this.addCustomReason();
+    }
+  }
+
   // Сумма длительностей выбранных услуг; только «Другое» — 30 минут
   private servicesMinutes(ids: number[]): number {
     const list = this.services() ?? [];
@@ -386,10 +492,23 @@ export class AppointmentFormDialog {
     initialValue: this.form.controls.date.value
   });
   // Мобилка: дата в поле показывается как дд.мм.гг (2026-11-21 → 21.11.26)
-  protected readonly dateLabel = computed(() => {
-    const [year, month, day] = (this.dateValue() ?? '').split('-');
-    return year && month && day ? `${day}.${month}.${year.slice(-2)}` : '';
+  private readonly transloco = inject(TranslocoService);
+  private readonly lang = toSignal(this.transloco.langChanges$, { initialValue: this.transloco.getActiveLang() });
+
+  // Дата визита: «27 нояб. 2026»
+  protected readonly dateLabel = computed(() => this.formatDate(this.dateValue()));
+
+  // Дата рождения — в том же формате и тем же шрифтом, что и дата визита
+  private readonly birthDateValue = toSignal(this.newPatient.birthDate.valueChanges, {
+    initialValue: this.newPatient.birthDate.value
   });
+  protected readonly birthDateLabel = computed(() => this.formatDate(this.birthDateValue()));
+
+  private formatDate(value: string | null | undefined): string {
+    if (!value) return '';
+    const format = new Intl.DateTimeFormat(LOCALES[this.lang()] ?? 'ru-RU', { day: 'numeric', month: 'short', year: 'numeric' });
+    return format.format(new Date(`${value}T00:00`)).replace(/\s?г\.$/, '');
+  }
   // Вошёл врач: имя выбранного врача — в поле рядом с датой
   protected readonly doctorName = computed(() => this.doctors().find(d => d.id === this.doctorIdValue())?.name ?? '');
   protected readonly timeValue = toSignal(this.form.controls.time.valueChanges, {
@@ -452,6 +571,7 @@ export class AppointmentFormDialog {
   // ---- Отправка ----
 
   protected submit(): void {
+    this.commitServiceQuery();
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;

@@ -1,25 +1,24 @@
 <div class="flex flex-col gap-2 md:gap-4">
-  <!-- Заголовок -->
-  <section class="md:px-1 md:pt-1 flex flex-col md:flex-row md:items-center md:justify-between gap-2 md:gap-3">
-    <h1 class="font-display text-xl leading-tight md:text-[30px] md:leading-normal font-extrabold tracking-tight text-content">{{ 'finance.title' | transloco }}</h1>
-
-    <!-- Добавить — ПК -->
-    <button type="button" class="hidden md:flex items-center justify-center w-11 h-11 rounded-xl bg-brand-700 text-white hover:bg-brand-800" [title]="(tab() === 'expenses' ? 'finance.expenses.add' : 'finance.debts.add') | transloco" [attr.aria-label]="(tab() === 'expenses' ? 'finance.expenses.add' : 'finance.debts.add') | transloco" (click)="add()">
-      <mat-icon fontSet="material-symbols-outlined">add</mat-icon>
-    </button>
-  </section>
-
-  <!-- Вкладки и фильтры: на мобилке закреплены сверху, прокручивается только список -->
+  <!-- Заголовок и вкладки — в один ряд; на мобилке закреплены сверху вместе с фильтрами, прокручивается только список -->
   <div class="sticky top-0 z-20 -mx-2 px-2 pt-2 pb-2 -mt-2 -mb-2 bg-page flex flex-col gap-2 md:static md:m-0 md:p-0 md:bg-transparent md:gap-4">
-    <!-- Вкладки -->
-    <div class="grid grid-cols-2 gap-1 p-1 rounded-xl bg-surface border border-line-strong md:w-96" role="tablist">
-      @for (t of tabs; track t.id) {
-        <button type="button" role="tab" [attr.aria-selected]="tab() === t.id" class="flex items-center justify-center gap-1.5 h-10 rounded-lg text-sm font-semibold transition-colors" [class.bg-brand-700]="tab() === t.id" [class.text-white]="tab() === t.id" [class.text-muted]="tab() !== t.id" [class.hover:bg-page]="tab() !== t.id" (click)="setTab(t.id)">
-          <mat-icon fontSet="material-symbols-outlined" style="font-size: 20px; width: 20px; height: 20px;">{{ t.icon }}</mat-icon>
-          {{ t.key | transloco }}
-        </button>
-      }
-    </div>
+    <section class="md:px-1 md:pt-1 flex items-center gap-2 md:gap-4">
+      <h1 class="shrink-0 font-display text-xl leading-tight md:text-[30px] md:leading-normal font-extrabold tracking-tight text-content">{{ 'finance.title' | transloco }}</h1>
+
+      <!-- Вкладки -->
+      <div class="flex-1 min-w-0 grid grid-cols-2 gap-1 p-0.5 rounded-xl bg-surface border border-line-strong md:flex-none md:w-80" role="tablist">
+        @for (t of tabs; track t.id) {
+          <button type="button" role="tab" [attr.aria-selected]="tab() === t.id" class="min-w-0 flex items-center justify-center gap-1 h-8 md:h-9 rounded-[10px] text-[13px] font-semibold transition-colors" [class.bg-brand-700]="tab() === t.id" [class.text-white]="tab() === t.id" [class.text-muted]="tab() !== t.id" [class.hover:bg-page]="tab() !== t.id" (click)="setTab(t.id)">
+            <mat-icon fontSet="material-symbols-outlined" class="shrink-0 max-[380px]:!hidden" style="font-size: 18px; width: 18px; height: 18px;">{{ t.icon }}</mat-icon>
+            <span class="truncate">{{ t.key | transloco }}</span>
+          </button>
+        }
+      </div>
+
+      <!-- Добавить — ПК -->
+      <button type="button" class="hidden md:flex ml-auto shrink-0 items-center justify-center w-11 h-11 rounded-xl bg-brand-700 text-white hover:bg-brand-800" [title]="(tab() === 'expenses' ? 'finance.expenses.add' : 'finance.debts.add') | transloco" [attr.aria-label]="(tab() === 'expenses' ? 'finance.expenses.add' : 'finance.debts.add') | transloco" (click)="add()">
+        <mat-icon fontSet="material-symbols-outlined">add</mat-icon>
+      </button>
+    </section>
 
     @if (tab() === 'expenses') {
       <!-- ===== Расходы ===== -->

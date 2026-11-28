@@ -6,6 +6,8 @@ import { AuthService } from '../../core/auth/auth.service';
 import { MatDialog } from '@angular/material/dialog';
 import { NotificationsService } from '../../features/notifications/services/notifications.service';
 import { ThemeService } from '../../core/theme/theme.service';
+import { DashboardPrefsService } from '../../features/dashboard/services/dashboard-prefs.service';
+import { SettingsService } from '../../features/settings/services/settings.service';
 
 // Свёрнутая боковая панель (только иконки) — запоминаем в браузере
 const SIDEBAR_KEY = 'e-dental.sidebar-collapsed';
@@ -41,6 +43,8 @@ export class MainLayout {
     { path: '/patients', label: 'menu.patients', icon: 'groups', staffOnly: false },
     { path: '/doctors', label: 'menu.doctors', icon: 'stethoscope', staffOnly: true },
     { path: '/finance', label: 'menu.finance', icon: 'account_balance_wallet', staffOnly: true },
+    // «SMS» — только в боковом меню ПК: в нижнем меню мобилки уже 7 пунктов; на мобилке — из «Настройки → Уведомления»
+    { path: '/sms', label: 'menu.sms', icon: 'sms', staffOnly: true, desktopOnly: true },
     { path: '/settings', label: 'menu.settings', icon: 'settings', staffOnly: false }
   ];
 
@@ -48,9 +52,21 @@ export class MainLayout {
   protected readonly user = this.auth.user;
 
   // Врачу «Врачи» и «Финансы» не показываем (и не пускаем — см. roleGuard)
+  // Пункты, скрытые пользователем в «Настройки → Внешний вид», тоже не показываем («Настройки» — всегда)
+  private readonly prefs = inject(DashboardPrefsService);
   protected readonly menu = computed(() =>
-    this.allMenu.filter(item => !item.staffOnly || this.user()?.role !== 'doctor')
+    this.allMenu.filter(item =>
+      (!item.staffOnly || this.user()?.role !== 'doctor') &&
+      (item.path === '/settings' || !this.prefs.hiddenMenu().includes(item.path))
+    )
   );
+
+  // Нижнее меню мобилки — без пунктов «только для ПК»
+  protected readonly mobileMenu = computed(() => this.menu().filter(item => !('desktopOnly' in item && item.desktopOnly)));
+
+  // Свой логотип клиники (загружается в «Настройки → Клиника»); нет — стандартный
+  private readonly settingsService = inject(SettingsService);
+  protected readonly logoUrl = computed(() => this.settingsService.settings().logoUrl);
 
   protected readonly initials = computed(() => {
     const name = this.user()?.fullName ?? '';

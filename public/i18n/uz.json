@@ -31,7 +31,8 @@
     "patients": "Bemorlar",
     "doctors": "Shifokorlar",
     "settings": "Sozlamalar",
-    "finance": "Moliya"
+    "finance": "Moliya",
+    "sms": "SMS"
   },
   "menuShort": {
     "dashboard": "Asosiy",
@@ -40,7 +41,8 @@
     "patients": "Bemorlar",
     "doctors": "Shifokorlar",
     "finance": "Moliya",
-    "settings": "Sozlamalar"
+    "settings": "Sozlamalar",
+    "sms": "SMS"
   },
   "dashboard": {
     "greeting": {
@@ -115,16 +117,20 @@
       "fullName": "Bemorning F.I.Sh.",
       "phone": "Telefon raqami",
       "birthDate": "Tug'ilgan sana",
+      "birthDatePlaceholder": "Sanani tanlang",
       "gender": "Jinsi",
       "female": "Ayol",
       "male": "Erkak"
     },
     "service": {
-      "section": "Xizmat yoki tashrif sababi",
+      "section": "Xizmatlar",
       "selected": "Tanlandi",
       "urgent": "Shoshilinch",
       "minutes": "{{count}} daqiqa",
       "placeholder": "Xizmatni tanlang",
+      "searchPlaceholder": "Xizmat yoki tashrif sababini yozing",
+      "addCustom": "Qo'shish: «{{text}}»",
+      "noMatches": "Hech narsa topilmadi — o'z sababingizni qo'shish uchun kamida 3 ta harf yozing",
       "other": "Boshqa",
       "otherLabel": "Tashrif sababini yozing",
       "otherPlaceholder": "Masalan: plomba sinishi, tishlar sezgirligi…",
@@ -203,8 +209,9 @@
         "text": "{{patient}} ning {{time}} dagi Dr. {{doctor}} qabuli o'tdi, lekin holat hali ham «Birlamchi»"
       },
       "pendingDecision": {
-        "title": "Bemorlar qaror kutmoqda",
-        "text": "Dr. {{doctor}} da «Qaror kutilmoqda» holatidagi bemorlar: {{count}}. Smena oxirigacha ({{time}}) holatni yangilang"
+        "title": "Bemor qaror kutmoqda",
+        "text": "{{patient}} ning {{time}} dagi Dr. {{doctor}} qabuli: holat hali ham «Qaror kutilmoqda»",
+        "textGroup": "Dr. {{doctor}} da «Qaror kutilmoqda» holatidagi bemorlar: {{count}}. Smena oxirigacha ({{time}}) holatni yangilang"
       },
       "newAppointment": {
         "title": "Yangi yozuv",
@@ -509,7 +516,19 @@
       "tashkent": "Toshkent (UTC+5)",
       "currency": "Valyuta",
       "uzs": "So'm (UZS)",
-      "usd": "Dollar (USD)"
+      "usd": "Dollar (USD)",
+      "logoUpload": "O'zingiznikini yuklash",
+      "logoChange": "Almashtirish",
+      "logoRules": "PNG, JPG, SVG yoki WebP, 2 MB gacha",
+      "logoWrongType": "Rasm fayli kerak",
+      "logoTooBig": "Fayl 2 MB dan katta",
+      "logoSaved": "Logotip yangilandi",
+      "logoRemoved": "Logotip o'chirildi",
+      "logoDelete": "O'chirish",
+      "logoCurrent": "Hozirgi",
+      "logoNew": "Yangi",
+      "logoDeleteTitle": "Logotipni o'chirish",
+      "logoDeleteMessage": "Klinika logotipi o'chirilsinmi? O'rniga standart logotip qo'yiladi."
     },
     "appearance": {
       "language": "Interfeys tili",
@@ -524,6 +543,14 @@
       "otherDoctors": {
         "title": "Boshqa shifokorlarni ko‘rsatish",
         "hint": "Bosh sahifa, yozuvlar va kalendardagi «Barcha shifokorlar» filtri"
+      },
+      "startPage": "Boshlang'ich sahifa",
+      "menu": "Menyu bandlari",
+      "scale": {
+        "title": "Masshtab",
+        "compact": "Kichikroq",
+        "normal": "Odatiy",
+        "large": "Kattaroq"
       }
     },
     "notifications": {
@@ -542,6 +569,36 @@
       "dailyReport": {
         "title": "Administratorga kunlik hisobot",
         "hint": "Qabullar, to'lovlar va qarzlar soat 19:00 da"
+      },
+      "smsLanguage": "SMS tili",
+      "patientSms": "Tashrifdan oldin bemorga SMS",
+      "before": "Tashrifdan",
+      "beforeVisit": "oldin",
+      "removeReminder": "Eslatmani olib tashlash",
+      "addReminder": "Eslatma qo'shish",
+      "smsText": "SMS matni",
+      "tokens": "{patient} — ism, {date} — sana, {time} — vaqt",
+      "tokensBirthday": "{patient} — bemor ismi",
+      "restoreText": "Namunani qo'yish",
+      "birthdaySms": "Tug'ilgan kun tabrigi SMS",
+      "sendAt": "Yuborish vaqti",
+      "statusPrimary": "«Birlamchi» holatini yangilashni eslatish",
+      "statusAwaiting": "«Qaror kutilmoqda» holatini eslatish",
+      "after": "Qabuldan",
+      "afterVisit": "keyin",
+      "units": {
+        "minutes": "daqiqa",
+        "hours": "soat",
+        "days": "kun"
+      },
+      "needsSave": "SMS matnlari hali saqlanmagan — «Saqlash» tugmasini bosmaguningizcha SMS yuborilmaydi.",
+      "smsLog": "Yuborilgan SMS",
+      "moderationNote": "Yangi yoki o'zgartirilgan SMS matnini SMS-provayder tekshiradi (1–2 ish kuni). Tekshiruvgacha SMS yuborilmasligi mumkin.",
+      "moderation": {
+        "pending": "SMS-provayderda tekshirilmoqda",
+        "approved": "Matn tasdiqlandi",
+        "rejected": "Matn rad etildi",
+        "changed": "O'zgartirildi — saqlangandan keyin tekshiruvga yuboriladi"
       }
     },
     "services": {
@@ -853,5 +910,33 @@
     "wrongPassword": "Joriy parol noto'g'ri",
     "lastOwner": "O'zingizni bloklash yoki egalik rolini olib tashlash mumkin emas",
     "internal": "Serverda xatolik. Keyinroq urinib ko'ring"
+  },
+  "sms": {
+    "title": "Yuborilgan SMS",
+    "total": "Jami: {{count}}",
+    "search": "Ism yoki telefon bo'yicha qidirish",
+    "empty": "Hali SMS yuborilmagan",
+    "loadError": "SMS ro'yxatini yuklab bo'lmadi",
+    "retry": "Qayta urinish",
+    "visit": "Tashrif: {{date}}",
+    "columns": {
+      "sent": "Yuborilgan",
+      "patient": "Bemor",
+      "type": "Turi",
+      "text": "Matn",
+      "status": "Holat"
+    },
+    "status": {
+      "sent": "Yuborildi",
+      "failed": "Xato"
+    },
+    "type": {
+      "reminder": "Eslatma",
+      "birthday": "Tabrik"
+    },
+    "filters": {
+      "allStatuses": "Barcha holatlar",
+      "allTypes": "Barcha turlar"
+    }
   }
 }

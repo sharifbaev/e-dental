@@ -155,6 +155,9 @@ export class PatientList {
       }));
   });
 
+  // Список загружен хотя бы раз
+  protected readonly loaded = this.patientsService.loaded;
+
   protected readonly filteredCount = computed(() => this.filtered().length);
 
   // ---- ПК: страницы ----

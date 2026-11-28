@@ -13,5 +13,5 @@ export interface AppNotification {
   time: string;                // время приёма, 'HH:mm' (для прошлых дней — 'dd.MM HH:mm')
   appointmentId?: number;      // приём, к которому относится уведомление (для statusOverdue)
   doctorId?: number;           // врач (для pendingDecision)
-  count?: number;              // сколько пациентов ждут решения (для pendingDecision)
+  count?: number;              // устаревшее: сколько пациентов ждут решения (старые общие pendingDecision; новые — по одному приёму)
 }

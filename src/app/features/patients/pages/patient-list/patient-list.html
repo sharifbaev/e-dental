@@ -46,7 +46,14 @@
     </div>
   </section>
 
-  @if (filteredCount() === 0) {
+  @if (!loaded()) {
+    <!-- Пока список грузится — скелетон, а не «пусто» -->
+    <div class="bg-surface border border-line-strong rounded-[20px] p-3 md:p-4 flex flex-col gap-2.5" aria-busy="true">
+      @for (row of [1, 2, 3, 4, 5]; track row) {
+        <div class="h-14 rounded-xl bg-page animate-pulse"></div>
+      }
+    </div>
+  } @else if (filteredCount() === 0) {
     <div class="bg-surface border border-line-strong rounded-[20px] py-12 text-center text-sm text-subtle">{{ 'patients.empty' | transloco }}</div>
   } @else {
     <!-- ПК: таблица -->

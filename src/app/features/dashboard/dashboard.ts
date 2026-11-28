@@ -64,7 +64,9 @@ export class Dashboard {
   private readonly feedback = inject(FeedbackService);
 
   // Мобилка: показывать ли карточки «Пациенты сегодня» и «Свободные слоты» (включается в настройках)
-  protected readonly showKpiMobile = inject(DashboardPrefsService).showKpiMobile;
+  // Пока настройки не загружены — карточки скрыты, чтобы не появлялись и сразу не исчезали
+  private readonly kpiPrefs = inject(DashboardPrefsService);
+  protected readonly showKpiMobile = computed(() => this.kpiPrefs.loaded() && this.kpiPrefs.showKpiMobile());
 
   // Ошибка загрузки — пустые данные (сообщение не показываем, страница остаётся рабочей)
   protected readonly summary = toSignal(this.dashboardService.getSummary().pipe(catchError(() => of(null))));

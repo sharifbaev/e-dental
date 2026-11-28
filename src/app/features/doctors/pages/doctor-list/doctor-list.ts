@@ -151,6 +151,9 @@ export class DoctorList {
       }));
   });
 
+  // Список загружен хотя бы раз
+  protected readonly loaded = this.doctorsService.loaded;
+
   protected readonly filteredCount = computed(() => this.filtered().length);
 
   // ---- ПК: страницы ----

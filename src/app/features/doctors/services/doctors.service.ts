@@ -44,7 +44,7 @@ export class DoctorsService {
         this._doctors.set(list);
         this.loaded.set(true);
       },
-      error: () => undefined
+      error: () => this.loaded.set(true)
     });
   }
 

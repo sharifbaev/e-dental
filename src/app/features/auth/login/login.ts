@@ -59,6 +59,15 @@ export class Login {
   protected readonly errorKey = signal('');
   protected readonly hidePassword = signal(true);
 
+  // Мобилка: после появления клавиатуры прокручиваем поле в видимую область
+  protected onFieldFocus(event: FocusEvent): void {
+    const target = event.target as HTMLElement | null;
+    if (!target || target.tagName !== 'INPUT') return;
+    // Наверх экрана поднимаем заголовок «Вход в систему», чтобы были видны и он, и поля
+    const title = target.closest('section')?.querySelector('h2') ?? target;
+    setTimeout(() => title.scrollIntoView({ block: 'start', behavior: 'smooth' }), 300);
+  }
+
   protected submit(): void {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
@@ -71,7 +80,7 @@ export class Login {
     this.auth.login(this.form.getRawValue())
       .pipe(finalize(() => this.loading.set(false)))
       .subscribe({
-        next: () => this.router.navigate(['/dashboard']),
+        next: () => this.router.navigateByUrl('/'), // → стартовая страница пользователя
         error: err => this.errorKey.set(LOGIN_ERRORS[errorCode(err)] ?? 'login.errors.failed')
       });
   }

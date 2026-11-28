@@ -19,12 +19,15 @@ export class PatientsService {
 
   readonly patients = this._patients.asReadonly();
   readonly loading = signal(false);
+  // Список уже загружен хотя бы раз — до этого показываем скелетон, а не «Пациентов нет»
+  readonly loaded = signal(false);
 
   constructor() {
     effect(() => {
       const userId = this.auth.user()?.id;
       untracked(() => {
         this._patients.set([]);
+        this.loaded.set(false);
         if (userId) this.reload();
       });
     });
@@ -47,8 +50,12 @@ export class PatientsService {
           const details = new Map(this._patients().filter(p => p.diagnoses).map(p => [p.id, p.diagnoses]));
           this._patients.set(all.map(p => (details.has(p.id) ? { ...p, diagnoses: details.get(p.id) } : p)));
           this.loading.set(false);
+          this.loaded.set(true);
         },
-        error: () => this.loading.set(false)
+        error: () => {
+          this.loading.set(false);
+          this.loaded.set(true);
+        }
       });
     };
     loadPage(1);

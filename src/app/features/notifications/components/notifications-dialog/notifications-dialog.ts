@@ -75,7 +75,8 @@ export class NotificationsDialog {
           icon: TYPE_VIEW[n.type].icon,
           iconClasses: TYPE_VIEW[n.type].classes,
           titleKey: `notifications.types.${n.type}.title`,
-          textKey: `notifications.types.${n.type}.text`,
+          // «Ожидают решения»: теперь на каждый приём своё уведомление; старые общие (с count) — прежним текстом
+          textKey: n.type === 'pendingDecision' && !n.appointmentId ? 'notifications.types.pendingDecision.textGroup' : `notifications.types.${n.type}.text`,
           textParams: { patient: n.patientName, doctor: n.doctorName, time: n.time, count: n.count ?? 0 },
           agoKey: minutes < 1 ? 'notifications.ago.justNow' : hours < 1 ? 'notifications.ago.minutes' : 'notifications.ago.hours',
           agoParams: { count: hours < 1 ? minutes : hours }
@@ -93,7 +94,22 @@ export class NotificationsDialog {
     // «Обновите статус» — переходим в расписание и сразу открываем окно смены статуса
     const notification = this.notificationsService.notifications().find(n => n.id === id);
 
-    // «Ожидают решения» — список пациентов врача, у каждого кнопка «Изменить статус»
+    // «Ожидает решения» по одному приёму — сразу окно смены статуса этого приёма
+    if (notification?.type === 'pendingDecision' && notification.appointmentId) {
+      this.dialogRef.close();
+      this.scheduleService.get(notification.appointmentId).subscribe({
+        next: appointment => {
+          if (appointment.status !== 'awaitingDecision') return;
+          this.router.navigateByUrl('/schedule')
+            .then(() => import('../../../schedule/services/status-change.service'))
+            .then(m => this.injector.get(m.StatusChangeService).open(appointment));
+        },
+        error: () => undefined
+      });
+      return;
+    }
+
+    // Старое общее «Ожидают решения» — список пациентов врача, у каждого кнопка «Изменить статус»
     if (notification?.type === 'pendingDecision' && notification.doctorId) {
       const doctorId = notification.doctorId;
       this.dialogRef.close();

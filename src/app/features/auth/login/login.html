@@ -1,6 +1,6 @@
-<div class="min-h-screen flex flex-col md:flex-row">
+<div class="min-h-dvh flex flex-col md:flex-row">
   <!-- Бренд-панель: на ПК слева, на мобилке сверху -->
-  <section class="relative overflow-hidden bg-brand-100 md:flex-1 px-6 pt-6 pb-10 md:px-14 md:py-12 flex flex-col gap-10">
+  <section class="relative overflow-hidden bg-brand-100 md:flex-1 px-6 pt-5 pb-9 md:px-14 md:py-8 flex flex-col gap-5 md:gap-8">
     <img src="favicon.svg" alt="" aria-hidden="true" class="absolute -right-24 -bottom-24 w-[420px] h-[420px] opacity-[0.07] pointer-events-none">
 
     <div class="relative flex items-center justify-between gap-3">
@@ -23,7 +23,8 @@
         {{ 'login.heroTitle' | transloco }}<br>
         <span class="text-accent">{{ 'login.heroAccent' | transloco }}</span>
       </h1>
-      <p class="text-[15px] md:text-[17px] leading-relaxed text-soft">{{ 'login.heroText' | transloco }}</p>
+      <!-- Невысокие телефоны (до 700px): подзаголовок скрыт, чтобы экран входа помещался без скролла -->
+      <p class="text-[15px] md:text-[17px] leading-relaxed text-soft max-md:[@media(max-height:700px)]:hidden">{{ 'login.heroText' | transloco }}</p>
     </div>
 
     <div class="relative hidden md:flex flex-wrap gap-3">
@@ -37,7 +38,7 @@
   </section>
 
   <!-- Форма входа -->
-  <section class="flex-1 md:max-w-[640px] bg-surface rounded-t-[28px] -mt-6 md:mt-0 md:rounded-none relative px-6 pt-8 pb-8 md:px-10 md:py-8 flex flex-col">
+  <section class="flex-1 md:max-w-[640px] bg-surface rounded-t-[28px] -mt-6 md:mt-0 md:rounded-none relative px-6 pt-6 pb-6 md:px-10 md:py-6 flex flex-col">
     <div class="hidden md:flex justify-end">
       <div class="flex rounded-xl border border-line-strong p-0.5" role="group" aria-label="Язык / Til">
         <button type="button" class="h-10 min-w-12 px-3 rounded-[10px] text-sm font-semibold" [class.bg-brand-700]="lang() === 'ru'" [class.text-white]="lang() === 'ru'" [class.text-muted]="lang() !== 'ru'" [attr.aria-pressed]="lang() === 'ru'" (click)="setLang('ru')">RU</button>
@@ -45,13 +46,13 @@
       </div>
     </div>
 
-    <div class="w-full max-w-[400px] md:m-auto flex flex-col gap-7">
+    <div class="w-full max-w-[400px] md:m-auto flex flex-col gap-5 md:gap-6">
       <div class="flex flex-col gap-2">
-        <h2 class="font-display text-2xl md:text-3xl font-extrabold tracking-tight text-content">{{ 'login.title' | transloco }}</h2>
+        <h2 class="scroll-mt-4 font-display text-2xl md:text-3xl font-extrabold tracking-tight text-content">{{ 'login.title' | transloco }}</h2>
         <p class="text-[15px] text-muted">{{ 'login.subtitle' | transloco }}</p>
       </div>
 
-      <form [formGroup]="form" (ngSubmit)="submit()" class="w-full flex flex-col gap-1">
+      <form [formGroup]="form" (ngSubmit)="submit()" (focusin)="onFieldFocus($event)" class="w-full flex flex-col gap-1">
         <mat-form-field appearance="outline">
           <mat-label>{{ 'login.username' | transloco }}</mat-label>
           <input matInput formControlName="username" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="clinic_login">
